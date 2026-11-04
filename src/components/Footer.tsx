@@ -28,6 +28,8 @@ export default function Footer() {
           <ul className="mt-3 space-y-2 text-slate-500">
             <li><Link href="/tests" className="hover:text-brand-600">همه‌ی تست‌ها</Link></li>
             <li><Link href="/blog" className="hover:text-brand-600">مقالات</Link></li>
+            <li><Link href="/clinicians" className="hover:text-brand-600">روانشناسان و پزشکان</Link></li>
+            <li><Link href="/clinician/apply" className="hover:text-brand-600">عضویت متخصصان</Link></li>
             <li><Link href="/about" className="hover:text-brand-600">درباره ما</Link></li>
           </ul>
         </div>

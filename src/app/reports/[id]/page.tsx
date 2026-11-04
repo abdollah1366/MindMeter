@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import ScoreBreakdown from "@/components/ScoreBreakdown";
 import PrintButton from "@/components/PrintButton";
 import { getCurrentUser, isProfileComplete } from "@/lib/auth/session";
+import { hasAccess } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
 import { getTest } from "@/data/tests";
 import { ageFrom, formatJalali } from "@/lib/jalali";
@@ -21,11 +22,17 @@ export default async function ReportPage({ params }: Props) {
   const user = await getCurrentUser();
   if (!user) redirect(`/login?next=/reports/${id}`);
 
-  const result = await db.testResult.findUnique({ where: { id } });
-  // فعلاً فقط صاحب پرونده؛ در فاز ۲ متخصص دارای مجوز هم دسترسی خواهد داشت
-  if (!result || result.userId !== user.id) notFound();
+  const result = await db.testResult.findUnique({ where: { id }, include: { user: true } });
+  if (!result) notFound();
 
-  if (!isProfileComplete(user)) redirect(`/profile?next=/reports/${id}`);
+  // دسترسی: صاحب پرونده، یا متخصص تأییدشده‌ای که بیمار به او اجازه داده است
+  const isOwner = result.userId === user.id;
+  if (!isOwner) {
+    const profile = await db.clinicianProfile.findUnique({ where: { userId: user.id } });
+    if (!profile || profile.status !== "APPROVED" || !(await hasAccess(profile.id, result.userId))) notFound();
+  }
+  const patient = result.user;
+  if (isOwner && !isProfileComplete(patient)) redirect(`/profile?next=/reports/${id}`);
 
   const test = getTest(result.testSlug);
   if (!test) notFound();
@@ -35,20 +42,22 @@ export default async function ReportPage({ params }: Props) {
   const alerts = JSON.parse(result.alerts) as TestAlert[];
 
   const info = [
-    ["نام و نام خانوادگی", `${user.firstName} ${user.lastName}`],
-    ["کد ملی", toPersianDigits(user.nationalId!)],
-    ["سن", `${toPersianDigits(ageFrom(user.birthDate!))} سال`],
-    ["جنسیت", SEX_LABEL[user.sex!] ?? "-"],
-    ["تاریخ تولد", formatJalali(user.birthDate!)],
-    ["تحصیلات", user.education ?? "-"],
-    ["شماره تماس", toPersianDigits(user.phone)],
+    ["نام و نام خانوادگی", [patient.firstName, patient.lastName].filter(Boolean).join(" ") || "-"],
+    ["کد ملی", patient.nationalId ? toPersianDigits(patient.nationalId) : "-"],
+    ["سن", patient.birthDate ? `${toPersianDigits(ageFrom(patient.birthDate))} سال` : "-"],
+    ["جنسیت", patient.sex ? SEX_LABEL[patient.sex] ?? "-" : "-"],
+    ["تاریخ تولد", patient.birthDate ? formatJalali(patient.birthDate) : "-"],
+    ["تحصیلات", patient.education ?? "-"],
+    ["شماره تماس", toPersianDigits(patient.phone)],
     ["تاریخ آزمون", formatJalali(result.createdAt)],
   ];
 
   return (
     <div className="mx-auto max-w-3xl">
       <div className="no-print mb-5 flex flex-wrap items-center justify-between gap-3">
-        <Link href="/my-results" className="text-sm text-slate-500 hover:text-brand-600">→ بازگشت به پرونده</Link>
+        <Link href={isOwner ? "/my-results" : `/panel/patients/${patient.id}`} className="text-sm text-slate-500 hover:text-brand-600">
+          → بازگشت به پرونده
+        </Link>
         <PrintButton />
       </div>
 

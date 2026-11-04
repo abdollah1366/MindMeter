@@ -17,10 +17,14 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser().catch(() => null);
   const userLabel = user ? user.firstName ?? "پرونده‌ی من" : null;
+  const extraLinks = [
+    ...(user && (user.role === "PSYCHOLOGIST" || user.role === "PHYSICIAN") ? [{ href: "/panel", label: "پنل متخصص" }] : []),
+    ...(user?.role === "ADMIN" ? [{ href: "/admin", label: "مدیریت" }] : []),
+  ];
   return (
     <html lang="fa" dir="rtl">
       <body className="flex min-h-screen flex-col font-sans">
-        <Header userLabel={userLabel} />
+        <Header userLabel={userLabel} extraLinks={extraLinks} />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 print:p-0">{children}</main>
         <Footer />
       </body>

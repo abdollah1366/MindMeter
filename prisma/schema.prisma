@@ -13,23 +13,27 @@ datasource db {
 
 /// کاربران سایت: بیمار، متخصص (روانشناس/پزشک) و ادمین
 model User {
-  id         String    @id @default(cuid())
-  phone      String    @unique /// شماره موبایل به فرم 09xxxxxxxxx
+  id          String    @id @default(cuid())
+  phone       String    @unique /// شماره موبایل به فرم 09xxxxxxxxx
   /// PATIENT | PSYCHOLOGIST | PHYSICIAN | ADMIN
-  role       String    @default("PATIENT")
-  firstName  String?
-  lastName   String?
-  nationalId String?   @unique /// کد ملی ۱۰ رقمی
-  birthDate  DateTime?
+  role        String    @default("PATIENT")
+  firstName   String?
+  lastName    String?
+  nationalId  String?   @unique /// کد ملی ۱۰ رقمی
+  birthDate   DateTime?
   /// MALE | FEMALE | OTHER
-  sex        String?
-  education  String?
-  city       String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  sex         String?
+  education   String?
+  city        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   lastLoginAt DateTime?
 
-  results TestResult[]
+  results    TestResult[]
+  clinician  ClinicianProfile?
+  grants     AccessGrant[]     @relation("PatientGrants")
+  notesAbout ClinicalNote[]    @relation("PatientNotes")
+  articles   Article[]         @relation("ArticleAuthor")
 }
 
 /// کدهای یک‌بارمصرف ورود
@@ -60,4 +64,81 @@ model TestResult {
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
+}
+
+/// پروفایل حرفه‌ای روانشناس / پزشک
+model ClinicianProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// PSYCHOLOGIST | PHYSICIAN
+  kind            String
+  /// عنوان نمایشی، مثلاً «دکتر» یا «کارشناس ارشد روانشناسی بالینی»
+  title           String
+  specialty       String
+  /// شماره‌ی نظام روانشناسی یا نظام پزشکی
+  licenseNumber   String
+  bio             String   @default("")
+  city            String?
+  yearsExperience Int?
+  /// PENDING | APPROVED | REJECTED
+  status          String   @default("PENDING")
+  reviewNote      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  grants AccessGrant[]
+  notes  ClinicalNote[]
+}
+
+/// اجازه‌ی بیمار به متخصص برای دیدن پرونده
+model AccessGrant {
+  id          String           @id @default(cuid())
+  patientId   String
+  patient     User             @relation("PatientGrants", fields: [patientId], references: [id], onDelete: Cascade)
+  clinicianId String
+  clinician   ClinicianProfile @relation(fields: [clinicianId], references: [id], onDelete: Cascade)
+  createdAt   DateTime         @default(now())
+  revokedAt   DateTime?
+
+  @@unique([patientId, clinicianId])
+}
+
+/// یادداشت بالینی متخصص درباره‌ی بیمار (فقط برای خود متخصص قابل مشاهده)
+model ClinicalNote {
+  id          String           @id @default(cuid())
+  clinicianId String
+  clinician   ClinicianProfile @relation(fields: [clinicianId], references: [id], onDelete: Cascade)
+  patientId   String
+  patient     User             @relation("PatientNotes", fields: [patientId], references: [id], onDelete: Cascade)
+  body        String
+  createdAt   DateTime         @default(now())
+
+  @@index([clinicianId, patientId])
+}
+
+/// مقاله‌های وبلاگ
+model Article {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  excerpt     String
+  /// متن مقاله؛ پاراگراف‌ها با یک خط خالی جدا می‌شوند و خطی که با ## شروع شود تیتر است
+  body        String
+  /// DRAFT | PUBLISHED
+  status      String    @default("DRAFT")
+  relatedTest String?
+  authorId    String?
+  author      User?     @relation("ArticleAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+/// تنظیمات قابل تغییر هر تست توسط ادمین (محتوای سؤال‌ها در کد است)
+model TestSetting {
+  slug      String   @id
+  enabled   Boolean  @default(true)
+  featured  Boolean?
+  updatedAt DateTime @updatedAt
 }

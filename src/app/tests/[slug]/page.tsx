@@ -3,15 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import TestRunner from "@/components/TestRunner";
 import TestCard from "@/components/TestCard";
-import { getTest, getTestsByCategory, tests } from "@/data/tests";
+import { getTest } from "@/data/tests";
+import { getVisibleTest, getVisibleTests } from "@/lib/tests-service";
 import { getCategory } from "@/data/categories";
 import { toPersianDigits } from "@/lib/scoring";
 
 type Props = { params: Promise<{ slug: string }> };
-
-export function generateStaticParams() {
-  return tests.map((t) => ({ slug: t.slug }));
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const test = getTest((await params).slug);
@@ -19,10 +16,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function TestPage({ params }: Props) {
-  const test = getTest((await params).slug);
+  const test = await getVisibleTest((await params).slug);
   if (!test) notFound();
   const category = getCategory(test.category);
-  const related = getTestsByCategory(test.category).filter((t) => t.slug !== test.slug).slice(0, 3);
+  const related = (await getVisibleTests()).filter((t) => t.category === test.category && t.slug !== test.slug).slice(0, 3);
 
   const pair = test.version ? getTest(test.version.pairSlug) : undefined;
   const facts = [

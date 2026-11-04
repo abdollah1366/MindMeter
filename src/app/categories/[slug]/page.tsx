@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import TestCard from "@/components/TestCard";
 import { categories, getCategory } from "@/data/categories";
-import { getTestsByCategory } from "@/data/tests";
+import { getVisibleTests } from "@/lib/tests-service";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CategoryPage({ params }: Props) {
   const category = getCategory((await params).slug);
   if (!category) notFound();
-  const list = getTestsByCategory(category.slug);
+  const list = (await getVisibleTests()).filter((t) => t.category === category.slug);
 
   return (
     <>

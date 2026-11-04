@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth/session";
-import { getTest } from "@/data/tests";
+import { getVisibleTest } from "@/lib/tests-service";
 import { alertsFor, isComplete, scoreTest, type Answers } from "@/lib/scoring";
 
 export type SaveResult = { ok: true; id: string } | { ok: false; reason: "auth" | "invalid" };
@@ -12,7 +12,7 @@ export async function saveTestResult(slug: string, answers: Answers): Promise<Sa
   const userId = await getSessionUserId();
   if (!userId) return { ok: false, reason: "auth" };
 
-  const test = getTest(slug);
+  const test = await getVisibleTest(slug);
   if (!test || !isComplete(test, answers)) return { ok: false, reason: "invalid" };
 
   // فقط پاسخ سؤال‌های همین تست ذخیره شود

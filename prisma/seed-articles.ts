@@ -1,4 +1,5 @@
-export type Article = {
+/** مقاله‌های اولیه که با `npm run db:seed` در پایگاه داده ثبت می‌شوند. */
+export type SeedArticle = {
   slug: string;
   title: string;
   excerpt: string;
@@ -11,7 +12,7 @@ export type Article = {
 };
 
 // ⚠️ مقاله‌های نمونه. با محتوای واقعی جایگزین کنید.
-export const articles: Article[] = [
+export const seedArticles: SeedArticle[] = [
   {
     slug: "what-is-stress",
     title: "استرس چیست و چطور آن را مدیریت کنیم؟",
@@ -36,7 +37,3 @@ export const articles: Article[] = [
     relatedTest: "big-five-ipip-50",
   },
 ];
-
-export function getArticle(slug: string) {
-  return articles.find((a) => a.slug === slug);
-}
