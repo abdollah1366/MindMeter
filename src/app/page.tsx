@@ -10,33 +10,33 @@ import { toPersianDigits } from "@/lib/scoring";
 const steps = [
   { title: "انتخاب تست", text: "از میان دسته‌بندی‌ها، تست مورد نظرتان را پیدا کنید." },
   { title: "پاسخ به سؤال‌ها", text: "با آرامش و صادقانه به سؤال‌ها پاسخ دهید." },
-  { title: "دریافت نتیجه", text: "بلافاصله گزارش و تفسیر نتیجه را ببینید." },
+  { title: "دریافت گزارش", text: "نتیجه را فوراً ببینید، در پرونده ذخیره کنید و گزارش رسمی چاپ کنید." },
 ];
 
 export default function HomePage() {
   return (
     <div className="space-y-16">
       {/* معرفی */}
-      <section className="rounded-3xl bg-gradient-to-bl from-brand-600 to-brand-700 px-6 py-14 text-white sm:px-12">
+      <section className="rounded-3xl bg-gradient-to-bl from-brand-600 via-brand-700 to-calm-700 px-6 py-14 text-white sm:px-12">
         <h1 className="text-3xl font-extrabold leading-relaxed sm:text-4xl">
           خودت را بهتر بشناس
         </h1>
         <p className="mt-4 max-w-2xl leading-8 text-brand-100">
-          مایندمتر مجموعه‌ای از تست‌های روانشناسی آنلاین به زبان فارسی است؛ از شخصیت و سلامت روان تا
-          شغل و روابط. تست بزن، نتیجه بگیر و مسیر رشدت را پیدا کن.
+          مایندمتر مجموعه‌ای از تست‌های استاندارد و معتبر بین‌المللی روانشناسی به زبان فارسی است؛ با نتیجه‌ی
+          فوری، پرونده‌ی شخصی و گزارش قابل چاپ برای ارائه به روانشناس یا پزشک.
         </p>
         <div className="mt-8">
           <SearchBox />
         </div>
         <div className="mt-8 flex gap-8 text-sm text-brand-100">
           <span>
-            <b className="block text-2xl text-white">{toPersianDigits(tests.length)}+</b> تست
+            <b className="block text-2xl text-white">{toPersianDigits(tests.length)}</b> تست استاندارد
           </span>
           <span>
             <b className="block text-2xl text-white">{toPersianDigits(categories.length)}</b> دسته‌بندی
           </span>
           <span>
-            <b className="block text-2xl text-white">رایگان</b> نتیجه‌ی فوری
+            <b className="block text-2xl text-white">گزارش</b> قابل چاپ
           </span>
         </div>
       </section>
@@ -72,7 +72,7 @@ export default function HomePage() {
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           {steps.map((s, i) => (
             <div key={s.title} className="rounded-2xl border border-slate-200 bg-white p-6">
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-brand-50 font-bold text-brand-600">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-calm-50 font-bold text-calm-600">
                 {toPersianDigits(i + 1)}
               </span>
               <h3 className="mt-4 font-bold">{s.title}</h3>

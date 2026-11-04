@@ -3,6 +3,7 @@ import "@fontsource-variable/vazirmatn";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.mindmeter.ir"),
@@ -13,12 +14,14 @@ export const metadata: Metadata = {
   description: "مایندمتر؛ مجموعه‌ای از تست‌های روانشناسی آنلاین و رایگان به زبان فارسی.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser().catch(() => null);
+  const userLabel = user ? user.firstName ?? "پرونده‌ی من" : null;
   return (
     <html lang="fa" dir="rtl">
       <body className="flex min-h-screen flex-col font-sans">
-        <Header />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
+        <Header userLabel={userLabel} />
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 print:p-0">{children}</main>
         <Footer />
       </body>
     </html>

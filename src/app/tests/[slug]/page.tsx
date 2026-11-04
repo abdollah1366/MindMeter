@@ -24,7 +24,9 @@ export default async function TestPage({ params }: Props) {
   const category = getCategory(test.category);
   const related = getTestsByCategory(test.category).filter((t) => t.slug !== test.slug).slice(0, 3);
 
+  const pair = test.version ? getTest(test.version.pairSlug) : undefined;
   const facts = [
+    { label: "نام بین‌المللی", value: test.code },
     { label: "تعداد سؤال", value: toPersianDigits(test.questions.length) },
     { label: "زمان تقریبی", value: `${toPersianDigits(test.estimatedMinutes)} دقیقه` },
     { label: "دسته‌بندی", value: category?.title ?? "-" },
@@ -48,10 +50,16 @@ export default async function TestPage({ params }: Props) {
         {test.title}
       </nav>
 
-      <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_280px]">
+      <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_300px]">
         <div>
           <h1 className="text-2xl font-extrabold">{test.title}</h1>
-          <p className="mt-3 leading-8 text-slate-600">{test.shortDescription}</p>
+          <p dir="ltr" className="mt-1 text-end text-xs text-slate-400">{test.englishTitle}</p>
+          <p className="mt-3 leading-8 text-slate-600">{test.about}</p>
+          {pair && (
+            <Link href={`/tests/${pair.slug}`} className="mt-3 inline-block rounded-xl bg-calm-50 px-4 py-2 text-sm text-calm-700 hover:bg-calm-100">
+              {pair.version?.kind === "short" ? "فرم کوتاه" : "فرم بلند"} این تست: {pair.code} ({toPersianDigits(pair.questions.length)} سؤال) ←
+            </Link>
+          )}
           <div className="mt-6">
             <TestRunner test={test} />
           </div>
@@ -67,7 +75,11 @@ export default async function TestPage({ params }: Props) {
               </div>
             ))}
           </dl>
-          {test.source && <p className="mt-4 text-xs leading-6 text-slate-400">منبع: {test.source}</p>}
+          <div className="mt-5 space-y-2 text-xs leading-6 text-slate-500">
+            <p dir="ltr" className="text-left">{test.source.citation}</p>
+            <p>مجوز: {test.source.license}</p>
+            {test.source.persianNote && <p className="text-amber-700">{test.source.persianNote}</p>}
+          </div>
         </aside>
       </div>
 

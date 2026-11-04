@@ -1,40 +1,49 @@
 /**
- * ذخیره‌ی نتایج تست‌ها در مرورگر کاربر (localStorage).
- * بعداً که حساب کاربری و پایگاه داده اضافه شد، این فایل را با فراخوانی API جایگزین کنید.
+ * ذخیره‌ی موقت نتایج کاربر مهمان در مرورگر (localStorage).
+ * کاربر واردشده نتایجش در پایگاه داده ذخیره می‌شود.
  */
+import type { Answers } from "./scoring";
 
 export type SavedResult = {
   testSlug: string;
   testTitle: string;
-  score: number;
-  maxScore: number;
-  resultTitle: string;
-  /** زمان به میلی‌ثانیه */
+  summary: string;
   takenAt: number;
 };
 
 const KEY = "mindmeter:results";
+const PENDING = "mindmeter:pending";
 
-export function loadResults(): SavedResult[] {
+function read<T>(key: string, fallback: T): T {
   try {
-    const raw = localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as SavedResult[]) : [];
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
-    return [];
+    return fallback;
   }
 }
 
-export function saveResult(result: SavedResult) {
+function write(key: string, value: unknown) {
   try {
-    const all = [result, ...loadResults()].slice(0, 50);
-    localStorage.setItem(KEY, JSON.stringify(all));
-  } catch {
-    // ذخیره نشد (مثلاً حالت ناشناس)؛ مشکلی نیست
-  }
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {}
 }
 
-export function clearResults() {
+export const loadResults = () => read<SavedResult[]>(KEY, []);
+export const saveResult = (r: SavedResult) => write(KEY, [r, ...loadResults()].slice(0, 50));
+export const clearResults = () => {
   try {
     localStorage.removeItem(KEY);
   } catch {}
-}
+};
+
+/** نتیجه‌ای که کاربر مهمان بعد از ورود می‌خواهد در پرونده ذخیره کند */
+export type PendingResult = { slug: string; answers: Answers };
+export const setPending = (p: PendingResult) => write(PENDING, p);
+export const takePending = (): PendingResult | null => {
+  const p = read<PendingResult | null>(PENDING, null);
+  try {
+    localStorage.removeItem(PENDING);
+  } catch {}
+  return p;
+};

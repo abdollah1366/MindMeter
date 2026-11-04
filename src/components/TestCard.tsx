@@ -15,6 +15,7 @@ export default function TestCard({ test }: { test: PsychTest }) {
           {category?.icon}
         </span>
         <span className="text-xs text-slate-500">{category?.title}</span>
+        <span dir="ltr" className="ms-auto rounded-md bg-calm-50 px-2 py-0.5 font-mono text-xs text-calm-700">{test.code}</span>
       </div>
       <h3 className="mt-4 text-lg font-bold group-hover:text-brand-600">{test.title}</h3>
       <p className="mt-2 flex-1 text-sm leading-7 text-slate-600">{test.shortDescription}</p>
@@ -22,7 +23,11 @@ export default function TestCard({ test }: { test: PsychTest }) {
         <span>
           {toPersianDigits(test.questions.length)} سؤال · {toPersianDigits(test.estimatedMinutes)} دقیقه
         </span>
-        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">رایگان</span>
+        {test.version ? (
+          <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-700">{test.version.kind === "short" ? "فرم کوتاه" : "فرم بلند"}</span>
+        ) : (
+          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">رایگان</span>
+        )}
       </div>
     </Link>
   );

@@ -3,7 +3,7 @@ import { categories } from "@/data/categories";
 
 export default function Footer() {
   return (
-    <footer className="mt-16 border-t border-slate-200 bg-white">
+    <footer className="no-print mt-16 border-t border-slate-200 bg-white">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-sm sm:grid-cols-3">
         <div>
           <p className="text-lg font-extrabold text-brand-600">مایندمتر</p>

@@ -1,14 +1,63 @@
 @import "tailwindcss";
 
+/*
+ * رنگ‌بندی مایندمتر
+ * ─────────────────
+ * - رنگ اصلی (brand): سبزآبی آرام. پژوهش‌های روانشناسی رنگ، طیف آبی-سبز را با کاهش برانگیختگی،
+ *   احساس امنیت و اعتماد مرتبط می‌دانند؛ مناسب فضایی که کاربر درباره‌ی حال روانی‌اش پاسخ می‌دهد.
+ * - رنگ مکمل (calm): اسطوخودوسی ملایم برای حس آرامش و تأمل.
+ * - رنگ تأکید (warm): هلویی گرم برای دکمه‌های فراخوان، بدون تهاجمی بودن قرمز.
+ * - پس‌زمینه: سفید گرم و کم‌کنتراست تا خستگی چشم و درخشش کمتر شود.
+ * - شدت نتایج با طیف ملایم سبز → زرد → نارنجی → صورتی-قرمز نشان داده می‌شود، نه قرمز تند و هشداردهنده.
+ */
 @theme {
   --font-sans: "Vazirmatn Variable", Tahoma, sans-serif;
-  --color-brand-50: #eef6ff;
-  --color-brand-100: #d9eaff;
-  --color-brand-500: #3b6fd8;
-  --color-brand-600: #2f58b5;
-  --color-brand-700: #274791;
+
+  --color-brand-50: #effaf8;
+  --color-brand-100: #d6f1ec;
+  --color-brand-200: #aee2d9;
+  --color-brand-300: #7ccbc0;
+  --color-brand-400: #4fb0a5;
+  --color-brand-500: #31958b;
+  --color-brand-600: #24786f;
+  --color-brand-700: #1f605a;
+  --color-brand-800: #1c4d49;
+  --color-brand-900: #193f3c;
+
+  --color-calm-50: #f5f3ff;
+  --color-calm-100: #ebe7fd;
+  --color-calm-200: #d9d1fb;
+  --color-calm-500: #8a78e0;
+  --color-calm-600: #7360cf;
+  --color-calm-700: #5f4db3;
+
+  --color-warm-100: #ffeadd;
+  --color-warm-500: #f08a5d;
+  --color-warm-600: #dc6f40;
+
+  --color-surface: #f8f7f4;
+  --color-ink: #1f2a37;
 }
 
 body {
-  @apply bg-slate-50 text-slate-800 antialiased;
+  @apply bg-surface text-ink antialiased;
+}
+
+/* چاپ گزارش */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  body {
+    background: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-area {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+  }
 }

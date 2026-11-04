@@ -1,64 +1,71 @@
+"use client";
+
 import Link from "next/link";
 import type { PsychTest } from "@/lib/types";
-import { findResult, maxScore, toPersianDigits } from "@/lib/scoring";
+import { alertsFor, scoreTest, type Answers } from "@/lib/scoring";
+import ScoreBreakdown from "./ScoreBreakdown";
 
-type Props = { test: PsychTest; score: number; onRestart: () => void };
+type Props = {
+  test: PsychTest;
+  answers: Answers;
+  /** وضعیت ذخیره در پرونده */
+  saved: { state: "saving" } | { state: "saved"; id: string } | { state: "guest" } | { state: "error" };
+  onRestart: () => void;
+};
 
-export default function ResultView({ test, score, onRestart }: Props) {
-  const max = maxScore(test);
-  const min = Math.min(...test.results.map((r) => r.min));
-  const result = findResult(test, score);
-  const percent = Math.round(((score - min) / (max - min || 1)) * 100);
+export default function ResultView({ test, answers, saved, onRestart }: Props) {
+  const scores = scoreTest(test, answers);
+  const alerts = alertsFor(test, answers);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <p className="text-sm text-slate-500">نتیجه‌ی تست شما</p>
-      <h2 className="mt-1 text-2xl font-extrabold text-brand-600">{result?.title ?? "-"}</h2>
-      <p className="mt-3 leading-8 text-slate-600">{result?.description}</p>
-
-      {/* نمودار امتیاز */}
-      <div className="mt-6">
-        <div className="mb-2 flex justify-between text-sm">
-          <span>امتیاز شما: <b>{toPersianDigits(score)}</b> از {toPersianDigits(max)}</span>
-          <span className="text-slate-500">{toPersianDigits(percent)}٪</span>
-        </div>
-        <div className="relative h-3 rounded-full bg-slate-100">
-          <div className="h-full rounded-full bg-brand-500" style={{ width: `${percent}%` }} />
-        </div>
+    <div className="space-y-5">
+      <div className="rounded-2xl bg-gradient-to-l from-brand-50 to-calm-50 p-5">
+        <p className="text-sm text-slate-500">نتیجه‌ی {test.code}</p>
+        <h2 className="mt-1 text-xl font-extrabold text-brand-700">
+          {scores.length === 1 ? scores[0].result?.title : "نیم‌رخ شما در مقیاس‌های این تست"}
+        </h2>
       </div>
 
-      {/* همه‌ی سطح‌ها */}
-      <div className="mt-6 grid gap-2">
-        {test.results.map((r) => {
-          const active = r === result;
-          return (
-            <div
-              key={r.title}
-              className={`flex items-center justify-between rounded-xl border px-4 py-2 text-sm ${
-                active ? "border-brand-500 bg-brand-50 font-bold text-brand-700" : "border-slate-100 text-slate-500"
-              }`}
+      <ScoreBreakdown test={test} scores={scores} alerts={alerts} />
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        {saved.state === "saved" && (
+          <>
+            <p className="text-sm text-slate-600">✓ این نتیجه در پرونده‌ی شما ذخیره شد.</p>
+            <Link
+              href={`/reports/${saved.id}`}
+              className="mt-3 inline-block rounded-xl bg-brand-600 px-5 py-2.5 text-white hover:bg-brand-700"
             >
-              <span>{r.title}</span>
-              <span>
-                {toPersianDigits(r.min)} تا {toPersianDigits(r.max)}
-              </span>
-            </div>
-          );
-        })}
+              مشاهده و چاپ گزارش رسمی
+            </Link>
+          </>
+        )}
+        {saved.state === "saving" && <p className="text-sm text-slate-500">در حال ذخیره در پرونده…</p>}
+        {saved.state === "guest" && (
+          <>
+            <p className="text-sm leading-7 text-slate-600">
+              برای ذخیره‌ی این نتیجه در پرونده‌ی خود و دریافت گزارش قابل چاپ، با شماره موبایل وارد شوید.
+            </p>
+            <Link
+              href="/login?next=/save-pending"
+              className="mt-3 inline-block rounded-xl bg-warm-500 px-5 py-2.5 text-white hover:bg-warm-600"
+            >
+              ورود و ذخیره‌ی نتیجه
+            </Link>
+          </>
+        )}
+        {saved.state === "error" && <p className="text-sm text-rose-700">ذخیره‌ی نتیجه با خطا روبه‌رو شد.</p>}
       </div>
 
-      <p className="mt-6 rounded-xl bg-amber-50 p-4 text-xs leading-6 text-amber-800">
-        این نتیجه فقط جنبه‌ی آگاهی‌بخشی دارد و تشخیص بالینی نیست. برای ارزیابی دقیق با روانشناس مشورت کنید.
+      <p className="rounded-xl bg-amber-50 p-4 text-xs leading-6 text-amber-800">
+        این نتیجه یک غربالگری است و تشخیص بالینی محسوب نمی‌شود. برای ارزیابی دقیق با روانشناس یا روانپزشک مشورت کنید.
       </p>
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <button onClick={onRestart} className="rounded-xl bg-brand-600 px-5 py-2 text-white hover:bg-brand-700">
+      <div className="flex flex-wrap gap-3">
+        <button onClick={onRestart} className="rounded-xl border border-slate-300 bg-white px-5 py-2 hover:bg-slate-50">
           انجام دوباره
         </button>
-        <Link href="/my-results" className="rounded-xl border border-slate-300 px-5 py-2 hover:bg-slate-50">
-          نتایج من
-        </Link>
-        <Link href="/tests" className="rounded-xl border border-slate-300 px-5 py-2 hover:bg-slate-50">
+        <Link href="/tests" className="rounded-xl border border-slate-300 bg-white px-5 py-2 hover:bg-slate-50">
           تست‌های دیگر
         </Link>
       </div>

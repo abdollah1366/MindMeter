@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { clearResults, loadResults, type SavedResult } from "@/lib/history";
-import { toPersianDigits } from "@/lib/scoring";
 
 export default function MyResults() {
   const [results, setResults] = useState<SavedResult[] | null>(null);
@@ -36,12 +35,7 @@ export default function MyResults() {
                 {new Date(r.takenAt).toLocaleDateString("fa-IR", { dateStyle: "long" })}
               </p>
             </div>
-            <div className="text-left">
-              <p className="font-bold text-brand-600">{r.resultTitle}</p>
-              <p className="text-xs text-slate-500">
-                امتیاز {toPersianDigits(r.score)} از {toPersianDigits(r.maxScore)}
-              </p>
-            </div>
+            <p className="text-sm text-brand-700">{r.summary}</p>
           </li>
         ))}
       </ul>
@@ -50,7 +44,7 @@ export default function MyResults() {
           clearResults();
           setResults([]);
         }}
-        className="mt-6 text-sm text-red-600 hover:underline"
+        className="mt-6 text-sm text-rose-600 hover:underline"
       >
         پاک کردن همه‌ی نتایج
       </button>
