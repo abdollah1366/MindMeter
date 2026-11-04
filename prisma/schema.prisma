@@ -1,0 +1,63 @@
+// پایگاه داده‌ی مایندمتر
+// در توسعه از SQLite استفاده می‌شود. برای تولید، provider را به "postgresql" تغییر دهید
+// و DATABASE_URL را تنظیم کنید.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// کاربران سایت: بیمار، متخصص (روانشناس/پزشک) و ادمین
+model User {
+  id         String    @id @default(cuid())
+  phone      String    @unique /// شماره موبایل به فرم 09xxxxxxxxx
+  /// PATIENT | PSYCHOLOGIST | PHYSICIAN | ADMIN
+  role       String    @default("PATIENT")
+  firstName  String?
+  lastName   String?
+  nationalId String?   @unique /// کد ملی ۱۰ رقمی
+  birthDate  DateTime?
+  /// MALE | FEMALE | OTHER
+  sex        String?
+  education  String?
+  city       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  lastLoginAt DateTime?
+
+  results TestResult[]
+}
+
+/// کدهای یک‌بارمصرف ورود
+model OtpCode {
+  id         String    @id @default(cuid())
+  phone      String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, createdAt])
+}
+
+/// نتیجه‌ی هر بار انجام تست
+model TestResult {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testSlug  String
+  /// پاسخ‌ها به صورت JSON: { "q1": 2, ... }
+  answers   String
+  /// امتیاز مقیاس‌ها به صورت JSON (محاسبه‌شده در سرور)
+  scores    String
+  /// هشدارهای ایمنی به صورت JSON
+  alerts    String   @default("[]")
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}

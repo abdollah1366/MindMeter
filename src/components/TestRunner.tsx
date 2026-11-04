@@ -1,59 +1,81 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import type { PsychTest } from "@/lib/types";
-import { calculateScore, findResult, maxScore, optionsFor, toPersianDigits } from "@/lib/scoring";
+import { optionsFor, scoreTest, toPersianDigits, type Answers } from "@/lib/scoring";
+import { saveResult, setPending } from "@/lib/history";
+import { saveTestResult } from "@/server/results";
+import ResultView from "./ResultView";
+
+type Phase = "intro" | "questions" | "result";
+type Saved = { state: "saving" } | { state: "saved"; id: string } | { state: "guest" } | { state: "error" };
 
 export default function TestRunner({ test }: { test: PsychTest }) {
-  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [phase, setPhase] = useState<Phase>("intro");
+  const [answers, setAnswers] = useState<Answers>({});
   const [index, setIndex] = useState(0);
-  const [finished, setFinished] = useState(false);
+  const [saved, setSaved] = useState<Saved>({ state: "saving" });
 
   const total = test.questions.length;
   const question = test.questions[index];
 
+  async function finish(final: Answers) {
+    setPhase("result");
+    setSaved({ state: "saving" });
+    const scores = scoreTest(test, final);
+    saveResult({
+      testSlug: test.slug,
+      testTitle: test.title,
+      summary: scores.map((s) => (scores.length > 1 ? `${s.title}: ${s.result?.title}` : s.result?.title)).join("، "),
+      takenAt: Date.now(),
+    });
+    try {
+      const res = await saveTestResult(test.slug, final);
+      if (res.ok) setSaved({ state: "saved", id: res.id });
+      else if (res.reason === "auth") {
+        setPending({ slug: test.slug, answers: final });
+        setSaved({ state: "guest" });
+      } else setSaved({ state: "error" });
+    } catch {
+      setSaved({ state: "error" });
+    }
+  }
+
   function choose(value: number) {
-    setAnswers((prev) => ({ ...prev, [question.id]: value }));
+    const next = { ...answers, [question.id]: value };
+    setAnswers(next);
     if (index < total - 1) setIndex(index + 1);
-    else setFinished(true);
+    else finish(next);
   }
 
   function restart() {
     setAnswers({});
     setIndex(0);
-    setFinished(false);
+    setPhase("questions");
   }
 
-  if (finished) {
-    const score = calculateScore(test, answers);
-    const result = findResult(test, score);
+  if (phase === "intro") {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-        <p className="text-sm text-slate-500">امتیاز شما</p>
-        <p className="mt-1 text-4xl font-extrabold text-brand-600">
-          {toPersianDigits(score)}
-          <span className="text-lg font-normal text-slate-400"> از {toPersianDigits(maxScore(test))}</span>
-        </p>
-        {result && (
-          <>
-            <h2 className="mt-5 text-xl font-bold">{result.title}</h2>
-            <p className="mt-3 leading-8 text-slate-600">{result.description}</p>
-          </>
-        )}
-        <div className="mt-6 flex justify-center gap-3">
-          <button
-            onClick={restart}
-            className="rounded-xl bg-brand-600 px-5 py-2 text-white hover:bg-brand-700"
-          >
-            انجام دوباره
-          </button>
-          <Link href="/" className="rounded-xl border border-slate-300 px-5 py-2 hover:bg-slate-50">
-            تست‌های دیگر
-          </Link>
-        </div>
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="font-bold">راهنمای پاسخ‌دهی</h2>
+        <p className="mt-3 leading-8 text-slate-600">{test.instructions}</p>
+        <ul className="mt-4 list-inside list-disc space-y-1 text-sm text-slate-500">
+          <li>در محیطی آرام و بدون عجله پاسخ دهید.</li>
+          <li>اولین پاسخی که به ذهنتان می‌رسد معمولاً دقیق‌ترین است.</li>
+          <li>هر زمان خواستید می‌توانید به سؤال قبلی برگردید.</li>
+        </ul>
+        <button
+          onClick={() => setPhase("questions")}
+          className="mt-6 w-full rounded-xl bg-brand-600 py-3 font-bold text-white hover:bg-brand-700 sm:w-auto sm:px-10"
+        >
+          شروع تست ({toPersianDigits(total)} سؤال)
+        </button>
       </div>
     );
+  }
+
+  if (phase === "result") {
+    return <ResultView test={test} answers={answers} saved={saved} onRestart={restart} />;
   }
 
   const progress = Math.round((index / total) * 100);
@@ -67,10 +89,11 @@ export default function TestRunner({ test }: { test: PsychTest }) {
         <span>{toPersianDigits(progress)}٪</span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-        <div className="h-full bg-brand-500 transition-all" style={{ width: `${progress}%` }} />
+        <div className="h-full bg-gradient-to-l from-brand-400 to-calm-500 transition-all" style={{ width: `${progress}%` }} />
       </div>
 
-      <h2 className="mt-6 text-lg font-bold leading-8">{question.text}</h2>
+      <p className="mt-6 text-xs text-slate-400">{test.instructions}</p>
+      <h2 className="mt-2 min-h-16 text-lg font-bold leading-8">{question.text}</h2>
 
       <div className="mt-5 grid gap-2">
         {optionsFor(test, question).map((opt) => {
@@ -82,7 +105,7 @@ export default function TestRunner({ test }: { test: PsychTest }) {
               className={`rounded-xl border px-4 py-3 text-start transition ${
                 selected
                   ? "border-brand-500 bg-brand-50 text-brand-700"
-                  : "border-slate-200 hover:border-brand-500 hover:bg-brand-50"
+                  : "border-slate-200 hover:border-brand-400 hover:bg-brand-50"
               }`}
             >
               {opt.label}
@@ -92,10 +115,7 @@ export default function TestRunner({ test }: { test: PsychTest }) {
       </div>
 
       {index > 0 && (
-        <button
-          onClick={() => setIndex(index - 1)}
-          className="mt-5 text-sm text-slate-500 hover:text-brand-600"
-        >
+        <button onClick={() => setIndex(index - 1)} className="mt-5 text-sm text-slate-500 hover:text-brand-600">
           → سؤال قبلی
         </button>
       )}
