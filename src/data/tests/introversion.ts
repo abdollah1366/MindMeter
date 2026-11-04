@@ -6,7 +6,9 @@ const introversion: PsychTest = {
   title: "تست درون‌گرایی / برون‌گرایی",
   shortDescription: "ببینید بیشتر به سمت درون‌گرایی تمایل دارید یا برون‌گرایی.",
   instructions: "میزان موافقت خود با هر جمله را مشخص کنید.",
-  category: "شخصیت",
+  category: "personality",
+  featured: true,
+  audience: "بزرگسالان",
   estimatedMinutes: 2,
   options: [
     { label: "کاملاً مخالفم", value: 1 },

@@ -7,7 +7,9 @@ const stress: PsychTest = {
   shortDescription: "میزان استرسی که در یک ماه گذشته تجربه کرده‌اید را بسنجید.",
   instructions:
     "به هر جمله با توجه به احساس و تجربه‌ی خود در یک ماه گذشته پاسخ دهید. پاسخ درست یا غلط وجود ندارد.",
-  category: "سلامت روان",
+  category: "mental-health",
+  featured: true,
+  audience: "بزرگسالان",
   estimatedMinutes: 3,
   options: [
     { label: "هرگز", value: 0 },

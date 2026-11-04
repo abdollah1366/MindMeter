@@ -36,7 +36,14 @@ export type PsychTest = {
   shortDescription: string;
   /** توضیح کامل‌تر و راهنمای پاسخ‌دهی */
   instructions: string;
+  /** شناسه‌ی دسته‌بندی از `src/data/categories.ts` */
   category: string;
+  /** اگر true باشد در بخش «تست‌های پرطرفدار» صفحه‌ی اصلی نمایش داده می‌شود */
+  featured?: boolean;
+  /** گروه سنی یا مخاطب، مثلاً «بزرگسالان» */
+  audience?: string;
+  /** منبع یا توضیح علمی تست (برای نمایش در صفحه‌ی معرفی) */
+  source?: string;
   /** زمان تقریبی به دقیقه */
   estimatedMinutes: number;
   /** گزینه‌های پیش‌فرض برای همه‌ی سؤال‌ها */
