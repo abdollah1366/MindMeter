@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Vazirmatn Variable", Tahoma, sans-serif;
+  --color-brand-50: #eef6ff;
+  --color-brand-100: #d9eaff;
+  --color-brand-500: #3b6fd8;
+  --color-brand-600: #2f58b5;
+  --color-brand-700: #274791;
+}
+
+body {
+  @apply bg-slate-50 text-slate-800 antialiased;
+}
