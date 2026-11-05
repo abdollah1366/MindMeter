@@ -5,6 +5,8 @@ const nav = [
   { href: "/admin", label: "داشبورد و آمار" },
   { href: "/admin/users", label: "کاربران" },
   { href: "/admin/clinicians", label: "متخصصان" },
+  { href: "/admin/appointments", label: "نوبت‌ها و پرداخت‌ها" },
+  { href: "/admin/referrals", label: "ارجاع‌ها" },
   { href: "/admin/blog", label: "وبلاگ" },
   { href: "/admin/tests", label: "تست‌ها" },
 ];

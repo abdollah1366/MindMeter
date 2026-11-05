@@ -26,6 +26,13 @@ export default async function AdminDashboard() {
     db.testResult.findMany({ where: { createdAt: { gte: new Date(now - 14 * DAY) } }, select: { createdAt: true } }),
   ]);
 
+  const [upcomingVisits, completedVisits, revenue, openReferrals] = await Promise.all([
+    db.appointment.count({ where: { status: { in: ["CONFIRMED", "IN_PROGRESS"] }, startsAt: { gte: new Date(now - DAY) } } }),
+    db.appointment.count({ where: { status: "COMPLETED" } }),
+    db.payment.aggregate({ where: { status: "PAID", paidAt: { gte: since30 } }, _sum: { amount: true } }),
+    db.referral.count({ where: { status: "NEW" } }),
+  ]);
+
   // تست‌های انجام‌شده در ۱۴ روز اخیر به تفکیک روز
   const days = Array.from({ length: 14 }, (_, i) => {
     const d = new Date(now - (13 - i) * DAY);
@@ -44,6 +51,9 @@ export default async function AdminDashboard() {
     { label: "تست‌های انجام‌شده", value: results, sub: `${toPersianDigits(results7)} مورد در ۷ روز اخیر` },
     { label: "متخصصان تأییدشده", value: approved, sub: pending ? `${toPersianDigits(pending)} درخواست در انتظار` : "درخواست جدیدی نیست", href: "/admin/clinicians" },
     { label: "مقاله‌های منتشرشده", value: articles, sub: "مدیریت وبلاگ", href: "/admin/blog" },
+    { label: "نوبت‌های پیش رو", value: upcomingVisits, sub: `${toPersianDigits(completedVisits)} ویزیت انجام‌شده`, href: "/admin/appointments" },
+    { label: "درآمد ۳۰ روز (هزار تومان)", value: Math.round((revenue._sum.amount ?? 0) / 1000), sub: "پرداخت‌های موفق", href: "/admin/appointments" },
+    { label: "ارجاع‌های در انتظار", value: openReferrals, sub: "درخواست‌های مشاوره", href: "/admin/referrals" },
   ];
 
   return (

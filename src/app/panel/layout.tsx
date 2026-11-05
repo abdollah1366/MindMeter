@@ -13,8 +13,11 @@ export default async function PanelLayout({ children }: { children: React.ReactN
             {profile.title} {displayName(user)}
           </p>
         </div>
-        <nav className="flex gap-2 text-sm">
+        <nav className="flex flex-wrap gap-2 text-sm">
           <Link href="/panel" className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">مراجعان</Link>
+          <Link href="/panel/appointments" className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">نوبت‌ها</Link>
+          <Link href="/panel/referrals" className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">ارجاع‌ها</Link>
+          <Link href="/panel/schedule" className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">برنامه‌ی کاری</Link>
           <Link href={`/clinicians/${profile.id}`} className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">پروفایل عمومی</Link>
         </nav>
       </div>

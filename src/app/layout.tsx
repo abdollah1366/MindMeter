@@ -18,6 +18,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const user = await getCurrentUser().catch(() => null);
   const userLabel = user ? user.firstName ?? "پرونده‌ی من" : null;
   const extraLinks = [
+    ...(user ? [{ href: "/appointments", label: "نوبت‌های من" }] : []),
     ...(user && (user.role === "PSYCHOLOGIST" || user.role === "PHYSICIAN") ? [{ href: "/panel", label: "پنل متخصص" }] : []),
     ...(user?.role === "ADMIN" ? [{ href: "/admin", label: "مدیریت" }] : []),
   ];

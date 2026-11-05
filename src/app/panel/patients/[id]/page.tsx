@@ -10,6 +10,8 @@ import { toPersianDigits } from "@/lib/scoring";
 import type { ScaleScore, TestAlert } from "@/lib/types";
 import { getTest } from "@/data/tests";
 import { addClinicalNote } from "@/server/clinician";
+import { referToClinician } from "@/server/referral";
+import { CLINICIAN_KIND } from "@/lib/clinicians";
 
 export const metadata: Metadata = { title: "پرونده‌ی مراجع", robots: { index: false } };
 
@@ -28,6 +30,10 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   const notes = await db.clinicalNote.findMany({
     where: { clinicianId: profile.id, patientId: id },
     orderBy: { createdAt: "desc" },
+  });
+  const colleagues = await db.clinicianProfile.findMany({
+    where: { status: "APPROVED", id: { not: profile.id }, userId: { not: id } },
+    include: { user: true },
   });
 
   const info = [
@@ -105,6 +111,21 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
               </li>
             ))}
           </ul>
+          {colleagues.length > 0 && (
+            <form action={referToClinician} className="mt-6 rounded-2xl border border-calm-100 bg-calm-50 p-4">
+              <h3 className="text-sm font-bold text-calm-700">ارجاع به متخصص دیگر</h3>
+              <input type="hidden" name="patientId" value={patient.id} />
+              <select name="toClinicianId" className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                {colleagues.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title} {displayName(c.user)} ({CLINICIAN_KIND[c.kind]} · {c.specialty})
+                  </option>
+                ))}
+              </select>
+              <textarea name="reason" required minLength={5} rows={2} placeholder="دلیل ارجاع" className="mt-2 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm" />
+              <button className="mt-2 rounded-xl bg-calm-600 px-5 py-2 text-sm text-white">ارسال ارجاع</button>
+            </form>
+          )}
         </section>
       </div>
     </>
