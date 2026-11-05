@@ -29,6 +29,8 @@ export default function Footer() {
             <li><Link href="/tests" className="hover:text-brand-600">همه‌ی تست‌ها</Link></li>
             <li><Link href="/blog" className="hover:text-brand-600">مقالات</Link></li>
             <li><Link href="/clinicians" className="hover:text-brand-600">روانشناسان و پزشکان</Link></li>
+            <li><Link href="/academy" className="hover:text-brand-600">آکادمی و دوره‌ها</Link></li>
+            <li><Link href="/certificates" className="hover:text-brand-600">استعلام گواهی</Link></li>
             <li><Link href="/clinician/apply" className="hover:text-brand-600">عضویت متخصصان</Link></li>
             <li><Link href="/about" className="hover:text-brand-600">درباره ما</Link></li>
           </ul>

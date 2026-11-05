@@ -10,6 +10,8 @@ const nav = [
   { href: "/admin/blog", label: "وبلاگ" },
   { href: "/admin/tests", label: "تست‌ها" },
   { href: "/admin/norms", label: "هنجارها" },
+  { href: "/admin/courses", label: "آکادمی" },
+  { href: "/admin/coupons", label: "کدهای تخفیف" },
 ];
 
 export const metadata = { robots: { index: false } };
