@@ -109,6 +109,8 @@ export type PsychTest = {
   source: TestSource;
   /** «ability» برای آزمون‌های توانایی با پاسخ درست و نادرست؛ پیش‌فرض: پرسشنامه */
   kind?: "questionnaire" | "ability";
+  /** ترتیب سؤال‌ها و گزینه‌ها در هر بار اجرا تصادفی شود */
+  shuffle?: boolean;
   /** توضیح تکمیلی که بعد از نتیجه و در گزارش نشان داده می‌شود (مثلاً راهنمای ارجاع) */
   resultNote?: { title: string; paragraphs: string[] };
 };

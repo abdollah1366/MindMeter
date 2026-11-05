@@ -6,6 +6,36 @@ import { LEVEL_LABEL, SKIP_VALUE, optionsFor, scoreTest, toPersianDigits, type A
 
 const LEVEL_STYLE = { easy: "bg-emerald-50 text-emerald-700", medium: "bg-amber-50 text-amber-700", hard: "bg-rose-50 text-rose-700" };
 const progressKey = (slug: string) => `mm-progress-${slug}`;
+
+type Layout = { order: string[]; optOrder: Record<string, number[]> };
+
+function shuffled<T>(arr: T[]) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/**
+ * ترتیب سؤال‌ها و گزینه‌ها برای یک بار اجرا.
+ * در تست‌های shuffle هر بار تصادفی است و سعی می‌شود بیش از دو سؤال پشت‌سرهم از یک بخش نیاید.
+ * پاسخ‌ها با شناسه‌ی سؤال و مقدار گزینه ذخیره می‌شوند، پس ترتیب نمایش روی نمره اثری ندارد.
+ */
+function makeLayout(test: PsychTest): Layout {
+  if (!test.shuffle) return { order: test.questions.map((q) => q.id), optOrder: {} };
+  const qs = shuffled(test.questions);
+  for (let i = 2; i < qs.length; i++) {
+    if (qs[i].scale === qs[i - 1].scale && qs[i].scale === qs[i - 2].scale) {
+      const j = qs.findIndex((q, k) => k > i && q.scale !== qs[i].scale);
+      if (j > 0) [qs[i], qs[j]] = [qs[j], qs[i]];
+    }
+  }
+  const optOrder: Record<string, number[]> = {};
+  for (const q of qs) if (q.options) optOrder[q.id] = shuffled(q.options.map((o) => o.value));
+  return { order: qs.map((q) => q.id), optOrder };
+}
 import { saveResult, setPending } from "@/lib/history";
 import { saveTestResult } from "@/server/results";
 import ResultView from "./ResultView";
@@ -21,7 +51,17 @@ export default function TestRunner({ test }: { test: PsychTest }) {
   const [saved, setSaved] = useState<Saved>({ state: "saving" });
 
   const total = test.questions.length;
-  const [resume, setResume] = useState<{ answers: Answers; index: number } | null>(null);
+  const [layout, setLayout] = useState<Layout>(() => ({ order: test.questions.map((q) => q.id), optOrder: {} }));
+  const [resume, setResume] = useState<{ answers: Answers; index: number; layout?: Layout } | null>(null);
+  const byId = Object.fromEntries(test.questions.map((q) => [q.id, q]));
+
+  function begin(from?: { answers: Answers; index: number; layout?: Layout }) {
+    const valid = from?.layout && from.layout.order.length === total && from.layout.order.every((id) => byId[id]);
+    setLayout(valid ? from!.layout! : makeLayout(test));
+    setAnswers(from && valid ? from.answers : {});
+    setIndex(from && valid ? from.index : 0);
+    setPhase("questions");
+  }
 
   // پیشرفت آزمون‌های طولانی در مرورگر نگه داشته می‌شود تا با بستن صفحه از دست نرود
   useEffect(() => {
@@ -37,10 +77,10 @@ export default function TestRunner({ test }: { test: PsychTest }) {
   useEffect(() => {
     if (phase !== "questions" || index === 0) return;
     try {
-      localStorage.setItem(progressKey(test.slug), JSON.stringify({ answers, index }));
+      localStorage.setItem(progressKey(test.slug), JSON.stringify({ answers, index, layout }));
     } catch {}
-  }, [phase, answers, index, test.slug]);
-  const question = test.questions[index];
+  }, [phase, answers, index, layout, test.slug]);
+  const question = byId[layout.order[index]] ?? test.questions[index];
 
   async function finish(final: Answers) {
     setPhase("result");
@@ -75,9 +115,7 @@ export default function TestRunner({ test }: { test: PsychTest }) {
   }
 
   function restart() {
-    setAnswers({});
-    setIndex(0);
-    setPhase("questions");
+    begin();
   }
 
   if (phase === "intro") {
@@ -103,22 +141,14 @@ export default function TestRunner({ test }: { test: PsychTest }) {
         <div className="mt-6 flex flex-wrap gap-3">
           {resume && (
             <button
-              onClick={() => {
-                setAnswers(resume.answers);
-                setIndex(resume.index);
-                setPhase("questions");
-              }}
+              onClick={() => begin(resume)}
               className="w-full rounded-xl bg-calm-600 py-3 font-bold text-white hover:bg-calm-700 sm:w-auto sm:px-8"
             >
               ادامه از سؤال {toPersianDigits(resume.index + 1)}
             </button>
           )}
           <button
-            onClick={() => {
-              setAnswers({});
-              setIndex(0);
-              setPhase("questions");
-            }}
+            onClick={() => begin()}
             className={`w-full rounded-xl py-3 font-bold sm:w-auto sm:px-10 ${
               resume ? "border border-slate-300 bg-white text-slate-700" : "bg-brand-600 text-white hover:bg-brand-700"
             }`}
@@ -137,7 +167,12 @@ export default function TestRunner({ test }: { test: PsychTest }) {
   const progress = Math.round((index / total) * 100);
   const allOptions = optionsFor(test, question);
   const skipOption = allOptions.find((o) => o.value === SKIP_VALUE);
-  const mainOptions = allOptions.filter((o) => o.value !== SKIP_VALUE);
+  const baseOptions = allOptions.filter((o) => o.value !== SKIP_VALUE);
+  const ordered = layout.optOrder[question.id];
+  const mainOptions =
+    ordered && ordered.length === baseOptions.length
+      ? ordered.map((v) => baseOptions.find((o) => o.value === v)!).filter(Boolean)
+      : baseOptions;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -170,20 +205,20 @@ export default function TestRunner({ test }: { test: PsychTest }) {
           mainOptions.some((o) => o.figure) ? "grid-cols-3 sm:grid-cols-5" : test.kind === "ability" ? "sm:grid-cols-2" : ""
         }`}
       >
-        {mainOptions.map((opt) => {
+        {mainOptions.map((opt, pos) => {
           const selected = answers[question.id] === opt.value;
           if (opt.figure)
             return (
               <button
                 key={opt.value}
                 onClick={() => choose(opt.value)}
-                aria-label={`گزینه‌ی ${opt.label}`}
+                aria-label={`گزینه‌ی ${toPersianDigits(pos + 1)}`}
                 className={`flex flex-col items-center gap-1 rounded-xl border p-2 transition ${
                   selected ? "border-brand-500 bg-brand-50" : "border-slate-200 hover:border-brand-400 hover:bg-brand-50"
                 }`}
               >
                 <GlyphCell glyph={opt.figure} id={`${question.id}-o${opt.value}`} size={64} />
-                <span className="text-xs text-slate-500">{opt.label}</span>
+                <span className="text-xs text-slate-500">{toPersianDigits(pos + 1)}</span>
               </button>
             );
           return (

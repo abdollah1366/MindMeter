@@ -1,10 +1,21 @@
 import type { Glyph, MatrixFigure } from "@/lib/types";
 
-const INK = "#1f3a3d";
+/**
+ * رنگ هر شکل ثابت است (رنگ اطلاعات اضافه‌ای در قاعده‌ی سؤال ندارد و فقط برای جذابیت و تشخیص راحت‌تر است).
+ * [رنگ پُر، رنگ خط]
+ */
+const COLORS: Record<Glyph["shape"], [string, string]> = {
+  circle: ["#3b82f6", "#1d4ed8"],
+  square: ["#14b8a6", "#0f766e"],
+  triangle: ["#f97316", "#c2410c"],
+  diamond: ["#8b5cf6", "#6d28d9"],
+  star: ["#eab308", "#a16207"],
+  arrow: ["#e11d48", "#9f1239"],
+};
 
 /** مسیر یک شکل در مختصات ‎-10..10‎ */
-function ShapePath({ shape, fill }: { shape: Glyph["shape"]; fill: string }) {
-  const common = { fill, stroke: INK, strokeWidth: 1.6, strokeLinejoin: "round" as const };
+function ShapePath({ shape, fill, stroke }: { shape: Glyph["shape"]; fill: string; stroke: string }) {
+  const common = { fill, stroke, strokeWidth: 1.6, strokeLinejoin: "round" as const };
   switch (shape) {
     case "circle":
       return <circle r={8} {...common} />;
@@ -33,19 +44,20 @@ export function GlyphCell({ glyph, size = 64, id }: { glyph: Glyph | null; size?
   const count = Math.min(4, Math.max(1, glyph?.count ?? 1));
   const scale = count === 1 ? 1.6 : 0.95;
   const pattern = `stripes-${id}`;
-  const fill = glyph?.fill === "solid" ? INK : glyph?.fill === "striped" ? `url(#${pattern})` : "white";
+  const [color, ink] = glyph ? COLORS[glyph.shape] : ["#000", "#000"];
+  const fill = glyph?.fill === "solid" ? color : glyph?.fill === "striped" ? `url(#${pattern})` : "white";
   return (
     <svg viewBox="-25 -25 50 50" width={size} height={size} aria-hidden className="block">
       <defs>
         <pattern id={pattern} width="3.2" height="3.2" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <rect width="3.2" height="3.2" fill="white" />
-          <line x1="0" y1="0" x2="0" y2="3.2" stroke={INK} strokeWidth="1.4" />
+          <line x1="0" y1="0" x2="0" y2="3.2" stroke={color} strokeWidth="1.5" />
         </pattern>
       </defs>
       {glyph ? (
         LAYOUT[count].map(([x, y], i) => (
           <g key={i} transform={`translate(${x} ${y}) scale(${scale}) rotate(${glyph.rotate ?? 0})`}>
-            <ShapePath shape={glyph.shape} fill={fill} />
+            <ShapePath shape={glyph.shape} fill={fill} stroke={ink} />
           </g>
         ))
       ) : (
