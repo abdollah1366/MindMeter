@@ -27,6 +27,10 @@ function devFixedCode() {
 export type IssueResult = { ok: true; code: string } | { ok: false; error: string; retryAfter?: number };
 
 export async function issueOtp(phone: string): Promise<IssueResult> {
+  // در حالت کد ثابت توسعه، محدودیت ارسال لازم نیست
+  const fixed = devFixedCode();
+  if (fixed) return { ok: true, code: fixed };
+
   const now = Date.now();
   const recent = await db.otpCode.findMany({
     where: { phone, createdAt: { gt: new Date(now - 60 * 60 * 1000) } },
@@ -39,7 +43,7 @@ export async function issueOtp(phone: string): Promise<IssueResult> {
   if (recent.length >= MAX_PER_HOUR) {
     return { ok: false, error: "تعداد درخواست‌ها زیاد است. لطفاً یک ساعت دیگر تلاش کنید." };
   }
-  const code = devFixedCode() ?? String(randomInt(0, 10 ** OTP_LENGTH)).padStart(OTP_LENGTH, "0");
+  const code = String(randomInt(0, 10 ** OTP_LENGTH)).padStart(OTP_LENGTH, "0");
   await db.otpCode.create({
     data: { phone, codeHash: hash(phone, code), expiresAt: new Date(now + TTL_MS) },
   });
@@ -47,6 +51,9 @@ export async function issueOtp(phone: string): Promise<IssueResult> {
 }
 
 export async function verifyOtp(phone: string, code: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const fixed = devFixedCode();
+  if (fixed) return code === fixed ? { ok: true } : { ok: false, error: "کد واردشده درست نیست." };
+
   const otp = await db.otpCode.findFirst({
     where: { phone, consumedAt: null },
     orderBy: { createdAt: "desc" },

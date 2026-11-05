@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import { db } from "@/lib/db";
+import { normalizeIranMobile } from "@/lib/validation";
 
 const COOKIE = "mm_session";
 const MAX_AGE = 60 * 60 * 24 * 30; // ۳۰ روز
@@ -46,9 +47,26 @@ export async function getSessionUserId(): Promise<string | null> {
   }
 }
 
+/**
+ * شماره‌هایی که در ADMIN_PHONES تعریف شده‌اند ادمین هستند.
+ * شماره‌ها نرمال می‌شوند، پس 0914…، +98914… یا ارقام فارسی همه پذیرفته می‌شوند.
+ */
+export function isBootstrapAdmin(phone: string) {
+  return (process.env.ADMIN_PHONES ?? "")
+    .split(/[,،]/)
+    .map((p) => normalizeIranMobile(p.replace(/["']/g, "")))
+    .includes(phone);
+}
+
 export async function getCurrentUser() {
   const id = await getSessionUserId();
-  return id ? db.user.findUnique({ where: { id } }) : null;
+  if (!id) return null;
+  const user = await db.user.findUnique({ where: { id } });
+  // اگر شماره بعد از ورود به ADMIN_PHONES اضافه شده باشد، نیازی به خروج و ورود دوباره نیست
+  if (user && user.role !== "ADMIN" && isBootstrapAdmin(user.phone)) {
+    return db.user.update({ where: { id }, data: { role: "ADMIN" } });
+  }
+  return user;
 }
 
 export type CurrentUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
