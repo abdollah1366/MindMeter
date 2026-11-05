@@ -11,7 +11,8 @@
     "validate:tests": "tsx scripts/validate-tests.ts",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@fontsource-variable/vazirmatn": "^5.3.0",

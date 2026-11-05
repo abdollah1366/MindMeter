@@ -6,6 +6,7 @@ import { issueOtp, verifyOtp } from "@/lib/auth/otp";
 import { createSession, destroySession } from "@/lib/auth/session";
 import { sendOtpSms } from "@/lib/sms";
 import { normalizeIranMobile, toEnglishDigits } from "@/lib/validation";
+import { isBootstrapAdmin } from "@/lib/auth/guards";
 
 export type LoginState = {
   step: "phone" | "code";
@@ -46,10 +47,11 @@ export async function verifyCode(prev: LoginState, form: FormData): Promise<Logi
   const result = await verifyOtp(phone, code);
   if (!result.ok) return { step: "code", phone, error: result.error };
 
+  const admin = isBootstrapAdmin(phone);
   const user = await db.user.upsert({
     where: { phone },
-    create: { phone, lastLoginAt: new Date() },
-    update: { lastLoginAt: new Date() },
+    create: { phone, lastLoginAt: new Date(), ...(admin ? { role: "ADMIN" } : {}) },
+    update: { lastLoginAt: new Date(), ...(admin ? { role: "ADMIN" } : {}) },
   });
   await createSession(user.id);
   redirect(safeNext(form.get("next")));

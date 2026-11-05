@@ -14,6 +14,16 @@ function hash(phone: string, code: string) {
     .digest("hex");
 }
 
+/**
+ * کد ثابت برای توسعه (مثلاً 12345) تا وقتی سرویس پیامک وصل نشده است.
+ * فقط وقتی فعال است که DEV_OTP_CODE تنظیم شده، پیامک تنظیم نشده و برنامه در حالت production نیست.
+ */
+function devFixedCode() {
+  const fixed = process.env.DEV_OTP_CODE?.trim();
+  if (!fixed || process.env.NODE_ENV === "production" || process.env.KAVENEGAR_API_KEY) return null;
+  return /^\d{4,6}$/.test(fixed) ? fixed : null;
+}
+
 export type IssueResult = { ok: true; code: string } | { ok: false; error: string; retryAfter?: number };
 
 export async function issueOtp(phone: string): Promise<IssueResult> {
@@ -29,7 +39,7 @@ export async function issueOtp(phone: string): Promise<IssueResult> {
   if (recent.length >= MAX_PER_HOUR) {
     return { ok: false, error: "تعداد درخواست‌ها زیاد است. لطفاً یک ساعت دیگر تلاش کنید." };
   }
-  const code = String(randomInt(0, 10 ** OTP_LENGTH)).padStart(OTP_LENGTH, "0");
+  const code = devFixedCode() ?? String(randomInt(0, 10 ** OTP_LENGTH)).padStart(OTP_LENGTH, "0");
   await db.otpCode.create({
     data: { phone, codeHash: hash(phone, code), expiresAt: new Date(now + TTL_MS) },
   });

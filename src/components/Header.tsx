@@ -6,12 +6,16 @@ import { useState } from "react";
 const links = [
   { href: "/tests", label: "همه‌ی تست‌ها" },
   { href: "/#categories", label: "دسته‌بندی‌ها" },
+  { href: "/clinicians", label: "متخصصان" },
   { href: "/blog", label: "مقالات" },
     { href: "/about", label: "درباره ما" },
 ];
 
-export default function Header({ userLabel }: { userLabel: string | null }) {
+type NavLink = { href: string; label: string };
+
+export default function Header({ userLabel, extraLinks = [] }: { userLabel: string | null; extraLinks?: NavLink[] }) {
   const [open, setOpen] = useState(false);
+  const all = [...links, ...extraLinks];
 
   return (
     <header className="no-print sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -24,7 +28,7 @@ export default function Header({ userLabel }: { userLabel: string | null }) {
         </Link>
 
         <nav className="hidden gap-6 text-sm text-slate-600 md:flex">
-          {links.map((l) => (
+          {all.map((l) => (
             <Link key={l.href} href={l.href} className="hover:text-brand-600">
               {l.label}
             </Link>
@@ -57,7 +61,7 @@ export default function Header({ userLabel }: { userLabel: string | null }) {
           <Link href={userLabel ? "/my-results" : "/login"} onClick={() => setOpen(false)} className="block py-3 font-bold text-brand-700">
             {userLabel ?? "ورود / ثبت‌نام"}
           </Link>
-          {links.map((l) => (
+          {all.map((l) => (
             <Link
               key={l.href}
               href={l.href}

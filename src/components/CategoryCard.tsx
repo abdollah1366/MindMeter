@@ -1,10 +1,8 @@
 import Link from "next/link";
 import type { Category } from "@/data/categories";
-import { getTestsByCategory } from "@/data/tests";
 import { toPersianDigits } from "@/lib/scoring";
 
-export default function CategoryCard({ category }: { category: Category }) {
-  const count = getTestsByCategory(category.slug).length;
+export default function CategoryCard({ category, count }: { category: Category; count: number }) {
   return (
     <Link
       href={`/categories/${category.slug}`}

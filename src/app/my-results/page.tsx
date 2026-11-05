@@ -8,6 +8,8 @@ import { formatJalali } from "@/lib/jalali";
 import { levelStyle } from "@/lib/levels";
 import type { ScaleScore } from "@/lib/types";
 import { logout } from "@/server/auth";
+import { revokeAccess } from "@/server/clinician";
+import { displayName } from "@/lib/clinicians";
 
 export const metadata: Metadata = { title: "پرونده‌ی من" };
 
@@ -30,7 +32,13 @@ export default async function MyResultsPage() {
     );
   }
 
-  const results = await db.testResult.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" } });
+  const [results, grants] = await Promise.all([
+    db.testResult.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" } }),
+    db.accessGrant.findMany({
+      where: { patientId: user.id, revokedAt: null },
+      include: { clinician: { include: { user: { select: { firstName: true, lastName: true } } } } },
+    }),
+  ]);
   const name = [user.firstName, user.lastName].filter(Boolean).join(" ");
 
   return (
@@ -92,6 +100,30 @@ export default async function MyResultsPage() {
           })}
         </ul>
       )}
+
+      <section className="mt-10">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <h2 className="text-lg font-extrabold">متخصصانی که به پرونده‌ی شما دسترسی دارند</h2>
+          <Link href="/clinicians" className="text-sm text-brand-600 hover:underline">فهرست متخصصان ←</Link>
+        </div>
+        {grants.length === 0 ? (
+          <p className="mt-3 text-sm text-slate-500">پرونده‌ی شما با هیچ متخصصی به اشتراک گذاشته نشده است.</p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {grants.map((g) => (
+              <li key={g.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+                <Link href={`/clinicians/${g.clinicianId}`} className="font-medium hover:text-brand-600">
+                  {g.clinician.title} {displayName(g.clinician.user)} <span className="text-xs text-slate-400">· {g.clinician.specialty}</span>
+                </Link>
+                <form action={revokeAccess}>
+                  <input type="hidden" name="clinicianId" value={g.clinicianId} />
+                  <button className="text-sm text-rose-600 hover:underline">لغو دسترسی</button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </>
   );
 }

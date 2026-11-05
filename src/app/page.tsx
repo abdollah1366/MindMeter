@@ -3,8 +3,9 @@ import TestCard from "@/components/TestCard";
 import CategoryCard from "@/components/CategoryCard";
 import SearchBox from "@/components/SearchBox";
 import { categories } from "@/data/categories";
-import { getFeaturedTests, tests } from "@/data/tests";
-import { articles } from "@/data/articles";
+import { getFeaturedVisibleTests, getVisibleTests } from "@/lib/tests-service";
+import { listPublishedArticles } from "@/lib/articles";
+import { formatJalali } from "@/lib/jalali";
 import { toPersianDigits } from "@/lib/scoring";
 
 const steps = [
@@ -13,7 +14,12 @@ const steps = [
   { title: "دریافت گزارش", text: "نتیجه را فوراً ببینید، در پرونده ذخیره کنید و گزارش رسمی چاپ کنید." },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [tests, featured, articles] = await Promise.all([
+    getVisibleTests(),
+    getFeaturedVisibleTests(),
+    listPublishedArticles(4),
+  ]);
   return (
     <div className="space-y-16">
       {/* معرفی */}
@@ -46,7 +52,7 @@ export default function HomePage() {
         <h2 className="text-2xl font-extrabold">دسته‌بندی تست‌ها</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((c) => (
-            <CategoryCard key={c.slug} category={c} />
+            <CategoryCard key={c.slug} category={c} count={tests.filter((t) => t.category === c.slug).length} />
           ))}
         </div>
       </section>
@@ -60,7 +66,7 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {getFeaturedTests().map((t) => (
+          {featured.map((t) => (
             <TestCard key={t.slug} test={t} />
           ))}
         </div>
@@ -91,13 +97,13 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {articles.slice(0, 4).map((a) => (
+          {articles.map((a) => (
             <Link
               key={a.slug}
               href={`/blog/${a.slug}`}
               className="rounded-2xl border border-slate-200 bg-white p-5 hover:border-brand-500"
             >
-              <p className="text-xs text-slate-400">{a.date}</p>
+              <p className="text-xs text-slate-400">{a.publishedAt && formatJalali(a.publishedAt)}</p>
               <h3 className="mt-2 font-bold">{a.title}</h3>
               <p className="mt-2 text-sm leading-7 text-slate-500">{a.excerpt}</p>
             </Link>
