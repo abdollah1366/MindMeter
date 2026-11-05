@@ -5,7 +5,7 @@
  * - نسخه‌های کوتاه/بلند به هم ارجاع می‌دهند
  */
 import { tests, getTest } from "../src/data/tests";
-import { scoreScale, scaleOf } from "../src/lib/scoring";
+import { scoreScale, scaleOf, inScale, optionsFor } from "../src/lib/scoring";
 
 let errors = 0;
 const fail = (msg: string) => {
@@ -20,6 +20,10 @@ for (const t of tests) {
     if (ids.has(q.id)) fail(`${t.slug}: duplicate id ${q.id}`);
     ids.add(q.id);
     if (!keys.has(scaleOf(t, q))) fail(`${t.slug}/${q.id}: unknown scale ${q.scale}`);
+    const values = optionsFor(t, q).map((o) => o.value);
+    if (new Set(values).size !== values.length) fail(`${t.slug}/${q.id}: duplicate option values`);
+    if (q.answer !== undefined && !values.includes(q.answer)) fail(`${t.slug}/${q.id}: answer ${q.answer} is not an option`);
+    if (q.figure && q.figure.cells.filter((c) => c === null).length !== 1) fail(`${t.slug}/${q.id}: matrix needs exactly one blank`);
   }
   for (const s of t.scales) {
     const { min, max } = scoreScale(t, s, {});
@@ -36,7 +40,8 @@ for (const t of tests) {
       const score = raw * m;
       if (!s.results.some((r) => score >= r.min && score <= r.max)) fail(`${t.slug}/${s.key}: no result for score ${score}`);
     }
-    const count = t.questions.filter((q) => scaleOf(t, q) === s.key).length;
+    for (const k of s.includes ?? []) if (!keys.has(k)) fail(`${t.slug}/${s.key}: includes unknown scale ${k}`);
+    const count = t.questions.filter((q) => inScale(t, s, q)).length;
     console.log(`  ${t.code.padEnd(10)} ${s.key.padEnd(11)} items=${String(count).padStart(2)} range=${min}-${max}`);
   }
   if (t.version) {

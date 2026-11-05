@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { PsychTest } from "@/lib/types";
 import { alertsFor, scoreTest, type Answers } from "@/lib/scoring";
 import ScoreBreakdown from "./ScoreBreakdown";
+import ResultNote from "./ResultNote";
 
 type Props = {
   test: PsychTest;
@@ -57,6 +58,8 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
         )}
         {saved.state === "error" && <p className="text-sm text-rose-700">ذخیره‌ی نتیجه با خطا روبه‌رو شد.</p>}
       </div>
+
+      {test.resultNote && <ResultNote note={test.resultNote} resultId={saved.state === "saved" ? saved.id : undefined} />}
 
       {concerning && (
         <div className="rounded-2xl border border-calm-200 bg-calm-50 p-5">

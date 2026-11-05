@@ -7,6 +7,7 @@ export function optionsFor(test: PsychTest, question: Question) {
 }
 
 function bounds(test: PsychTest, q: Question) {
+  if (q.answer !== undefined) return { lo: 0, hi: 1 };
   const values = optionsFor(test, q).map((o) => o.value);
   return { lo: Math.min(...values), hi: Math.max(...values) };
 }
@@ -16,9 +17,16 @@ export function scaleOf(test: PsychTest, q: Question) {
 }
 
 export function scoreAnswer(test: PsychTest, q: Question, value: number) {
+  if (q.answer !== undefined) return value === q.answer ? 1 : 0;
   if (!q.reverse) return value;
   const { lo, hi } = bounds(test, q);
   return hi + lo - value;
+}
+
+/** آیا سؤال در این مقیاس (یا مقیاس ترکیبی) شمرده می‌شود */
+export function inScale(test: PsychTest, scale: Scale, q: Question) {
+  const key = scaleOf(test, q);
+  return scale.includes ? scale.includes.includes(key) : key === scale.key;
 }
 
 export function scoreScale(test: PsychTest, scale: Scale, answers: Answers): ScaleScore {
@@ -27,7 +35,7 @@ export function scoreScale(test: PsychTest, scale: Scale, answers: Answers): Sca
   let min = 0;
   let max = 0;
   for (const q of test.questions) {
-    if (scaleOf(test, q) !== scale.key) continue;
+    if (!inScale(test, scale, q)) continue;
     const { lo, hi } = bounds(test, q);
     min += lo;
     max += hi;

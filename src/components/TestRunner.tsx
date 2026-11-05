@@ -6,6 +6,7 @@ import { optionsFor, scoreTest, toPersianDigits, type Answers } from "@/lib/scor
 import { saveResult, setPending } from "@/lib/history";
 import { saveTestResult } from "@/server/results";
 import ResultView from "./ResultView";
+import { GlyphCell, Matrix } from "./Figure";
 
 type Phase = "intro" | "questions" | "result";
 type Saved = { state: "saving" } | { state: "saved"; id: string } | { state: "guest" } | { state: "error" };
@@ -60,8 +61,18 @@ export default function TestRunner({ test }: { test: PsychTest }) {
         <h2 className="font-bold">راهنمای پاسخ‌دهی</h2>
         <p className="mt-3 leading-8 text-slate-600">{test.instructions}</p>
         <ul className="mt-4 list-inside list-disc space-y-1 text-sm text-slate-500">
-          <li>در محیطی آرام و بدون عجله پاسخ دهید.</li>
-          <li>اولین پاسخی که به ذهنتان می‌رسد معمولاً دقیق‌ترین است.</li>
+          {test.kind === "ability" ? (
+            <>
+              <li>در محیطی آرام و بدون مزاحمت، در یک نوبت پاسخ دهید.</li>
+              <li>از ماشین‌حساب، کاغذ یادداشت یا کمک دیگران استفاده نکنید.</li>
+              <li>سؤال‌ها به‌تدریج سخت‌تر می‌شوند؛ اگر جوابی را نمی‌دانید، بهترین حدس خود را انتخاب کنید.</li>
+            </>
+          ) : (
+            <>
+              <li>در محیطی آرام و بدون عجله پاسخ دهید.</li>
+              <li>اولین پاسخی که به ذهنتان می‌رسد معمولاً دقیق‌ترین است.</li>
+            </>
+          )}
           <li>هر زمان خواستید می‌توانید به سؤال قبلی برگردید.</li>
         </ul>
         <button
@@ -95,9 +106,33 @@ export default function TestRunner({ test }: { test: PsychTest }) {
       <p className="mt-6 text-xs text-slate-400">{test.instructions}</p>
       <h2 className="mt-2 min-h-16 text-lg font-bold leading-8">{question.text}</h2>
 
-      <div className="mt-5 grid gap-2">
+      {question.figure && (
+        <div className="mt-4">
+          <Matrix figure={question.figure} id={question.id} />
+        </div>
+      )}
+
+      <div
+        className={`mt-5 grid gap-2 ${
+          optionsFor(test, question).some((o) => o.figure) ? "grid-cols-3 sm:grid-cols-5" : test.kind === "ability" ? "sm:grid-cols-2" : ""
+        }`}
+      >
         {optionsFor(test, question).map((opt) => {
           const selected = answers[question.id] === opt.value;
+          if (opt.figure)
+            return (
+              <button
+                key={opt.value}
+                onClick={() => choose(opt.value)}
+                aria-label={`گزینه‌ی ${opt.label}`}
+                className={`flex flex-col items-center gap-1 rounded-xl border p-2 transition ${
+                  selected ? "border-brand-500 bg-brand-50" : "border-slate-200 hover:border-brand-400 hover:bg-brand-50"
+                }`}
+              >
+                <GlyphCell glyph={opt.figure} id={`${question.id}-o${opt.value}`} size={64} />
+                <span className="text-xs text-slate-500">{opt.label}</span>
+              </button>
+            );
           return (
             <button
               key={opt.value}

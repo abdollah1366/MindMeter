@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import ScoreBreakdown from "@/components/ScoreBreakdown";
+import ResultNote from "@/components/ResultNote";
 import PrintButton from "@/components/PrintButton";
 import { getCurrentUser, isProfileComplete } from "@/lib/auth/session";
 import { hasAccess } from "@/lib/auth/guards";
@@ -102,6 +103,11 @@ export default async function ReportPage({ params }: Props) {
         <section className="mt-5">
           <h2 className="mb-3 text-sm font-bold text-slate-500">نتایج</h2>
           <ScoreBreakdown test={test} scores={scores} alerts={alerts} />
+          {test.resultNote && (
+            <div className="mt-4">
+              <ResultNote note={test.resultNote} print />
+            </div>
+          )}
         </section>
 
         {/* پاسخ‌ها */}
@@ -120,7 +126,10 @@ export default async function ReportPage({ params }: Props) {
                 <tr key={q.id} className="border-b border-slate-100 align-top">
                   <td className="py-1.5 pe-2 text-slate-400">{toPersianDigits(i + 1)}</td>
                   <td className="py-1.5 pe-3">{q.text}</td>
-                  <td className="py-1.5 whitespace-nowrap">{optionsFor(test, q).find((o) => o.value === answers[q.id])?.label ?? "-"}</td>
+                  <td className="py-1.5 whitespace-nowrap">
+                    {optionsFor(test, q).find((o) => o.value === answers[q.id])?.label ?? "-"}
+                    {q.answer !== undefined && (answers[q.id] === q.answer ? <span className="ms-1 text-emerald-600">✓</span> : <span className="ms-1 text-rose-500">✗</span>)}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -129,7 +138,7 @@ export default async function ReportPage({ params }: Props) {
 
         <footer className="mt-8 border-t border-slate-200 pt-4 text-[11px] leading-6 text-slate-500">
           <p>
-            <b>توجه:</b> این گزارش نتیجه‌ی یک ابزار غربالگری خودگزارشی است و به‌تنهایی تشخیص بالینی محسوب نمی‌شود. تفسیر نهایی
+            <b>توجه:</b> این گزارش نتیجه‌ی {test.kind === "ability" ? "یک آزمون کوتاه توانایی (بدون هنجار)" : "یک ابزار غربالگری خودگزارشی"} است و به‌تنهایی تشخیص بالینی محسوب نمی‌شود. تفسیر نهایی
             باید توسط روانشناس بالینی یا روانپزشک و همراه با مصاحبه‌ی بالینی انجام شود.
           </p>
           <p className="mt-1">منبع: {test.source.citation}</p>
