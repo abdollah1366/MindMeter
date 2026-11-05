@@ -37,6 +37,8 @@ model User {
   appointments Appointment[]     @relation("PatientAppointments")
   payments     Payment[]
   referrals    Referral[]        @relation("PatientReferrals")
+  enrollments  Enrollment[]
+  certificates Certificate[]
 }
 
 /// کدهای یک‌بارمصرف ورود
@@ -102,6 +104,7 @@ model ClinicianProfile {
   appointments  Appointment[]
   referralsFrom Referral[]     @relation("ReferralFrom")
   referralsTo   Referral[]     @relation("ReferralTo")
+  courses       Course[]
 }
 
 /// اجازه‌ی بیمار به متخصص برای دیدن پرونده
@@ -203,6 +206,8 @@ model Payment {
   user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   appointmentId String?
   appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  enrollmentId  String?
+  enrollment    Enrollment?  @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
   /// مبلغ به تومان
   amount        Int
   /// ZARINPAL | DEV
@@ -284,4 +289,175 @@ model TestNorm {
   createdAt DateTime @default(now())
 
   @@index([testSlug, scaleKey])
+}
+
+// ─────────────── آکادمی ───────────────
+
+/// دوره‌ی آموزشی (بسته‌ی درس‌ها)
+model Course {
+  id           String            @id @default(cuid())
+  slug         String            @unique
+  title        String
+  /// توضیح کوتاه برای فهرست دوره‌ها
+  summary      String
+  /// توضیح کامل (همان قالب متن مقاله)
+  description  String            @default("")
+  /// مخاطب دوره، مثلاً «دانشجویان روانشناسی و عموم علاقه‌مندان»
+  audience     String            @default("")
+  /// BEGINNER | INTERMEDIATE | ADVANCED
+  level        String            @default("BEGINNER")
+  /// قیمت به تومان (۰ = رایگان)
+  price        Int               @default(0)
+  /// مدرس (متخصص تأییدشده)؛ خالی یعنی تیم آموزشی مایندمتر
+  instructorId String?
+  instructor   ClinicianProfile? @relation(fields: [instructorId], references: [id], onDelete: SetNull)
+  /// DRAFT | PUBLISHED
+  status       String            @default("DRAFT")
+  /// آیا پس از قبولی گواهی صادر شود
+  certificate  Boolean           @default(true)
+  /// حد نصاب قبولی آزمون پایانی (درصد)
+  passingScore Int               @default(70)
+  /// رنگ جلد: brand | calm | warm | rose | sky
+  theme        String            @default("brand")
+  publishedAt  DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  lessons      Lesson[]
+  questions    CourseQuestion[]
+  enrollments  Enrollment[]
+  certificates Certificate[]
+  coupons      Coupon[]
+}
+
+/// یک درس از دوره: ویدیو، متن یا کلاس زنده
+model Lesson {
+  id           String           @id @default(cuid())
+  courseId     String
+  course       Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  order        Int              @default(0)
+  title        String
+  /// VIDEO | TEXT | LIVE
+  kind         String           @default("TEXT")
+  /// لینک ویدیو: فایل mp4/m3u8 یا صفحه‌ی آپارات/یوتیوب
+  videoUrl     String?
+  /// متن درس یا جزوه‌ی همراه
+  body         String           @default("")
+  durationMin  Int              @default(0)
+  /// پیش‌نمایش رایگان برای همه
+  freePreview  Boolean          @default(false)
+  /// زمان شروع کلاس زنده
+  liveAt       DateTime?
+  /// لینک ورود به کلاس زنده (اسکای‌روم، ادوبی کانکت، BigBlueButton، گوگل میت ...)
+  liveUrl      String?
+  createdAt    DateTime         @default(now())
+
+  progress LessonProgress[]
+
+  @@index([courseId, order])
+}
+
+/// ثبت‌نام کاربر در دوره
+model Enrollment {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  /// PENDING_PAYMENT | ACTIVE | CANCELLED
+  status      String    @default("PENDING_PAYMENT")
+  /// مبلغ نهایی پس از تخفیف
+  price       Int       @default(0)
+  couponCode  String?
+  createdAt   DateTime  @default(now())
+  activatedAt DateTime?
+  completedAt DateTime?
+
+  progress     LessonProgress[]
+  attempts     QuizAttempt[]
+  payments     Payment[]
+  certificate  Certificate?
+
+  @@unique([userId, courseId])
+}
+
+/// درس‌های تمام‌شده
+model LessonProgress {
+  id           String     @id @default(cuid())
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lessonId     String
+  lesson       Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completedAt  DateTime   @default(now())
+
+  @@unique([enrollmentId, lessonId])
+}
+
+/// سؤال آزمون پایان دوره (چهارگزینه‌ای)
+model CourseQuestion {
+  id       String @id @default(cuid())
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  order    Int    @default(0)
+  text     String
+  /// گزینه‌ها به صورت JSON: ["...", "..."]
+  options  String
+  /// اندیس گزینه‌ی درست (از ۰)
+  answer   Int
+
+  @@index([courseId, order])
+}
+
+/// هر بار شرکت در آزمون پایانی
+model QuizAttempt {
+  id           String     @id @default(cuid())
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  /// پاسخ‌ها به صورت JSON: { "<questionId>": 2 }
+  answers      String
+  /// درصد پاسخ درست
+  score        Int
+  passed       Boolean
+  createdAt    DateTime   @default(now())
+
+  @@index([enrollmentId, createdAt])
+}
+
+/// گواهی پایان دوره با کد استعلام
+model Certificate {
+  id             String     @id @default(cuid())
+  /// کد استعلام عمومی، مثلاً MM-7K3Q-9XPA
+  code           String     @unique
+  enrollmentId   String     @unique
+  enrollment     Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId       String
+  course         Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  /// نام‌ها هنگام صدور ثبت می‌شوند تا گواهی بعداً تغییر نکند
+  fullName       String
+  nationalId     String?
+  courseTitle    String
+  instructorName String
+  hours          Int        @default(0)
+  score          Int?
+  issuedAt       DateTime   @default(now())
+  /// ابطال توسط ادمین
+  revokedAt      DateTime?
+}
+
+/// کد تخفیف دوره‌ها
+model Coupon {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  /// درصد تخفیف ۱ تا ۱۰۰
+  percent   Int
+  /// خالی یعنی برای همه‌ی دوره‌ها
+  courseId  String?
+  course    Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  maxUses   Int?
+  used      Int       @default(0)
+  expiresAt DateTime?
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
 }
