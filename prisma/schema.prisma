@@ -265,3 +265,23 @@ model VisitMessage {
 
   @@index([appointmentId, createdAt])
 }
+
+/// هنجار داخلی (رسمی) یک تست برای یک گروه سنی و جنسی؛ توسط ادمین ثبت می‌شود
+model TestNorm {
+  id        String   @id @default(cuid())
+  testSlug  String
+  /// کلید مقیاس، مثلاً total
+  scaleKey  String   @default("total")
+  /// ALL | MALE | FEMALE
+  sex       String   @default("ALL")
+  ageMin    Int
+  ageMax    Int
+  mean      Float
+  sd        Float
+  n         Int      @default(0)
+  /// منبع: پژوهش هنجاریابی یا «شرکت‌کنندگان سایت تا تاریخ ...»
+  source    String
+  createdAt DateTime @default(now())
+
+  @@index([testSlug, scaleKey])
+}

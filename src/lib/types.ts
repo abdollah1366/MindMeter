@@ -42,6 +42,8 @@ export type Question = {
    * پاسخ درست ۱ امتیاز و پاسخ نادرست ۰ امتیاز دارد.
    */
   answer?: number;
+  /** سطح دشواری (در آزمون‌های توانایی) */
+  level?: "easy" | "medium" | "hard";
   /** هشدار ایمنی: اگر مقدار پاسخ >= minValue بود پیام نشان داده می‌شود */
   alert?: { minValue: number; message: string };
 };

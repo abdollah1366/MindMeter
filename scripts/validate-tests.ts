@@ -23,6 +23,14 @@ for (const t of tests) {
     const values = optionsFor(t, q).map((o) => o.value);
     if (new Set(values).size !== values.length) fail(`${t.slug}/${q.id}: duplicate option values`);
     if (q.answer !== undefined && !values.includes(q.answer)) fail(`${t.slug}/${q.id}: answer ${q.answer} is not an option`);
+    if (t.kind === "ability") {
+      const real = optionsFor(t, q).filter((o) => o.value >= 0);
+      if (real.length < 4) fail(`${t.slug}/${q.id}: ability item needs at least 4 options`);
+      if (!q.level) fail(`${t.slug}/${q.id}: ability item needs a level`);
+      if (q.answer === undefined) fail(`${t.slug}/${q.id}: ability item needs an answer`);
+      const key = (o: (typeof real)[number]) => (o.figure ? JSON.stringify(o.figure) : o.label);
+      if (new Set(real.map(key)).size !== real.length) fail(`${t.slug}/${q.id}: two options look identical`);
+    }
     if (q.figure && q.figure.cells.filter((c) => c === null).length !== 1) fail(`${t.slug}/${q.id}: matrix needs exactly one blank`);
   }
   for (const s of t.scales) {

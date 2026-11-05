@@ -9,6 +9,7 @@ const nav = [
   { href: "/admin/referrals", label: "ارجاع‌ها" },
   { href: "/admin/blog", label: "وبلاگ" },
   { href: "/admin/tests", label: "تست‌ها" },
+  { href: "/admin/norms", label: "هنجارها" },
 ];
 
 export const metadata = { robots: { index: false } };

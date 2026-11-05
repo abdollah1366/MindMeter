@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { PsychTest } from "@/lib/types";
-import { optionsFor, scoreTest, toPersianDigits, type Answers } from "@/lib/scoring";
+import { LEVEL_LABEL, SKIP_VALUE, optionsFor, scoreTest, toPersianDigits, type Answers } from "@/lib/scoring";
+
+const LEVEL_STYLE = { easy: "bg-emerald-50 text-emerald-700", medium: "bg-amber-50 text-amber-700", hard: "bg-rose-50 text-rose-700" };
+const progressKey = (slug: string) => `mm-progress-${slug}`;
 import { saveResult, setPending } from "@/lib/history";
 import { saveTestResult } from "@/server/results";
 import ResultView from "./ResultView";
@@ -18,10 +21,32 @@ export default function TestRunner({ test }: { test: PsychTest }) {
   const [saved, setSaved] = useState<Saved>({ state: "saving" });
 
   const total = test.questions.length;
+  const [resume, setResume] = useState<{ answers: Answers; index: number } | null>(null);
+
+  // پیشرفت آزمون‌های طولانی در مرورگر نگه داشته می‌شود تا با بستن صفحه از دست نرود
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(progressKey(test.slug));
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved && typeof saved.index === "number" && saved.index > 0 && saved.index < total) setResume(saved);
+      }
+    } catch {}
+  }, [test.slug, total]);
+
+  useEffect(() => {
+    if (phase !== "questions" || index === 0) return;
+    try {
+      localStorage.setItem(progressKey(test.slug), JSON.stringify({ answers, index }));
+    } catch {}
+  }, [phase, answers, index, test.slug]);
   const question = test.questions[index];
 
   async function finish(final: Answers) {
     setPhase("result");
+    try {
+      localStorage.removeItem(progressKey(test.slug));
+    } catch {}
     setSaved({ state: "saving" });
     const scores = scoreTest(test, final);
     saveResult({
@@ -75,12 +100,32 @@ export default function TestRunner({ test }: { test: PsychTest }) {
           )}
           <li>هر زمان خواستید می‌توانید به سؤال قبلی برگردید.</li>
         </ul>
-        <button
-          onClick={() => setPhase("questions")}
-          className="mt-6 w-full rounded-xl bg-brand-600 py-3 font-bold text-white hover:bg-brand-700 sm:w-auto sm:px-10"
-        >
-          شروع تست ({toPersianDigits(total)} سؤال)
-        </button>
+        <div className="mt-6 flex flex-wrap gap-3">
+          {resume && (
+            <button
+              onClick={() => {
+                setAnswers(resume.answers);
+                setIndex(resume.index);
+                setPhase("questions");
+              }}
+              className="w-full rounded-xl bg-calm-600 py-3 font-bold text-white hover:bg-calm-700 sm:w-auto sm:px-8"
+            >
+              ادامه از سؤال {toPersianDigits(resume.index + 1)}
+            </button>
+          )}
+          <button
+            onClick={() => {
+              setAnswers({});
+              setIndex(0);
+              setPhase("questions");
+            }}
+            className={`w-full rounded-xl py-3 font-bold sm:w-auto sm:px-10 ${
+              resume ? "border border-slate-300 bg-white text-slate-700" : "bg-brand-600 text-white hover:bg-brand-700"
+            }`}
+          >
+            {resume ? "شروع از اول" : `شروع تست (${toPersianDigits(total)} سؤال)`}
+          </button>
+        </div>
       </div>
     );
   }
@@ -90,6 +135,9 @@ export default function TestRunner({ test }: { test: PsychTest }) {
   }
 
   const progress = Math.round((index / total) * 100);
+  const allOptions = optionsFor(test, question);
+  const skipOption = allOptions.find((o) => o.value === SKIP_VALUE);
+  const mainOptions = allOptions.filter((o) => o.value !== SKIP_VALUE);
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -103,7 +151,12 @@ export default function TestRunner({ test }: { test: PsychTest }) {
         <div className="h-full bg-gradient-to-l from-brand-400 to-calm-500 transition-all" style={{ width: `${progress}%` }} />
       </div>
 
-      <p className="mt-6 text-xs text-slate-400">{test.instructions}</p>
+      <div className="mt-6 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+        {question.level && (
+          <span className={`rounded-full px-2 py-0.5 font-medium ${LEVEL_STYLE[question.level]}`}>سطح {LEVEL_LABEL[question.level]}</span>
+        )}
+        <span>{test.instructions}</span>
+      </div>
       <h2 className="mt-2 min-h-16 text-lg font-bold leading-8">{question.text}</h2>
 
       {question.figure && (
@@ -114,10 +167,10 @@ export default function TestRunner({ test }: { test: PsychTest }) {
 
       <div
         className={`mt-5 grid gap-2 ${
-          optionsFor(test, question).some((o) => o.figure) ? "grid-cols-3 sm:grid-cols-5" : test.kind === "ability" ? "sm:grid-cols-2" : ""
+          mainOptions.some((o) => o.figure) ? "grid-cols-3 sm:grid-cols-5" : test.kind === "ability" ? "sm:grid-cols-2" : ""
         }`}
       >
-        {optionsFor(test, question).map((opt) => {
+        {mainOptions.map((opt) => {
           const selected = answers[question.id] === opt.value;
           if (opt.figure)
             return (
@@ -148,6 +201,18 @@ export default function TestRunner({ test }: { test: PsychTest }) {
           );
         })}
       </div>
+      {skipOption && (
+        <button
+          onClick={() => choose(skipOption.value)}
+          className={`mt-3 w-full rounded-xl border border-dashed px-4 py-2.5 text-sm transition ${
+            answers[question.id] === skipOption.value
+              ? "border-slate-400 bg-slate-100 text-slate-700"
+              : "border-slate-300 text-slate-500 hover:bg-slate-50"
+          }`}
+        >
+          {skipOption.label}
+        </button>
+      )}
 
       {index > 0 && (
         <button onClick={() => setIndex(index - 1)} className="mt-5 text-sm text-slate-500 hover:text-brand-600">

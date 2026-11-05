@@ -1,10 +1,17 @@
-import type { PsychTest, Question, Scale, ScaleScore, TestAlert } from "./types";
+import type { AnswerOption, PsychTest, Question, Scale, ScaleScore, TestAlert } from "./types";
 
 export type Answers = Record<string, number>;
 
-export function optionsFor(test: PsychTest, question: Question) {
-  return question.options ?? test.options;
+/** مقدار گزینه‌ی «نمی‌دانم» در سؤال‌های توانایی (امتیاز صفر) */
+export const SKIP_VALUE = -1;
+const SKIP_OPTION: AnswerOption = { label: "نمی‌دانم / بدون پاسخ", value: SKIP_VALUE };
+
+export function optionsFor(test: PsychTest, question: Question): AnswerOption[] {
+  const opts = question.options ?? test.options;
+  return question.answer !== undefined ? [...opts, SKIP_OPTION] : opts;
 }
+
+export const LEVEL_LABEL = { easy: "ساده", medium: "متوسط", hard: "دشوار" } as const;
 
 function bounds(test: PsychTest, q: Question) {
   if (q.answer !== undefined) return { lo: 0, hi: 1 };

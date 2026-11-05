@@ -3,13 +3,16 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import ScoreBreakdown from "@/components/ScoreBreakdown";
 import ResultNote from "@/components/ResultNote";
+import NormPanel from "@/components/NormPanel";
+import LevelBreakdown from "@/components/LevelBreakdown";
+import { buildNormReport } from "@/lib/norms";
 import PrintButton from "@/components/PrintButton";
 import { getCurrentUser, isProfileComplete } from "@/lib/auth/session";
 import { hasAccess } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
 import { getTest } from "@/data/tests";
 import { ageFrom, formatJalali } from "@/lib/jalali";
-import { optionsFor, toPersianDigits, type Answers } from "@/lib/scoring";
+import { SKIP_VALUE, optionsFor, toPersianDigits, type Answers } from "@/lib/scoring";
 import type { ScaleScore, TestAlert } from "@/lib/types";
 
 export const metadata: Metadata = { title: "گزارش نتیجه‌ی تست", robots: { index: false } };
@@ -41,6 +44,7 @@ export default async function ReportPage({ params }: Props) {
   const answers = JSON.parse(result.answers) as Answers;
   const scores = JSON.parse(result.scores) as ScaleScore[];
   const alerts = JSON.parse(result.alerts) as TestAlert[];
+  const norm = test.kind === "ability" ? await buildNormReport(result.id) : null;
 
   const info = [
     ["نام و نام خانوادگی", [patient.firstName, patient.lastName].filter(Boolean).join(" ") || "-"],
@@ -103,6 +107,16 @@ export default async function ReportPage({ params }: Props) {
         <section className="mt-5">
           <h2 className="mb-3 text-sm font-bold text-slate-500">نتایج</h2>
           <ScoreBreakdown test={test} scores={scores} alerts={alerts} />
+          {test.kind === "ability" && (
+            <div className="mt-4">
+              <LevelBreakdown test={test} answers={answers} />
+            </div>
+          )}
+          {norm && (
+            <div className="mt-4">
+              <NormPanel report={norm} print />
+            </div>
+          )}
           {test.resultNote && (
             <div className="mt-4">
               <ResultNote note={test.resultNote} print />
@@ -128,7 +142,8 @@ export default async function ReportPage({ params }: Props) {
                   <td className="py-1.5 pe-3">{q.text}</td>
                   <td className="py-1.5 whitespace-nowrap">
                     {optionsFor(test, q).find((o) => o.value === answers[q.id])?.label ?? "-"}
-                    {q.answer !== undefined && (answers[q.id] === q.answer ? <span className="ms-1 text-emerald-600">✓</span> : <span className="ms-1 text-rose-500">✗</span>)}
+                    {q.answer !== undefined && answers[q.id] !== SKIP_VALUE &&
+                      (answers[q.id] === q.answer ? <span className="ms-1 text-emerald-600">✓</span> : <span className="ms-1 text-rose-500">✗</span>)}
                   </td>
                 </tr>
               ))}
