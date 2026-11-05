@@ -11,13 +11,7 @@ export const ROLES = {
 } as const;
 export type Role = keyof typeof ROLES;
 
-/** شماره‌هایی که در ADMIN_PHONES تعریف شده‌اند هنگام ورود نقش ادمین می‌گیرند */
-export function isBootstrapAdmin(phone: string) {
-  return (process.env.ADMIN_PHONES ?? "")
-    .split(",")
-    .map((p) => p.trim())
-    .includes(phone);
-}
+export { isBootstrapAdmin } from "./session";
 
 export async function requireUser(next: string) {
   const user = await getCurrentUser();
