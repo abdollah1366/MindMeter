@@ -4,11 +4,26 @@
  * و آن را در `src/data/tests/index.ts` ثبت کنید.
  */
 
+/** یک خانه‌ی تصویری (برای سؤال‌های ماتریس): چند شکل یکسان */
+export type Glyph = {
+  shape: "circle" | "square" | "triangle" | "diamond" | "star" | "arrow";
+  /** تعداد شکل‌ها در خانه (۱ تا ۴) */
+  count?: number;
+  fill?: "solid" | "empty" | "striped";
+  /** چرخش به درجه (ساعتگرد) */
+  rotate?: number;
+};
+
+/** ماتریس ۳×۳ که خانه‌ی آخرش (null) باید پیدا شود */
+export type MatrixFigure = { kind: "matrix"; cells: (Glyph | null)[] };
+
 export type AnswerOption = {
   /** متنی که به کاربر نشان داده می‌شود */
   label: string;
-  /** امتیاز این گزینه (پیش از ضریب مقیاس) */
+  /** امتیاز این گزینه (پیش از ضریب مقیاس)؛ در سؤال‌های توانایی، شماره‌ی گزینه */
   value: number;
+  /** تصویر گزینه (برای سؤال‌های ماتریس) */
+  figure?: Glyph;
 };
 
 export type Question = {
@@ -20,6 +35,15 @@ export type Question = {
   reverse?: boolean;
   /** گزینه‌های اختصاصی این سؤال؛ اگر نباشد از `options` تست استفاده می‌شود */
   options?: AnswerOption[];
+  /** تصویر سؤال (ماتریس) */
+  figure?: MatrixFigure;
+  /**
+   * سؤال توانایی با یک پاسخ درست: مقدار گزینه‌ی درست.
+   * پاسخ درست ۱ امتیاز و پاسخ نادرست ۰ امتیاز دارد.
+   */
+  answer?: number;
+  /** سطح دشواری (در آزمون‌های توانایی) */
+  level?: "easy" | "medium" | "hard";
   /** هشدار ایمنی: اگر مقدار پاسخ >= minValue بود پیام نشان داده می‌شود */
   alert?: { minValue: number; message: string };
 };
@@ -43,6 +67,8 @@ export type Scale = {
   description?: string;
   /** ضریب امتیاز خام (مثلاً ۲ برای DASS-21 یا ۴ برای WHO-5) */
   multiplier?: number;
+  /** مقیاس ترکیبی: جمع سؤال‌های این مقیاس‌ها (مثلاً نمره‌ی کل) */
+  includes?: string[];
   results: ResultRange[];
 };
 
@@ -81,6 +107,10 @@ export type PsychTest = {
   /** مقیاس‌ها؛ تست تک‌بعدی یک مقیاس دارد */
   scales: Scale[];
   source: TestSource;
+  /** «ability» برای آزمون‌های توانایی با پاسخ درست و نادرست؛ پیش‌فرض: پرسشنامه */
+  kind?: "questionnaire" | "ability";
+  /** توضیح تکمیلی که بعد از نتیجه و در گزارش نشان داده می‌شود (مثلاً راهنمای ارجاع) */
+  resultNote?: { title: string; paragraphs: string[] };
 };
 
 export type ScaleScore = {

@@ -4,6 +4,12 @@ import Link from "next/link";
 import type { PsychTest } from "@/lib/types";
 import { alertsFor, scoreTest, type Answers } from "@/lib/scoring";
 import ScoreBreakdown from "./ScoreBreakdown";
+import LevelBreakdown from "./LevelBreakdown";
+import ResultNote from "./ResultNote";
+import NormPanel from "./NormPanel";
+import { useEffect, useState } from "react";
+import { getNormReport } from "@/server/norms";
+import type { NormReport } from "@/lib/norms";
 
 type Props = {
   test: PsychTest;
@@ -16,6 +22,13 @@ type Props = {
 export default function ResultView({ test, answers, saved, onRestart }: Props) {
   const scores = scoreTest(test, answers);
   const alerts = alertsFor(test, answers);
+  const savedId = saved.state === "saved" ? saved.id : null;
+  const [norm, setNorm] = useState<NormReport | null>(null);
+  useEffect(() => {
+    if (test.kind !== "ability" || !savedId) return;
+    getNormReport(savedId).then(setNorm).catch(() => {});
+  }, [savedId, test.kind]);
+
   const concerning = alerts.length > 0 || scores.some((s) => ["moderate", "high", "severe"].includes(s.result?.level ?? ""));
 
   return (
@@ -28,6 +41,15 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
       </div>
 
       <ScoreBreakdown test={test} scores={scores} alerts={alerts} />
+
+      {test.kind === "ability" && <LevelBreakdown test={test} answers={answers} />}
+
+      {norm && <NormPanel report={norm} />}
+      {test.kind === "ability" && saved.state === "guest" && (
+        <p className="rounded-2xl bg-calm-50 p-4 text-sm leading-7 text-calm-700">
+          برای مقایسه‌ی نتیجه با هم‌سن‌ها و هم‌جنس‌ها (صدک و نمره‌ی استاندارد)، وارد شوید تا نتیجه در پرونده‌تان ذخیره شود.
+        </p>
+      )}
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
         {saved.state === "saved" && (
@@ -57,6 +79,8 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
         )}
         {saved.state === "error" && <p className="text-sm text-rose-700">ذخیره‌ی نتیجه با خطا روبه‌رو شد.</p>}
       </div>
+
+      {test.resultNote && <ResultNote note={test.resultNote} resultId={saved.state === "saved" ? saved.id : undefined} />}
 
       {concerning && (
         <div className="rounded-2xl border border-calm-200 bg-calm-50 p-5">
