@@ -40,6 +40,7 @@ import { saveResult, setPending } from "@/lib/history";
 import { saveTestResult } from "@/server/results";
 import ResultView from "./ResultView";
 import { GlyphCell, Matrix } from "./Figure";
+import { track } from "@/lib/track-client";
 
 type Phase = "intro" | "questions" | "result";
 type Saved = { state: "saving" } | { state: "saved"; id: string } | { state: "guest" } | { state: "error" };
@@ -61,6 +62,7 @@ export default function TestRunner({ test }: { test: PsychTest }) {
     setAnswers(from && valid ? from.answers : {});
     setIndex(from && valid ? from.index : 0);
     setPhase("questions");
+    if (!from) track("test_start", { ref: test.slug });
   }
 
   // پیشرفت آزمون‌های طولانی در مرورگر نگه داشته می‌شود تا با بستن صفحه از دست نرود
@@ -84,6 +86,7 @@ export default function TestRunner({ test }: { test: PsychTest }) {
 
   async function finish(final: Answers) {
     setPhase("result");
+    track("test_complete", { ref: test.slug });
     try {
       localStorage.removeItem(progressKey(test.slug));
     } catch {}

@@ -1,18 +1,28 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/vazirmatn";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Analytics from "@/components/Analytics";
+import Pwa from "@/components/Pwa";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { getCurrentUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.mindmeter.ir"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "مایندمتر | تست‌های روانشناسی آنلاین",
     template: "%s | مایندمتر",
   },
-  description: "مایندمتر؛ مجموعه‌ای از تست‌های روانشناسی آنلاین و رایگان به زبان فارسی.",
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: { type: "website", locale: "fa_IR", siteName: SITE_NAME, title: "مایندمتر | تست‌های روانشناسی آنلاین", description: SITE_DESCRIPTION },
+  twitter: { card: "summary" },
+  formatDetection: { telephone: false },
+  appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "default" },
 };
+
+export const viewport: Viewport = { themeColor: "#24786f", width: "device-width", initialScale: 1 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser().catch(() => null);
@@ -28,6 +38,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Header userLabel={userLabel} extraLinks={extraLinks} />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 print:p-0">{children}</main>
         <Footer />
+        <Analytics />
+        <Pwa />
       </body>
     </html>
   );

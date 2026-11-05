@@ -2,7 +2,8 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/guards";
 
 const nav = [
-  { href: "/admin", label: "داشبورد و آمار" },
+  { href: "/admin", label: "داشبورد" },
+  { href: "/admin/analytics", label: "آمار بازدید" },
   { href: "/admin/users", label: "کاربران" },
   { href: "/admin/clinicians", label: "متخصصان" },
   { href: "/admin/appointments", label: "نوبت‌ها و پرداخت‌ها" },

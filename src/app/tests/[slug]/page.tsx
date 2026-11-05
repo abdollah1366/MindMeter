@@ -7,12 +7,21 @@ import { getTest } from "@/data/tests";
 import { getVisibleTest, getVisibleTests } from "@/lib/tests-service";
 import { getCategory } from "@/data/categories";
 import { toPersianDigits } from "@/lib/scoring";
+import JsonLd from "@/components/JsonLd";
+import { absoluteUrl } from "@/lib/site";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const test = getTest((await params).slug);
-  return test ? { title: test.title, description: test.shortDescription } : {};
+  if (!test) return {};
+  const url = `/tests/${test.slug}`;
+  return {
+    title: test.title,
+    description: test.shortDescription,
+    alternates: { canonical: url },
+    openGraph: { type: "article", title: test.title, description: test.shortDescription, url },
+  };
 }
 
 export default async function TestPage({ params }: Props) {
@@ -31,8 +40,34 @@ export default async function TestPage({ params }: Props) {
     { label: "هزینه", value: "رایگان" },
   ];
 
+  const ld = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        name: test.title,
+        description: test.shortDescription,
+        url: absoluteUrl(`/tests/${test.slug}`),
+        inLanguage: "fa",
+        isAccessibleForFree: true,
+        timeRequired: `PT${test.estimatedMinutes}M`,
+        about: { "@type": "Thing", name: `${test.englishTitle} (${test.code})` },
+        publisher: { "@type": "Organization", name: "مایندمتر", url: absoluteUrl("/") },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "خانه", item: absoluteUrl("/") },
+          ...(category ? [{ "@type": "ListItem", position: 2, name: category.title, item: absoluteUrl(`/categories/${category.slug}`) }] : []),
+          { "@type": "ListItem", position: category ? 3 : 2, name: test.title, item: absoluteUrl(`/tests/${test.slug}`) },
+        ],
+      },
+    ],
+  };
+
   return (
     <>
+      <JsonLd data={ld} />
       <nav className="text-sm text-slate-400">
         <Link href="/" className="hover:text-brand-600">خانه</Link>
         {category && (

@@ -6,9 +6,9 @@ export default function SearchBox({ defaultValue = "" }: { defaultValue?: string
         name="q"
         defaultValue={defaultValue}
         placeholder="جستجوی تست؛ مثلاً استرس، شخصیت، عزت نفس…"
-        className="flex-1 bg-transparent px-4 py-3 text-slate-800 outline-none placeholder:text-slate-400"
+        className="min-w-0 flex-1 bg-transparent px-4 py-3 text-slate-800 outline-none placeholder:text-slate-400"
       />
-      <button className="bg-brand-600 px-5 text-white hover:bg-brand-700">جستجو</button>
+      <button className="shrink-0 bg-brand-600 px-5 text-white hover:bg-brand-700">جستجو</button>
     </form>
   );
 }
