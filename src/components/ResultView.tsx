@@ -16,6 +16,7 @@ type Props = {
 export default function ResultView({ test, answers, saved, onRestart }: Props) {
   const scores = scoreTest(test, answers);
   const alerts = alertsFor(test, answers);
+  const concerning = alerts.length > 0 || scores.some((s) => ["moderate", "high", "severe"].includes(s.result?.level ?? ""));
 
   return (
     <div className="space-y-5">
@@ -56,6 +57,27 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
         )}
         {saved.state === "error" && <p className="text-sm text-rose-700">ذخیره‌ی نتیجه با خطا روبه‌رو شد.</p>}
       </div>
+
+      {concerning && (
+        <div className="rounded-2xl border border-calm-200 bg-calm-50 p-5">
+          <p className="font-bold text-calm-700">صحبت با یک متخصص می‌تواند کمک کند</p>
+          <p className="mt-2 text-sm leading-7 text-slate-600">
+            نتیجه‌ی شما نشان می‌دهد که بهتر است با یک روانشناس یا روانپزشک مشورت کنید. درخواست مشاوره بدهید تا متخصص مناسب به شما معرفی
+            شود، یا مستقیم ویزیت آنلاین رزرو کنید.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2 text-sm">
+            <Link
+              href={saved.state === "saved" ? `/referral/new?result=${saved.id}` : "/referral/new"}
+              className="rounded-xl bg-calm-600 px-5 py-2.5 text-white hover:bg-calm-700"
+            >
+              درخواست مشاوره
+            </Link>
+            <Link href="/clinicians" className="rounded-xl border border-calm-200 bg-white px-5 py-2.5 text-calm-700">
+              مشاهده‌ی متخصصان
+            </Link>
+          </div>
+        </div>
+      )}
 
       <p className="rounded-xl bg-amber-50 p-4 text-xs leading-6 text-amber-800">
         این نتیجه یک غربالگری است و تشخیص بالینی محسوب نمی‌شود. برای ارزیابی دقیق با روانشناس یا روانپزشک مشورت کنید.

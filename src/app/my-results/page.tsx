@@ -48,7 +48,10 @@ export default async function MyResultsPage() {
           <h1 className="text-2xl font-extrabold">پرونده‌ی من</h1>
           {name && <p className="mt-1 text-slate-500">{name}</p>}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Link href="/appointments" className="rounded-xl bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700">
+            نوبت‌ها و ویزیت‌ها
+          </Link>
           <Link href="/profile" className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm hover:bg-slate-50">
             اطلاعات من
           </Link>
