@@ -141,7 +141,10 @@ export default async function ReportPage({ params }: Props) {
                   <td className="py-1.5 pe-2 text-slate-400">{toPersianDigits(i + 1)}</td>
                   <td className="py-1.5 pe-3">{q.text}</td>
                   <td className="py-1.5 whitespace-nowrap">
-                    {optionsFor(test, q).find((o) => o.value === answers[q.id])?.label ?? "-"}
+                    {(() => {
+                      const o = optionsFor(test, q).find((x) => x.value === answers[q.id]);
+                      return !o ? "-" : o.figure ? "گزینه‌ی تصویری" : o.label;
+                    })()}
                     {q.answer !== undefined && answers[q.id] !== SKIP_VALUE &&
                       (answers[q.id] === q.answer ? <span className="ms-1 text-emerald-600">✓</span> : <span className="ms-1 text-rose-500">✗</span>)}
                   </td>
