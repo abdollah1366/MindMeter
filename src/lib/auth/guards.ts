@@ -19,10 +19,11 @@ export async function requireUser(next: string) {
   return user;
 }
 
-/** فقط ادمین؛ برای بقیه صفحه وجود ندارد (۴۰۴) */
+/** فقط ادمین. کاربر واردنشده به صفحه‌ی ورود می‌رود؛ برای بقیه‌ی کاربران صفحه وجود ندارد (۴۰۴) */
 export async function requireAdmin() {
   const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") notFound();
+  if (!user) redirect("/login?next=/admin");
+  if (user.role !== "ADMIN") notFound();
   return user;
 }
 
