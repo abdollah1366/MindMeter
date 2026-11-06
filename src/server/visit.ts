@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { loadVisit } from "@/lib/visit";
+import { audit } from "@/lib/audit";
 
 /** پایان ویزیت توسط متخصص */
 export async function endVisit(form: FormData) {
@@ -25,5 +26,6 @@ export async function saveVisitNote(id: string, body: string) {
   await db.clinicalNote.create({
     data: { clinicianId: visit.appointment.clinicianId, patientId: visit.appointment.patientId, body: `[جلسه‌ی آنلاین] ${text}` },
   });
+  await audit(visit.user.id, "note.add", { targetType: "Appointment", targetId: id, patientId: visit.appointment.patientId });
   return { ok: true };
 }

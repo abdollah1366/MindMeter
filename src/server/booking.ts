@@ -10,6 +10,7 @@ import { hhmmToMinute, formatTehran } from "@/lib/tehran-time";
 import { paymentProvider, zarinpalRequest } from "@/lib/zarinpal";
 import { toEnglishDigits } from "@/lib/validation";
 import { afterPaymentPath, markPaid } from "@/lib/payments";
+import { notifyAppointmentCancelled, notifyAppointmentConfirmed } from "@/lib/appointment-notify";
 
 async function approvedClinicianOf(userId: string) {
   const p = await db.clinicianProfile.findUnique({ where: { userId } });
@@ -112,7 +113,10 @@ export async function bookAppointment(form: FormData) {
     await db.referral.updateMany({ where: { id: referralId, patientId: user.id }, data: { status: "BOOKED" } });
   }
 
-  if (free) redirect(`/appointments?booked=${appointment.id}`);
+  if (free) {
+    await notifyAppointmentConfirmed(appointment.id);
+    redirect(`/appointments?booked=${appointment.id}`);
+  }
 
   const payment = await db.payment.create({
     data: {
@@ -170,6 +174,7 @@ export async function cancelAppointment(form: FormData) {
     where: { id },
     data: { status: "CANCELLED", cancelReason: reason ?? (isPatient ? "لغو توسط مراجع" : "لغو توسط متخصص") },
   });
+  if (a.status === "CONFIRMED") await notifyAppointmentCancelled(id, isPatient);
   revalidatePath("/appointments");
   revalidatePath("/panel/appointments");
 }

@@ -13,6 +13,7 @@ const nav = [
   { href: "/admin/norms", label: "هنجارها" },
   { href: "/admin/courses", label: "آکادمی" },
   { href: "/admin/coupons", label: "کدهای تخفیف" },
+  { href: "/admin/audit", label: "سوابق دسترسی" },
 ];
 
 export const metadata = { robots: { index: false } };

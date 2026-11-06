@@ -9,6 +9,7 @@ import { canManageCourse } from "@/lib/academy-server";
 import { COURSE_LEVEL, COURSE_THEMES, LESSON_KIND, isValidVideoUrl } from "@/lib/academy";
 import { parseTehranDateTime } from "@/lib/academy-time";
 import { normalizeIranMobile, toEnglishDigits } from "@/lib/validation";
+import { audit } from "@/lib/audit";
 
 export type FormState = { error?: string; ok?: boolean };
 
@@ -92,11 +93,12 @@ export async function saveCourse(_: FormState, form: FormData): Promise<FormStat
 }
 
 export async function deleteCourse(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const id = str(form, "id");
   const paid = await db.enrollment.count({ where: { courseId: id, status: "ACTIVE" } });
   if (paid > 0) redirect(`/admin/courses/${id}?error=has-students`);
-  await db.course.delete({ where: { id } });
+  const c = await db.course.delete({ where: { id } });
+  await audit(admin.id, "course.delete", { targetType: "Course", targetId: id, meta: { title: c.title } });
   revalidatePath("/academy");
   redirect("/admin/courses");
 }
@@ -189,7 +191,7 @@ export async function deleteQuestion(form: FormData) {
 
 /** ثبت‌نام دستی یک کاربر (مثلاً پرداخت حضوری) توسط ادمین */
 export async function enrollManually(_: FormState, form: FormData): Promise<FormState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const courseId = str(form, "courseId");
   const phone = normalizeIranMobile(str(form, "phone"));
   if (!phone) return { error: "شماره موبایل معتبر نیست." };
@@ -200,13 +202,14 @@ export async function enrollManually(_: FormState, form: FormData): Promise<Form
     create: { userId: user.id, courseId, status: "ACTIVE", activatedAt: new Date() },
     update: { status: "ACTIVE", activatedAt: new Date() },
   });
+  await audit(admin.id, "enroll.manual", { targetType: "Course", targetId: courseId, meta: { userId: user.id } });
   revalidatePath(`/admin/courses/${courseId}`);
   return { ok: true };
 }
 
 /** کد تخفیف */
 export async function saveCoupon(_: FormState, form: FormData): Promise<FormState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const code = str(form, "code").toUpperCase();
   const percent = num(form, "percent");
   const maxUsesRaw = str(form, "maxUses");
@@ -221,6 +224,7 @@ export async function saveCoupon(_: FormState, form: FormData): Promise<FormStat
   if (courseId && !(await db.course.findUnique({ where: { id: courseId } }))) return { error: "دوره پیدا نشد." };
   if (await db.coupon.findUnique({ where: { code } })) return { error: "این کد قبلاً ساخته شده است." };
   await db.coupon.create({ data: { code, percent, maxUses, courseId, expiresAt } });
+  await audit(admin.id, "coupon.create", { targetType: "Coupon", targetId: code, meta: { percent } });
   revalidatePath("/admin/coupons");
   return { ok: true };
 }
@@ -235,11 +239,12 @@ export async function toggleCoupon(form: FormData) {
 
 /** ابطال یا بازگرداندن گواهی */
 export async function toggleCertificate(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const id = str(form, "id");
   const c = await db.certificate.findUnique({ where: { id } });
   if (!c) return;
   await db.certificate.update({ where: { id }, data: { revokedAt: c.revokedAt ? null : new Date() } });
+  await audit(admin.id, "certificate.toggle", { targetType: "Certificate", targetId: c.code, meta: { revoked: !c.revokedAt } });
   revalidatePath(`/certificates/${c.code}`);
   revalidatePath(`/admin/courses/${c.courseId}`);
 }

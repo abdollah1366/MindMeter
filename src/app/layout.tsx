@@ -6,6 +6,8 @@ import Footer from "@/components/Footer";
 import Analytics from "@/components/Analytics";
 import Pwa from "@/components/Pwa";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { db } from "@/lib/db";
+import { toPersianDigits } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
@@ -27,8 +29,15 @@ export const viewport: Viewport = { themeColor: "#24786f", width: "device-width"
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser().catch(() => null);
   const userLabel = user ? user.firstName ?? "پرونده‌ی من" : null;
+  const unread = user ? await db.notification.count({ where: { userId: user.id, readAt: null } }).catch(() => 0) : 0;
   const extraLinks = [
-    ...(user ? [{ href: "/my-courses", label: "دوره‌های من" }, { href: "/appointments", label: "نوبت‌های من" }] : []),
+    ...(user
+      ? [
+          { href: "/my-courses", label: "دوره‌های من" },
+          { href: "/appointments", label: "نوبت‌های من" },
+          { href: "/notifications", label: unread ? `اعلان‌ها (${toPersianDigits(unread)})` : "اعلان‌ها" },
+        ]
+      : []),
     ...(user && (user.role === "PSYCHOLOGIST" || user.role === "PHYSICIAN") ? [{ href: "/panel", label: "پنل متخصص" }] : []),
     ...(user?.role === "ADMIN" ? [{ href: "/admin", label: "مدیریت" }] : []),
   ];

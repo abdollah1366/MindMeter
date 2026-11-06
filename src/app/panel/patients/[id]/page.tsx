@@ -12,6 +12,7 @@ import { getTest } from "@/data/tests";
 import { addClinicalNote } from "@/server/clinician";
 import { referToClinician } from "@/server/referral";
 import { CLINICIAN_KIND } from "@/lib/clinicians";
+import { audit } from "@/lib/audit";
 
 export const metadata: Metadata = { title: "پرونده‌ی مراجع", robots: { index: false } };
 
@@ -21,6 +22,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const { profile } = await requireClinician();
   if (!(await hasAccess(profile.id, id))) notFound();
+  await audit(profile.userId, "record.view", { targetType: "User", targetId: id, patientId: id });
 
   const patient = await db.user.findUnique({
     where: { id },

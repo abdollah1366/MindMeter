@@ -39,6 +39,11 @@ model User {
   referrals    Referral[]        @relation("PatientReferrals")
   enrollments  Enrollment[]
   certificates Certificate[]
+  /// یادآوری پیامکی نوبت و کلاس‌ها
+  smsReminders  Boolean            @default(true)
+  notifications Notification[]
+  pushSubs      PushSubscription[]
+  uploads       Upload[]
 }
 
 /// کدهای یک‌بارمصرف ورود
@@ -105,6 +110,8 @@ model ClinicianProfile {
   referralsFrom Referral[]     @relation("ReferralFrom")
   referralsTo   Referral[]     @relation("ReferralTo")
   courses       Course[]
+  /// عکس پروفایل (Upload با kind=AVATAR)
+  avatarId      String?
 }
 
 /// اجازه‌ی بیمار به متخصص برای دیدن پرونده
@@ -485,4 +492,81 @@ model PageView {
   @@index([createdAt])
   @@index([kind, createdAt])
   @@index([path, createdAt])
+}
+
+// ─────────────── اعلان‌ها، یادآوری، سوابق دسترسی، فایل‌ها ───────────────
+
+/// اعلان داخل سایت (و همان متنی که با Push/پیامک فرستاده می‌شود)
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  url       String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// اشتراک Push مرورگر
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+}
+
+/// جلوگیری از ارسال تکراری یادآوری
+model ReminderLog {
+  id       String   @id @default(cuid())
+  /// APPT_24H | APPT_1H | LIVE_24H | LIVE_1H
+  kind     String
+  targetId String
+  userId   String
+  sentAt   DateTime @default(now())
+
+  @@unique([kind, targetId, userId])
+}
+
+/// سوابق دسترسی و تغییرات حساس (چه کسی، چه زمانی، چه چیزی)
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  /// مثلاً record.view، report.view، role.change، clinician.review
+  action     String
+  targetType String?
+  targetId   String?
+  /// بیماری که پرونده‌اش دیده یا تغییر داده شده (برای نمایش به خود بیمار)
+  patientId  String?
+  /// جزئیات به صورت JSON
+  meta       String   @default("{}")
+  createdAt  DateTime @default(now())
+
+  @@index([patientId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+}
+
+/// فایل آپلودشده؛ خود فایل در پوشه‌ی UPLOAD_DIR است، نه در پایگاه داده
+model Upload {
+  id        String   @id @default(cuid())
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  /// AVATAR (عمومی) | DOCUMENT (فقط صاحب و ادمین) | CHAT (دو طرف ویزیت)
+  kind      String
+  /// برای CHAT: شناسه‌ی نوبت
+  scopeId   String?
+  name      String
+  mime      String
+  size      Int
+  /// نام فایل روی دیسک
+  storedAs  String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([ownerId, kind])
 }

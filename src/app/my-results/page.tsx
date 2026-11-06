@@ -10,6 +10,8 @@ import type { ScaleScore } from "@/lib/types";
 import { logout } from "@/server/auth";
 import { revokeAccess } from "@/server/clinician";
 import { displayName } from "@/lib/clinicians";
+import { AUDIT_LABEL } from "@/lib/audit";
+import { formatTehran } from "@/lib/tehran-time";
 
 export const metadata: Metadata = { title: "پرونده‌ی من" };
 
@@ -32,13 +34,17 @@ export default async function MyResultsPage() {
     );
   }
 
-  const [results, grants] = await Promise.all([
+  const [results, grants, accessLog] = await Promise.all([
     db.testResult.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" } }),
     db.accessGrant.findMany({
       where: { patientId: user.id, revokedAt: null },
       include: { clinician: { include: { user: { select: { firstName: true, lastName: true } } } } },
     }),
+    db.auditLog.findMany({ where: { patientId: user.id, actorId: { not: user.id } }, orderBy: { createdAt: "desc" }, take: 15 }),
   ]);
+  const actors = new Map(
+    (await db.user.findMany({ where: { id: { in: accessLog.map((a) => a.actorId).filter((x): x is string => Boolean(x)) } }, select: { id: true, firstName: true, lastName: true } })).map((u) => [u.id, u]),
+  );
   const name = [user.firstName, user.lastName].filter(Boolean).join(" ");
 
   return (
@@ -124,6 +130,28 @@ export default async function MyResultsPage() {
                 </form>
               </li>
             ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-lg font-extrabold">چه کسانی پرونده‌ی شما را دیده‌اند</h2>
+        <p className="mt-1 text-xs text-slate-500">هر بار متخصصی پرونده یا گزارش شما را باز کند یا یادداشتی ثبت کند، اینجا نمایش داده می‌شود.</p>
+        {accessLog.length === 0 ? (
+          <p className="mt-3 text-sm text-slate-500">هنوز کسی پرونده‌ی شما را مشاهده نکرده است.</p>
+        ) : (
+          <ul className="mt-3 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white text-sm">
+            {accessLog.map((a) => {
+              const actor = a.actorId ? actors.get(a.actorId) : null;
+              return (
+                <li key={a.id} className="flex flex-wrap justify-between gap-2 p-3">
+                  <span>
+                    <b>{actor ? displayName(actor) : "سیستم"}</b> · {AUDIT_LABEL[a.action] ?? a.action}
+                  </span>
+                  <span className="text-xs text-slate-400">{formatTehran(a.createdAt, { dateStyle: "medium", timeStyle: "short" })}</span>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

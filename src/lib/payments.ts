@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { ACTIVE_STATUSES } from "@/lib/scheduling";
 import { activateEnrollment } from "@/lib/academy-server";
+import { notifyAppointmentConfirmed } from "@/lib/appointment-notify";
 
 /**
  * ثبت پرداخت موفق و قطعی کردن نوبت.
@@ -20,6 +21,7 @@ export async function markPaid(paymentId: string, refId: string) {
   if (!a) return;
   if (a.status === "PENDING_PAYMENT") {
     await db.appointment.update({ where: { id: a.id }, data: { status: "CONFIRMED" } });
+    await notifyAppointmentConfirmed(a.id);
   } else if (a.status === "CANCELLED") {
     const clash = await db.appointment.findFirst({
       where: { id: { not: a.id }, clinicianId: a.clinicianId, status: { in: ACTIVE_STATUSES }, startsAt: { lt: a.endsAt }, endsAt: { gt: a.startsAt } },
@@ -30,6 +32,7 @@ export async function markPaid(paymentId: string, refId: string) {
         ? { cancelReason: "پرداخت پس از پایان مهلت انجام شد و زمان رزرو شده بود؛ مبلغ بازگردانده می‌شود." }
         : { status: "CONFIRMED", cancelReason: null },
     });
+    if (!clash) await notifyAppointmentConfirmed(a.id);
   }
 }
 

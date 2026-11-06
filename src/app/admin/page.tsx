@@ -3,12 +3,16 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { getTest } from "@/data/tests";
 import { toPersianDigits } from "@/lib/scoring";
+import { runRemindersNow } from "@/server/admin";
 
 export const metadata: Metadata = { title: "داشبورد مدیریت" };
 
 const DAY = 24 * 60 * 60 * 1000;
 
-export default async function AdminDashboard() {
+type Props = { searchParams: Promise<{ reminders?: string }> };
+
+export default async function AdminDashboard({ searchParams }: Props) {
+  const { reminders } = await searchParams;
   const now = Date.now();
   const since7 = new Date(now - 7 * DAY);
   const since30 = new Date(now - 30 * DAY);
@@ -67,7 +71,13 @@ export default async function AdminDashboard() {
 
   return (
     <>
-      <h1 className="text-2xl font-extrabold">داشبورد</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-extrabold">داشبورد</h1>
+        <form action={runRemindersNow} className="flex items-center gap-2 text-sm">
+          {reminders !== undefined && <span className="text-emerald-700">{toPersianDigits(Number(reminders) || 0)} یادآوری ارسال شد</span>}
+          <button className="rounded-xl border border-slate-200 bg-white px-4 py-2 hover:text-brand-600">ارسال یادآوری‌های الان</button>
+        </form>
+      </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((c) => {
           const inner = (
