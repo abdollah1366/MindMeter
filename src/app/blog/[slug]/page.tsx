@@ -5,12 +5,21 @@ import ArticleBody from "@/components/ArticleBody";
 import { getPublishedArticle } from "@/lib/articles";
 import { getTest } from "@/data/tests";
 import { formatJalali } from "@/lib/jalali";
+import JsonLd from "@/components/JsonLd";
+import { absoluteUrl } from "@/lib/site";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const a = await getPublishedArticle(decodeURIComponent((await params).slug));
-  return a ? { title: a.title, description: a.excerpt } : {};
+  if (!a) return {};
+  const url = `/blog/${encodeURIComponent(a.slug)}`;
+  return {
+    title: a.title,
+    description: a.excerpt,
+    alternates: { canonical: url },
+    openGraph: { type: "article", title: a.title, description: a.excerpt, url, publishedTime: a.publishedAt?.toISOString() },
+  };
 }
 
 export default async function ArticlePage({ params }: Props) {
@@ -20,6 +29,20 @@ export default async function ArticlePage({ params }: Props) {
 
   return (
     <article className="mx-auto max-w-3xl">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: article.title,
+          description: article.excerpt,
+          inLanguage: "fa",
+          datePublished: article.publishedAt?.toISOString(),
+          dateModified: article.updatedAt.toISOString(),
+          mainEntityOfPage: absoluteUrl(`/blog/${encodeURIComponent(article.slug)}`),
+          author: { "@type": "Organization", name: "مایندمتر" },
+          publisher: { "@type": "Organization", name: "مایندمتر", url: absoluteUrl("/") },
+        }}
+      />
       <nav className="text-sm text-slate-400">
         <Link href="/blog" className="hover:text-brand-600">مقالات</Link> / {article.title}
       </nav>

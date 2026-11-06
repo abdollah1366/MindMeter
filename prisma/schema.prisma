@@ -461,3 +461,28 @@ model Coupon {
   active    Boolean   @default(true)
   createdAt DateTime  @default(now())
 }
+
+// ─────────────── آمار سایت ───────────────
+
+/// بازدید صفحه یا رویداد، بدون کوکی و بدون ذخیره‌ی IP.
+/// visitor هش روزانه‌ی IP و مرورگر با یک نمک مخفی است؛ فردا همان بازدیدکننده هش دیگری دارد.
+model PageView {
+  id        String   @id @default(cuid())
+  /// view | test_start | test_complete | signup | enroll
+  kind      String   @default("view")
+  path      String
+  /// دامنه‌ی ارجاع‌دهنده، مثلاً google.com (خالی = مستقیم یا داخلی)
+  referrer  String?
+  visitor   String
+  /// mobile | desktop | tablet
+  device    String   @default("desktop")
+  /// برای رویدادها: slug تست یا دوره
+  ref       String?
+  /// utm_source اگر وجود داشته باشد
+  source    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([kind, createdAt])
+  @@index([path, createdAt])
+}

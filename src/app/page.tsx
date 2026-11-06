@@ -7,6 +7,8 @@ import { getFeaturedVisibleTests, getVisibleTests } from "@/lib/tests-service";
 import { listPublishedArticles } from "@/lib/articles";
 import { formatJalali } from "@/lib/jalali";
 import { toPersianDigits } from "@/lib/scoring";
+import JsonLd from "@/components/JsonLd";
+import { SITE_NAME, absoluteUrl } from "@/lib/site";
 
 const steps = [
   { title: "انتخاب تست", text: "از میان دسته‌بندی‌ها، تست مورد نظرتان را پیدا کنید." },
@@ -22,6 +24,21 @@ export default async function HomePage() {
   ]);
   return (
     <div className="space-y-16">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@graph": [
+            { "@type": "Organization", name: SITE_NAME, url: absoluteUrl("/"), logo: absoluteUrl("/icons/icon-512.png") },
+            {
+              "@type": "WebSite",
+              name: SITE_NAME,
+              url: absoluteUrl("/"),
+              inLanguage: "fa",
+              potentialAction: { "@type": "SearchAction", target: `${absoluteUrl("/tests")}?q={search_term_string}`, "query-input": "required name=search_term_string" },
+            },
+          ],
+        }}
+      />
       {/* معرفی */}
       <section className="rounded-3xl bg-gradient-to-bl from-brand-600 via-brand-700 to-calm-700 px-6 py-14 text-white sm:px-12">
         <h1 className="text-3xl font-extrabold leading-relaxed sm:text-4xl">

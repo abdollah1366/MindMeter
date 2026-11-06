@@ -6,6 +6,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import ArticleBody from "@/components/ArticleBody";
 import CourseCover from "@/components/academy/CourseCover";
 import EnrollForm from "@/components/academy/EnrollForm";
+import JsonLd from "@/components/JsonLd";
+import { SITE_URL } from "@/lib/site";
 import { canManageCourse, instructorLabel, progressOf } from "@/lib/academy-server";
 import { COURSE_LEVEL, LESSON_KIND, formatMinutes } from "@/lib/academy";
 import { formatTehran, formatToman } from "@/lib/tehran-time";
@@ -52,13 +54,13 @@ export default async function CoursePage({ params, searchParams }: Props) {
     name: course.title,
     description: course.summary,
     inLanguage: "fa",
-    provider: { "@type": "Organization", name: "مایندمتر", sameAs: "https://www.mindmeter.ir" },
+    provider: { "@type": "Organization", name: "مایندمتر", sameAs: SITE_URL },
     offers: { "@type": "Offer", price: course.price * 10, priceCurrency: "IRR", category: course.price ? "Paid" : "Free" },
   };
 
   return (
     <div>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={jsonLd} />
       {course.status !== "PUBLISHED" && (
         <p className="mb-4 rounded-2xl bg-amber-50 p-3 text-sm text-amber-800">این دوره پیش‌نویس است و فقط مدیر و مدرس آن را می‌بینند.</p>
       )}
