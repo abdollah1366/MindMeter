@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { displayName } from "@/lib/clinicians";
 import { makeCertificateCode } from "@/lib/academy";
+import { notifyLater } from "@/lib/notify";
 
 type MaybeUser = { id: string; role: string } | null;
 
@@ -43,7 +44,8 @@ export async function checkCoupon(rawCode: string, courseId: string) {
 export async function activateEnrollment(enrollmentId: string) {
   const e = await db.enrollment.findUnique({ where: { id: enrollmentId } });
   if (!e || e.status === "ACTIVE") return e;
-  const updated = await db.enrollment.update({ where: { id: e.id }, data: { status: "ACTIVE", activatedAt: new Date() } });
+  const updated = await db.enrollment.update({ where: { id: e.id }, data: { status: "ACTIVE", activatedAt: new Date() }, include: { course: { select: { title: true, slug: true } } } });
+  notifyLater(e.userId, { title: "ثبت‌نام در دوره انجام شد", body: updated.course.title, url: `/academy/${updated.course.slug}/learn` });
   if (e.couponCode) await db.coupon.updateMany({ where: { code: e.couponCode }, data: { used: { increment: 1 } } });
   return updated;
 }
@@ -70,6 +72,7 @@ export async function issueCertificate(enrollmentId: string, score: number | nul
   for (let i = 0; i < 5; i++) {
     const code = makeCertificateCode((n) => randomInt(n));
     if (await db.certificate.findUnique({ where: { code } })) continue;
+    notifyLater(e.userId, { title: "گواهی پایان دوره صادر شد", body: e.course.title, url: `/certificates/${code}` });
     return db.certificate.create({
       data: {
         code,

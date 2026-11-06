@@ -5,18 +5,21 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin, ROLES } from "@/lib/auth/guards";
 import { getTest } from "@/data/tests";
+import { audit } from "@/lib/audit";
+import { notifyLater } from "@/lib/notify";
 
 export async function setUserRole(form: FormData) {
   const admin = await requireAdmin();
   const userId = String(form.get("userId"));
   const role = String(form.get("role"));
   if (!(role in ROLES) || userId === admin.id) return; // ادمین نقش خودش را تغییر نمی‌دهد
-  await db.user.update({ where: { id: userId }, data: { role } });
+  const before = await db.user.update({ where: { id: userId }, data: { role } });
+  await audit(admin.id, "role.change", { targetType: "User", targetId: userId, meta: { role, phoneTail: before.phone.slice(-4) } });
   revalidatePath("/admin/users");
 }
 
 export async function reviewClinician(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const id = String(form.get("id"));
   const decision = String(form.get("decision"));
   const note = String(form.get("note") ?? "").trim() || null;
@@ -29,6 +32,15 @@ export async function reviewClinician(form: FormData) {
     await db.user.update({
       where: { id: user.id },
       data: { role: decision === "APPROVED" ? profile.kind : "PATIENT" },
+    });
+  }
+  await audit(admin.id, "clinician.review", { targetType: "ClinicianProfile", targetId: id, meta: { decision } });
+  if (decision !== "PENDING") {
+    notifyLater(profile.userId, {
+      title: decision === "APPROVED" ? "حساب متخصص شما تأیید شد" : "درخواست عضویت متخصص تأیید نشد",
+      body: decision === "APPROVED" ? "اکنون می‌توانید برنامه‌ی کاری و تعرفه‌ی خود را در پنل متخصص تنظیم کنید." : note ?? "برای اطلاعات بیشتر با پشتیبانی تماس بگیرید.",
+      url: decision === "APPROVED" ? "/panel/schedule" : "/clinician/apply",
+      sms: true,
     });
   }
   revalidatePath("/admin/clinicians");
@@ -86,4 +98,12 @@ export async function updateTestSetting(form: FormData) {
   await db.testSetting.upsert({ where: { slug }, create: { slug, [field]: value }, update: { [field]: value } });
   revalidatePath("/admin/tests");
   revalidatePath("/", "layout");
+}
+
+/** اجرای دستی یادآوری‌ها از داشبورد (در production باید cron هم تنظیم شود) */
+export async function runRemindersNow() {
+  await requireAdmin();
+  const { runReminders } = await import("@/lib/reminders");
+  const r = await runReminders();
+  redirect(`/admin?reminders=${r.sent}`);
 }

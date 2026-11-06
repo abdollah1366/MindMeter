@@ -9,6 +9,7 @@ import { grantAccess, revokeAccess } from "@/server/clinician";
 import { bookAppointment } from "@/server/booking";
 import { getFreeSlots } from "@/lib/scheduling";
 import { formatTehran, formatTehranTime, formatToman, tehranMidnight } from "@/lib/tehran-time";
+import Avatar from "@/components/Avatar";
 
 export const metadata: Metadata = { title: "پروفایل متخصص" };
 
@@ -45,9 +46,7 @@ export default async function ClinicianPage({ params, searchParams }: Props) {
       <Link href="/clinicians" className="text-sm text-slate-400 hover:text-brand-600">→ همه‌ی متخصصان</Link>
       <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-7">
         <div className="flex items-center gap-4">
-          <span className="grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-brand-100 to-calm-100 text-2xl font-bold text-brand-700">
-            {c.user.firstName?.[0] ?? "؟"}
-          </span>
+          <Avatar avatarId={c.avatarId} name={c.user.firstName} size={72} />
           <div>
             <h1 className="text-2xl font-extrabold">
               {c.title} {displayName(c.user)}

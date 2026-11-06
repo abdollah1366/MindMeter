@@ -14,3 +14,6 @@ npm-debug.log*
 # SQLite
 prisma/*.db
 prisma/*.db-journal
+
+# فایل‌های آپلودشده
+uploads/

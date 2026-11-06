@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser, isProfileComplete } from "@/lib/auth/session";
 import { hasAccess } from "@/lib/auth/guards";
 import { toEnglishDigits } from "@/lib/validation";
+import { audit } from "@/lib/audit";
 
 export type ApplyState = { error?: string };
 
@@ -61,6 +62,7 @@ export async function grantAccess(form: FormData) {
     create: { patientId: user.id, clinicianId },
     update: { revokedAt: null, createdAt: new Date() },
   });
+  await audit(user.id, "access.grant", { targetType: "ClinicianProfile", targetId: clinicianId, patientId: user.id });
   revalidatePath(`/clinicians/${clinicianId}`);
   revalidatePath("/my-results");
 }
@@ -73,6 +75,7 @@ export async function revokeAccess(form: FormData) {
     where: { patientId: user.id, clinicianId, revokedAt: null },
     data: { revokedAt: new Date() },
   });
+  await audit(user.id, "access.revoke", { targetType: "ClinicianProfile", targetId: clinicianId, patientId: user.id });
   revalidatePath(`/clinicians/${clinicianId}`);
   revalidatePath("/my-results");
 }
@@ -89,5 +92,6 @@ export async function addClinicalNote(form: FormData) {
   if (body.length < 1 || body.length > 5000) return;
 
   await db.clinicalNote.create({ data: { clinicianId: profile.id, patientId, body } });
+  await audit(user.id, "note.add", { targetType: "User", targetId: patientId, patientId });
   revalidatePath(`/panel/patients/${patientId}`);
 }

@@ -14,6 +14,7 @@ import { getTest } from "@/data/tests";
 import { ageFrom, formatJalali } from "@/lib/jalali";
 import { SKIP_VALUE, optionsFor, toPersianDigits, type Answers } from "@/lib/scoring";
 import type { ScaleScore, TestAlert } from "@/lib/types";
+import { audit } from "@/lib/audit";
 
 export const metadata: Metadata = { title: "گزارش نتیجه‌ی تست", robots: { index: false } };
 
@@ -34,6 +35,7 @@ export default async function ReportPage({ params }: Props) {
   if (!isOwner) {
     const profile = await db.clinicianProfile.findUnique({ where: { userId: user.id } });
     if (!profile || profile.status !== "APPROVED" || !(await hasAccess(profile.id, result.userId))) notFound();
+    await audit(user.id, "report.view", { targetType: "TestResult", targetId: result.id, patientId: result.userId, meta: { test: result.testSlug } });
   }
   const patient = result.user;
   if (isOwner && !isProfileComplete(patient)) redirect(`/profile?next=/reports/${id}`);

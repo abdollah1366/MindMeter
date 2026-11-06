@@ -5,10 +5,13 @@ import { useState } from "react";
 
 const links = [
   { href: "/tests", label: "همه‌ی تست‌ها" },
-  { href: "/#categories", label: "دسته‌بندی‌ها" },
   { href: "/clinicians", label: "متخصصان" },
   { href: "/academy", label: "آکادمی" },
   { href: "/blog", label: "مقالات" },
+];
+/** فقط در منوی موبایل (در نسخه‌ی دسکتاپ در پانویس هستند) */
+const mobileOnly = [
+  { href: "/#categories", label: "دسته‌بندی‌ها" },
   { href: "/about", label: "درباره ما" },
 ];
 
@@ -17,6 +20,7 @@ type NavLink = { href: string; label: string };
 export default function Header({ userLabel, extraLinks = [] }: { userLabel: string | null; extraLinks?: NavLink[] }) {
   const [open, setOpen] = useState(false);
   const all = [...links, ...extraLinks];
+  const mobile = [...links, ...mobileOnly, ...extraLinks];
 
   return (
     <header className="no-print sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -62,7 +66,7 @@ export default function Header({ userLabel, extraLinks = [] }: { userLabel: stri
           <Link href={userLabel ? "/my-results" : "/login"} onClick={() => setOpen(false)} className="block py-3 font-bold text-brand-700">
             {userLabel ?? "ورود / ثبت‌نام"}
           </Link>
-          {all.map((l) => (
+          {mobile.map((l) => (
             <Link
               key={l.href}
               href={l.href}

@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { hasAccess } from "@/lib/auth/guards";
+import { audit } from "@/lib/audit";
+import { notifyLater } from "@/lib/notify";
 
 export type ReferralState = { error?: string };
 
@@ -31,6 +33,10 @@ export async function requestReferral(_: ReferralState, form: FormData): Promise
   await db.referral.create({
     data: { patientId: user.id, reason: reason.slice(0, 2000), preferredKind, resultId, toClinicianId },
   });
+  if (toClinicianId) {
+    const c = await db.clinicianProfile.findUnique({ where: { id: toClinicianId }, select: { userId: true } });
+    if (c) notifyLater(c.userId, { title: "درخواست مشاوره‌ی جدید", body: "یک مراجع برای شما درخواست مشاوره فرستاده است.", url: "/panel/referrals" });
+  }
   redirect("/appointments?referral=1");
 }
 
@@ -50,6 +56,7 @@ export async function referToClinician(form: FormData) {
   await db.referral.create({
     data: { patientId, fromClinicianId: from.id, toClinicianId, reason: reason.slice(0, 2000), preferredKind: to.kind },
   });
+  notifyLater(to.userId, { title: "ارجاع جدید از همکار", body: "یک مراجع به شما ارجاع داده شده است.", url: "/panel/referrals" });
   revalidatePath(`/panel/patients/${patientId}`);
 }
 
@@ -78,8 +85,16 @@ export async function respondReferral(form: FormData) {
         update: { revokedAt: null },
       }),
     ]);
+    await audit(user.id, "referral.accept", { targetType: "Referral", targetId: id, patientId: ref.patientId });
+    notifyLater(ref.patientId, {
+      title: "درخواست مشاوره‌ی شما پذیرفته شد",
+      body: "متخصص درخواست شما را پذیرفت. اکنون می‌توانید از صفحه‌ی او نوبت بگیرید.",
+      url: `/clinicians/${me.id}?referral=${id}#booking`,
+      sms: true,
+    });
   } else if (decision === "DECLINED") {
     await db.referral.update({ where: { id }, data: { status: "DECLINED", responseNote: note } });
+    notifyLater(ref.patientId, { title: "پاسخ درخواست مشاوره", body: "متخصص امکان پذیرش این درخواست را نداشت. می‌توانید متخصص دیگری انتخاب کنید.", url: "/clinicians" });
   }
   revalidatePath("/panel/referrals");
 }

@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth/guards";
 import { isProfileComplete } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { CLINICIAN_STATUS } from "@/lib/clinicians";
+import ClinicianFiles from "@/components/ClinicianFiles";
 
 export const metadata: Metadata = { title: "عضویت متخصصان" };
 
@@ -38,6 +39,8 @@ export default async function ClinicianApplyPage() {
           )}
         </div>
       )}
+
+      {profile && <ClinicianFiles userId={user.id} avatarId={profile.avatarId} firstName={user.firstName} />}
 
       {profile?.status !== "APPROVED" && (
         <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6">

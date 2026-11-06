@@ -6,12 +6,12 @@
  * - اگر شبکه نباشد و صفحه ذخیره نشده باشد، صفحه‌ی /offline نمایش داده می‌شود
  * - درخواست‌های غیر GET، API، پرداخت، ویزیت و پنل‌ها هرگز کش نمی‌شوند
  */
-const VERSION = "mm-v1";
+const VERSION = "mm-v2";
 const STATIC = `${VERSION}-static`;
 const PAGES = `${VERSION}-pages`;
 const OFFLINE = "/offline";
 const PUBLIC_PAGES = /^\/($|tests|categories|blog|academy|about|clinicians$)/;
-const NEVER = /^\/(api|admin|panel|pay|visit|reports|login|profile|my-|appointments|referral|save-pending|certificates)/;
+const NEVER = /^\/(api|admin|panel|pay|visit|reports|login|profile|my-|appointments|referral|save-pending|certificates|notifications)/;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(PAGES).then((c) => c.add(OFFLINE)).then(() => self.skipWaiting()));
@@ -66,4 +66,38 @@ self.addEventListener("fetch", (event) => {
         .catch(() => caches.match(req).then((hit) => hit || caches.match(OFFLINE))),
     );
   }
+});
+
+// اعلان Push (یادآوری نوبت و کلاس زنده)
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { title: "مایندمتر", body: event.data ? event.data.text() : "" };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || "مایندمتر", {
+      body: data.body || "",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      dir: "rtl",
+      lang: "fa",
+      tag: data.tag,
+      data: { url: data.url || "/notifications" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data?.url || "/", self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        if (c.url === url && "focus" in c) return c.focus();
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
 });
