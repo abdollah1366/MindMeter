@@ -10,6 +10,8 @@ import { formatJalali } from "@/lib/jalali";
 import { toPersianDigits } from "@/lib/scoring";
 import JsonLd from "@/components/JsonLd";
 import { SITE_NAME, absoluteUrl } from "@/lib/site";
+import { getSiteStats } from "@/lib/public-stats";
+import { faCount } from "@/lib/test-summary";
 
 const steps = [
   { title: "انتخاب تست", text: "از میان دسته‌بندی‌ها، تست مورد نظرتان را پیدا کنید." },
@@ -18,10 +20,11 @@ const steps = [
 ];
 
 export default async function HomePage() {
-  const [tests, featured, articles] = await Promise.all([
+  const [tests, featured, articles, stats] = await Promise.all([
     getVisibleTests(),
     getFeaturedVisibleTests(),
     listPublishedArticles(4),
+    getSiteStats(),
   ]);
   return (
     <div className="space-y-16">
@@ -52,16 +55,28 @@ export default async function HomePage() {
         <div className="mt-8">
           <SearchBox />
         </div>
-        <div className="mt-8 flex gap-8 text-sm text-brand-100">
+        <div className="mt-8 flex flex-wrap gap-x-8 gap-y-4 text-sm text-brand-100">
           <span>
             <b className="block text-2xl text-white">{toPersianDigits(tests.length)}</b> تست استاندارد
           </span>
           <span>
             <b className="block text-2xl text-white">{toPersianDigits(categories.length)}</b> دسته‌بندی
           </span>
-          <span>
-            <b className="block text-2xl text-white">گزارش</b> قابل چاپ
-          </span>
+          {stats.totalCompleted > 0 && (
+            <span data-testid="stat-completed">
+              <b className="block text-2xl text-white">{faCount(stats.totalCompleted)}</b> تست انجام‌شده
+            </span>
+          )}
+          {stats.users > 0 && (
+            <span>
+              <b className="block text-2xl text-white">{faCount(stats.users)}</b> کاربر
+            </span>
+          )}
+          {stats.clinicians > 0 && (
+            <span>
+              <b className="block text-2xl text-white">{faCount(stats.clinicians)}</b> متخصص
+            </span>
+          )}
         </div>
       </section>
 
@@ -85,7 +100,7 @@ export default async function HomePage() {
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {featured.map((t) => (
-            <TestCard key={t.slug} test={summarize(t)} />
+            <TestCard key={t.slug} test={summarize(t, stats.byTest[t.slug])} />
           ))}
         </div>
       </section>

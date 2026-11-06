@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import TestCard from "@/components/TestCard";
 import { categories, getCategory } from "@/data/categories";
 import { getVisibleTests } from "@/lib/tests-service";
+import { getSiteStats } from "@/lib/public-stats";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -20,6 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CategoryPage({ params }: Props) {
   const category = getCategory((await params).slug);
   if (!category) notFound();
+  const stats = await getSiteStats();
   const list = (await getVisibleTests()).filter((t) => inCategory(t, category.slug));
 
   return (
@@ -39,7 +41,7 @@ export default async function CategoryPage({ params }: Props) {
       {list.length ? (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((t) => (
-            <TestCard key={t.slug} test={summarize(t)} />
+            <TestCard key={t.slug} test={summarize(t, stats.byTest[t.slug])} />
           ))}
         </div>
       ) : (

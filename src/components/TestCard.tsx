@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { TestSummary } from "@/lib/test-summary";
+import { faCount, type TestSummary } from "@/lib/test-summary";
 import { toPersianDigits } from "@/lib/scoring";
 import { getCategory } from "@/data/categories";
 
@@ -22,6 +22,7 @@ export default function TestCard({ test }: { test: TestSummary }) {
       <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
         <span>
           {toPersianDigits(test.questionCount)} سؤال · {toPersianDigits(test.estimatedMinutes)} دقیقه
+          {test.taken ? <> · <span data-testid="taken">{faCount(test.taken)} بار انجام شده</span></> : null}
         </span>
         {test.version ? (
           <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-700">{test.version.kind === "short" ? "فرم کوتاه" : "فرم بلند"}</span>

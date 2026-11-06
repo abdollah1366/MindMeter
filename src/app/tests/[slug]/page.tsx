@@ -11,6 +11,8 @@ import { toPersianDigits } from "@/lib/scoring";
 import JsonLd from "@/components/JsonLd";
 import { absoluteUrl } from "@/lib/site";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getSiteStats } from "@/lib/public-stats";
+import { faCount } from "@/lib/test-summary";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -33,6 +35,8 @@ export default async function TestPage({ params }: Props) {
   const category = getCategory(test.category);
   const related = (await getVisibleTests()).filter((t) => t.slug !== test.slug && (inCategory(t, test.category) || inCategory(test, t.category))).slice(0, 3);
 
+  const stats = await getSiteStats();
+  const taken = stats.byTest[test.slug] ?? 0;
   const pair = test.version ? getTest(test.version.pairSlug) : undefined;
   const user = test.restricted ? await getCurrentUser() : null;
   const facts = [
@@ -40,6 +44,7 @@ export default async function TestPage({ params }: Props) {
     { label: "تعداد سؤال", value: toPersianDigits(test.questions.length) },
     { label: "زمان تقریبی", value: `${toPersianDigits(test.estimatedMinutes)} دقیقه` },
     { label: "دسته‌بندی", value: category?.title ?? "-" },
+    { label: "تعداد انجام", value: taken ? `${faCount(taken)} بار` : "اولین نفر باشید" },
     { label: "مناسب برای", value: test.audience ?? "همه" },
     { label: "هزینه", value: test.licensed ? "طبق تعرفه‌ی متخصص" : "رایگان" },
   ];
@@ -165,7 +170,7 @@ export default async function TestPage({ params }: Props) {
           <h2 className="text-xl font-extrabold">تست‌های مرتبط</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((t) => (
-              <TestCard key={t.slug} test={summarize(t)} />
+              <TestCard key={t.slug} test={summarize(t, stats.byTest[t.slug])} />
             ))}
           </div>
         </section>

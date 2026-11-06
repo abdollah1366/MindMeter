@@ -3,6 +3,8 @@
  * بدون وابستگی به سرور، تا در صفحه‌ی نتیجه (کلاینت) و گزارش چاپی (سرور) استفاده شود.
  */
 import type { PsychTest, ResultLevel, ResultPattern, ScaleScore } from "./types";
+import { isStrengths, strengthsChips } from "./strengths";
+import { toPersianDigits } from "./scoring";
 
 export function isInventory(test: PsychTest) {
   return !!test.scaleGroups?.length;
@@ -61,6 +63,7 @@ export function elevatedScales(test: PsychTest, scores: ScaleScore[]) {
 
 /** چند برچسب کوتاه برای فهرست نتایج (به جای نمایش همه‌ی مقیاس‌ها) */
 export function headlineChips(test: PsychTest, scores: ScaleScore[], limit = 4): { key: string; text: string; level?: ResultLevel }[] {
+  if (isStrengths(test)) return strengthsChips(test, scores, Math.max(limit, 5)).map((c) => ({ key: c.key, text: toPersianDigits(c.text) }));
   const chips: { key: string; text: string; level?: ResultLevel }[] = [];
   if (hasValidityGroup(test)) {
     const v = validityStatus(test, scores);
@@ -76,6 +79,7 @@ export function headlineChips(test: PsychTest, scores: ScaleScore[], limit = 4):
 }
 
 export function inventorySummary(test: PsychTest, scores: ScaleScore[]) {
+  if (isStrengths(test)) return "استعدادهای برتر: " + strengthsChips(test, scores).map((c) => c.text.replace(/^\d+\. /, "")).join("، ");
   return headlineChips(test, scores, 3)
     .map((c) => c.text)
     .join("، ");

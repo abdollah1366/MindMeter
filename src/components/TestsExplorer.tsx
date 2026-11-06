@@ -15,15 +15,18 @@ type Props = {
 export default function TestsExplorer({ tests, categories, initialQuery = "", initialCategory = "" }: Props) {
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState(initialCategory);
+  const [popular, setPopular] = useState(false);
+  const hasStats = tests.some((t) => t.taken);
 
   const filtered = useMemo(() => {
     const q = query.trim();
-    return tests.filter(
+    const list = tests.filter(
       (t) =>
         (!category || inCategory(t, category)) &&
         (!q || t.title.includes(q) || t.shortDescription.includes(q)),
     );
-  }, [tests, query, category]);
+    return popular ? [...list].sort((a, b) => (b.taken ?? 0) - (a.taken ?? 0)) : list;
+  }, [tests, query, category, popular]);
 
   const chip = (active: boolean) =>
     `rounded-full border px-4 py-1.5 text-sm transition ${
@@ -48,6 +51,11 @@ export default function TestsExplorer({ tests, categories, initialQuery = "", in
             {c.icon} {c.title}
           </button>
         ))}
+        {hasStats && (
+          <button className={`${chip(popular)} ms-auto`} onClick={() => setPopular((p) => !p)} aria-pressed={popular}>
+            🔥 پرانجام‌ترین
+          </button>
+        )}
       </div>
 
       {filtered.length ? (
