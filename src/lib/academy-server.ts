@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { displayName } from "@/lib/clinicians";
 import { makeCertificateCode } from "@/lib/academy";
 import { notifyLater } from "@/lib/notify";
+import { creditCourse } from "@/lib/wallet";
 
 type MaybeUser = { id: string; role: string } | null;
 
@@ -47,6 +48,7 @@ export async function activateEnrollment(enrollmentId: string) {
   const updated = await db.enrollment.update({ where: { id: e.id }, data: { status: "ACTIVE", activatedAt: new Date() }, include: { course: { select: { title: true, slug: true } } } });
   notifyLater(e.userId, { title: "ثبت‌نام در دوره انجام شد", body: updated.course.title, url: `/academy/${updated.course.slug}/learn` });
   if (e.couponCode) await db.coupon.updateMany({ where: { code: e.couponCode }, data: { used: { increment: 1 } } });
+  await creditCourse(e.id);
   return updated;
 }
 

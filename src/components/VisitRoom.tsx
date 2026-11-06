@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { endVisit, saveVisitNote } from "@/server/visit";
+import { endVisit, saveVisitNote, sendVisitFile } from "@/server/visit";
 
 type Role = "patient" | "clinician";
 type ChatMessage = { id: string; mine: boolean; body: string; at: string };
@@ -36,7 +36,24 @@ const CONN_LABEL: Record<Conn, { text: string; style: string }> = {
 };
 
 /** پیام‌های چت که لینک تست دارند قابل کلیک می‌شوند */
+const FILE_RE = /^\[\[file:([a-z0-9]+)\|([a-z/]+)\|(.+)\]\]$/;
+
 function ChatBody({ text }: { text: string }) {
+  const file = FILE_RE.exec(text);
+  if (file) {
+    const [, id, mime, name] = file;
+    const href = `/api/files/${id}`;
+    return mime.startsWith("image/") ? (
+      <a href={href} target="_blank" rel="noopener" className="block">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={href} alt={name} className="max-h-48 rounded-lg" />
+      </a>
+    ) : (
+      <a href={href} target="_blank" rel="noopener" className="font-bold underline" dir="auto">
+        📎 {name}
+      </a>
+    );
+  }
   const parts = text.split(/(\/tests\/[a-z0-9-]+)/g);
   return (
     <>
@@ -62,6 +79,8 @@ export default function VisitRoom(props: Props) {
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
   const [sharing, setSharing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [lowBandwidth, setLowBandwidth] = useState(false);
   const [conn, setConn] = useState<Conn>("waiting");
   const [otherOnline, setOtherOnline] = useState(false);
@@ -574,6 +593,28 @@ export default function VisitRoom(props: Props) {
               }}
               className="flex gap-2 border-t border-slate-100 p-3"
             >
+              <label title="ارسال تصویر یا PDF" className={`grid w-10 shrink-0 cursor-pointer place-items-center rounded-xl border border-slate-200 text-slate-500 hover:text-brand-600 ${uploading ? "opacity-50" : ""}`}>
+                {uploading ? "…" : "📎"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  className="hidden"
+                  data-testid="chat-file"
+                  disabled={uploading}
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!f) return;
+                    setUploading(true);
+                    setFileError(null);
+                    const fd = new FormData();
+                    fd.set("file", f);
+                    const r = await sendVisitFile(appointmentId, fd).catch(() => ({ error: "ارسال فایل انجام نشد." }));
+                    setUploading(false);
+                    if (r.error) setFileError(r.error);
+                  }}
+                />
+              </label>
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
@@ -583,6 +624,7 @@ export default function VisitRoom(props: Props) {
               />
               <button className="rounded-xl bg-brand-600 px-4 text-sm text-white">ارسال</button>
             </form>
+            {fileError && <p className="px-3 pb-2 text-xs text-rose-600">{fileError}</p>}
           </>
         ) : (
           <div className="flex-1 space-y-5 overflow-y-auto p-4">

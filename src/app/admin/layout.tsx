@@ -8,6 +8,7 @@ const nav = [
   { href: "/admin/clinicians", label: "متخصصان" },
   { href: "/admin/appointments", label: "نوبت‌ها و پرداخت‌ها" },
   { href: "/admin/referrals", label: "ارجاع‌ها" },
+  { href: "/admin/payouts", label: "تسویه با متخصصان" },
   { href: "/admin/blog", label: "وبلاگ" },
   { href: "/admin/tests", label: "تست‌ها" },
   { href: "/admin/norms", label: "هنجارها" },

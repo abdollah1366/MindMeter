@@ -57,7 +57,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     }
     return NextResponse.json({ ok: true });
   }
-  if (body?.type === "message" && typeof body.body === "string" && body.body.trim() && body.body.length <= 2000) {
+  if (body?.type === "message" && typeof body.body === "string" && body.body.trim() && body.body.length <= 2000 && !body.body.includes("[[file:")) {
     await db.visitMessage.create({ data: { appointmentId: a.id, userId: visit.user.id, body: body.body.trim() } });
     return NextResponse.json({ ok: true });
   }

@@ -17,6 +17,9 @@ export const AUDIT_LABEL: Record<string, string> = {
   "course.delete": "حذف دوره",
   "norm.change": "تغییر هنجار تست",
   "coupon.create": "ساخت کد تخفیف",
+  "payout.decide": "بررسی درخواست تسویه",
+  "commission.change": "تغییر کمیسیون سایت",
+  "wallet.adjust": "اصلاح موجودی متخصص",
 };
 
 type Entry = { targetType?: string; targetId?: string; patientId?: string | null; meta?: Record<string, unknown> };

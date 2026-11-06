@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, startTransition } from "react";
 
 type State = { error?: string; ok?: boolean };
 
@@ -22,7 +22,15 @@ export default function StateForm({
 }) {
   const [state, run, pending] = useActionState<State, FormData>(action, {});
   return (
-    <form action={run} className={className}>
+    <form
+      className={className}
+      onSubmit={(e) => {
+        // جلوگیری از پاک شدن خودکار فرم در React 19 تا کاربر پس از خطا مقادیرش را از دست ندهد
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => run(data));
+      }}
+    >
       {children}
       <div className="flex flex-wrap items-center gap-3">
         <button disabled={pending} className={buttonClass}>

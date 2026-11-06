@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { notify } from "@/lib/notify";
 import { formatTehran } from "@/lib/tehran-time";
 import { displayName } from "@/lib/clinicians";
+import { autoCompleteVisits } from "@/lib/wallet";
 
 const MIN = 60_000;
 const HOUR = 60 * MIN;
@@ -77,7 +78,9 @@ export async function runReminders(now = new Date()) {
       }
     }
   }
+  // ویزیت‌های رهاشده تکمیل و درآمد متخصص ثبت می‌شود
+  const completed = await autoCompleteVisits(now);
   // سوابق قدیمی یادآوری لازم نیست
   await db.reminderLog.deleteMany({ where: { sentAt: { lt: new Date(now.getTime() - 30 * 24 * HOUR) } } });
-  return { sent };
+  return { sent, completed };
 }

@@ -112,6 +112,11 @@ model ClinicianProfile {
   courses       Course[]
   /// عکس پروفایل (Upload با kind=AVATAR)
   avatarId      String?
+  /// شماره‌ی شبا برای تسویه (IR + ۲۴ رقم) و نام صاحب حساب
+  iban          String?
+  ibanOwner     String?
+  ledger        LedgerEntry[]
+  payouts       Payout[]
 }
 
 /// اجازه‌ی بیمار به متخصص برای دیدن پرونده
@@ -569,4 +574,55 @@ model Upload {
   createdAt DateTime @default(now())
 
   @@index([ownerId, kind])
+}
+
+// ─────────────── کیف پول متخصص و تسویه ───────────────
+
+/** تنظیمات قابل تغییر سایت (کلید/مقدار) */
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+/**
+ * دفتر حساب متخصص. مبلغ به تومان و علامت‌دار است: درآمد مثبت، برداشت منفی.
+ * موجودی = جمع همه‌ی ردیف‌ها.
+ */
+model LedgerEntry {
+  id           String           @id @default(cuid())
+  clinicianId  String
+  clinician    ClinicianProfile @relation(fields: [clinicianId], references: [id], onDelete: Cascade)
+  /// VISIT | COURSE | PAYOUT | PAYOUT_REVERSAL | ADJUSTMENT
+  kind         String
+  amount       Int
+  /// مبلغ کل پرداختی مشتری و کمیسیون سایت (برای گزارش)
+  gross        Int              @default(0)
+  commission   Int              @default(0)
+  /// شناسه‌ی منبع (نوبت، ثبت‌نام یا درخواست تسویه) برای جلوگیری از ثبت تکراری
+  sourceId     String?
+  note         String           @default("")
+  createdAt    DateTime         @default(now())
+
+  @@unique([kind, sourceId])
+  @@index([clinicianId, createdAt])
+}
+
+/** درخواست تسویه */
+model Payout {
+  id          String           @id @default(cuid())
+  clinicianId String
+  clinician   ClinicianProfile @relation(fields: [clinicianId], references: [id], onDelete: Cascade)
+  amount      Int
+  iban        String
+  ibanOwner   String
+  /// REQUESTED | PAID | REJECTED
+  status      String           @default("REQUESTED")
+  /// شماره‌ی پیگیری بانکی
+  reference   String?
+  note        String?
+  createdAt   DateTime         @default(now())
+  decidedAt   DateTime?
+
+  @@index([status, createdAt])
 }

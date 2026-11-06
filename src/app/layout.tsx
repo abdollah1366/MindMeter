@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
   openGraph: { type: "website", locale: "fa_IR", siteName: SITE_NAME, title: "مایندمتر | تست‌های روانشناسی آنلاین", description: SITE_DESCRIPTION },
-  twitter: { card: "summary" },
+  twitter: { card: "summary_large_image" },
   formatDetection: { telephone: false },
   appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "default" },
 };
