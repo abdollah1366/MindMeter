@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { isInventory, headlineChips } from "@/lib/inventory";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { hasAccess, requireClinician } from "@/lib/auth/guards";
@@ -82,12 +83,18 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {alerts.length > 0 && <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-700">⚠ هشدار ایمنی</span>}
-                        {scores.map((s) => (
-                          <span key={s.key} className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(s.result?.level).badge}`}>
-                            {scores.length > 1 ? `${s.title}: ` : ""}
-                            {s.result?.title} ({toPersianDigits(s.score)})
-                          </span>
-                        ))}
+                        {t && isInventory(t)
+                          ? headlineChips(t, scores).map((c) => (
+                              <span key={c.key} className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(c.level).badge}`}>
+                                {c.text}
+                              </span>
+                            ))
+                          : scores.map((s) => (
+                              <span key={s.key} className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(s.result?.level).badge}`}>
+                                {scores.length > 1 ? `${s.title}: ` : ""}
+                                {s.result?.title} ({toPersianDigits(s.score)})
+                              </span>
+                            ))}
                       </div>
                     </Link>
                   </li>

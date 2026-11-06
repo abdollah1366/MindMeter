@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { summarize, inCategory } from "@/lib/test-summary";
 import TestCard from "@/components/TestCard";
 import CategoryCard from "@/components/CategoryCard";
 import SearchBox from "@/components/SearchBox";
@@ -69,7 +70,7 @@ export default async function HomePage() {
         <h2 className="text-2xl font-extrabold">دسته‌بندی تست‌ها</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((c) => (
-            <CategoryCard key={c.slug} category={c} count={tests.filter((t) => t.category === c.slug).length} />
+            <CategoryCard key={c.slug} category={c} count={tests.filter((t) => inCategory(t, c.slug)).length} />
           ))}
         </div>
       </section>
@@ -84,7 +85,7 @@ export default async function HomePage() {
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {featured.map((t) => (
-            <TestCard key={t.slug} test={t} />
+            <TestCard key={t.slug} test={summarize(t)} />
           ))}
         </div>
       </section>

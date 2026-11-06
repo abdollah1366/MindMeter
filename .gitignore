@@ -17,3 +17,7 @@ prisma/*.db-journal
 
 # فایل‌های آپلودشده
 uploads/
+
+# پرسشنامه‌های دارای مجوز تجاری (فقط روی سرور؛ هرگز در گیت منتشر نشود)
+licensed-tests/*.json
+!licensed-tests/*.sample.json

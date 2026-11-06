@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import TestsExplorer from "@/components/TestsExplorer";
 import { getVisibleTests } from "@/lib/tests-service";
 import { categories } from "@/data/categories";
+import { summarize } from "@/lib/test-summary";
 
 export const metadata: Metadata = { title: "همه‌ی تست‌ها" };
 
@@ -14,7 +15,7 @@ export default async function TestsPage({ searchParams }: Props) {
     <>
       <h1 className="text-2xl font-extrabold">همه‌ی تست‌ها</h1>
       <p className="mt-2 mb-6 text-slate-500">تست مورد نظرتان را جستجو کنید یا بر اساس دسته‌بندی فیلتر کنید.</p>
-      <TestsExplorer tests={tests} categories={categories} initialQuery={q} initialCategory={category} />
+      <TestsExplorer tests={tests.map(summarize)} categories={categories} initialQuery={q} initialCategory={category} />
     </>
   );
 }

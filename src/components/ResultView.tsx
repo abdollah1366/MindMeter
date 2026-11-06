@@ -7,6 +7,8 @@ import ScoreBreakdown from "./ScoreBreakdown";
 import LevelBreakdown from "./LevelBreakdown";
 import ResultNote from "./ResultNote";
 import NormPanel from "./NormPanel";
+import InventoryProfile from "./InventoryProfile";
+import { isInventory, validityStatus, elevatedScales } from "@/lib/inventory";
 import { useEffect, useState } from "react";
 import { getNormReport } from "@/server/norms";
 import type { NormReport } from "@/lib/norms";
@@ -25,11 +27,14 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
   const savedId = saved.state === "saved" ? saved.id : null;
   const [norm, setNorm] = useState<NormReport | null>(null);
   useEffect(() => {
-    if (test.kind !== "ability" || !savedId) return;
+    if ((test.kind !== "ability" && !test.normMetric) || !savedId) return;
     getNormReport(savedId).then(setNorm).catch(() => {});
-  }, [savedId, test.kind]);
+  }, [savedId, test.kind, test.normMetric]);
 
-  const concerning = alerts.length > 0 || scores.some((s) => ["moderate", "high", "severe"].includes(s.result?.level ?? ""));
+  const inventory = isInventory(test);
+  const concerning = inventory
+    ? alerts.length > 0 || elevatedScales(test, scores).length > 0 || validityStatus(test, scores).level !== "ok"
+    : alerts.length > 0 || scores.some((s) => ["moderate", "high", "severe"].includes(s.result?.level ?? ""));
 
   return (
     <div className="space-y-5">
@@ -40,11 +45,15 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
         </h2>
       </div>
 
-      <ScoreBreakdown test={test} scores={scores} alerts={alerts} />
+      {inventory ? (
+        <InventoryProfile test={test} scores={scores} alerts={alerts} answers={answers} norm={norm} showCritical />
+      ) : (
+        <ScoreBreakdown test={test} scores={scores} alerts={alerts} />
+      )}
 
       {test.kind === "ability" && <LevelBreakdown test={test} answers={answers} />}
 
-      {norm && <NormPanel report={norm} />}
+      {norm && !inventory && <NormPanel report={norm} />}
       {test.kind === "ability" && saved.state === "guest" && (
         <p className="rounded-2xl bg-calm-50 p-4 text-sm leading-7 text-calm-700">
           برای مقایسه‌ی نتیجه با هم‌سن‌ها و هم‌جنس‌ها (صدک و نمره‌ی استاندارد)، وارد شوید تا نتیجه در پرونده‌تان ذخیره شود.

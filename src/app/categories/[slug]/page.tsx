@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { summarize, inCategory } from "@/lib/test-summary";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import TestCard from "@/components/TestCard";
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CategoryPage({ params }: Props) {
   const category = getCategory((await params).slug);
   if (!category) notFound();
-  const list = (await getVisibleTests()).filter((t) => t.category === category.slug);
+  const list = (await getVisibleTests()).filter((t) => inCategory(t, category.slug));
 
   return (
     <>
@@ -38,7 +39,7 @@ export default async function CategoryPage({ params }: Props) {
       {list.length ? (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((t) => (
-            <TestCard key={t.slug} test={t} />
+            <TestCard key={t.slug} test={summarize(t)} />
           ))}
         </div>
       ) : (

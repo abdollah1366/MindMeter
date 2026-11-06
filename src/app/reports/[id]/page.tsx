@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import ScoreBreakdown from "@/components/ScoreBreakdown";
 import ResultNote from "@/components/ResultNote";
 import NormPanel from "@/components/NormPanel";
+import InventoryProfile from "@/components/InventoryProfile";
+import { isInventory } from "@/lib/inventory";
 import LevelBreakdown from "@/components/LevelBreakdown";
 import { buildNormReport } from "@/lib/norms";
 import PrintButton from "@/components/PrintButton";
@@ -46,7 +48,8 @@ export default async function ReportPage({ params }: Props) {
   const answers = JSON.parse(result.answers) as Answers;
   const scores = JSON.parse(result.scores) as ScaleScore[];
   const alerts = JSON.parse(result.alerts) as TestAlert[];
-  const norm = test.kind === "ability" ? await buildNormReport(result.id) : null;
+  const inventory = isInventory(test);
+  const norm = test.kind === "ability" || test.normMetric ? await buildNormReport(result.id) : null;
 
   const info = [
     ["نام و نام خانوادگی", [patient.firstName, patient.lastName].filter(Boolean).join(" ") || "-"],
@@ -108,13 +111,17 @@ export default async function ReportPage({ params }: Props) {
 
         <section className="mt-5">
           <h2 className="mb-3 text-sm font-bold text-slate-500">نتایج</h2>
-          <ScoreBreakdown test={test} scores={scores} alerts={alerts} />
+          {inventory ? (
+            <InventoryProfile test={test} scores={scores} alerts={alerts} answers={answers} norm={norm} print showCritical />
+          ) : (
+            <ScoreBreakdown test={test} scores={scores} alerts={alerts} />
+          )}
           {test.kind === "ability" && (
             <div className="mt-4">
               <LevelBreakdown test={test} answers={answers} />
             </div>
           )}
-          {norm && (
+          {norm && !inventory && (
             <div className="mt-4">
               <NormPanel report={norm} print />
             </div>
