@@ -62,6 +62,11 @@ export function validateTest(t: PsychTest, all: PsychTest[] = []): string[] {
     }
   }
 
+  for (const p of t.patterns ?? [])
+    for (const c of [...(p.all ?? []), ...(p.none ?? [])]) if (!keys.has(c.scale)) fail(`pattern «${p.title}» refers to unknown scale ${c.scale}`);
+  if (t.patterns?.length && (t.patterns.at(-1)!.all?.length || t.patterns.at(-1)!.none?.length))
+    fail("the last pattern should have no conditions (fallback)");
+
   if (t.version) {
     const pair = all.find((x) => x.slug === t.version!.pairSlug);
     if (!pair || pair.version?.pairSlug !== t.slug) fail("version pair mismatch");

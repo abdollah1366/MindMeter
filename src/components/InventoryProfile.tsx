@@ -2,7 +2,7 @@ import type { PsychTest, ScaleScore, TestAlert } from "@/lib/types";
 import type { NormComparison, NormReport } from "@/lib/norms";
 import { optionsFor, toPersianDigits, type Answers } from "@/lib/scoring";
 import { levelStyle } from "@/lib/levels";
-import { VALIDITY_LABEL, elevatedScales, percentOf, validityStatus } from "@/lib/inventory";
+import { VALIDITY_LABEL, elevatedScales, hasValidityGroup, matchPattern, percentOf, validityStatus } from "@/lib/inventory";
 
 const fa = (n: number) => toPersianDigits(n);
 /** حداقل اندازه‌ی گروه شرکت‌کنندگان برای نمایش نمره‌ی T */
@@ -36,6 +36,7 @@ export default function InventoryProfile({ test, scores, alerts, answers, norm, 
 
   const validity = validityStatus(test, scores);
   const v = VALIDITY_LABEL[validity.level];
+  const pattern = matchPattern(test, scores);
   const higher = groups.find((g) => g.key === "higher");
   const elevated = elevatedScales(test, scores).filter((s) => test.scales.find((x) => x.key === s.key)?.group !== "higher");
 
@@ -44,7 +45,10 @@ export default function InventoryProfile({ test, scores, alerts, answers, norm, 
       ? test.questions.filter((q) => {
           if (!q.critical || answers[q.id] === undefined) return false;
           const values = optionsFor(test, q).map((o) => o.value);
-          return answers[q.id] === Math.max(...values);
+          // پاسخ در نیمه‌ی بالای طیف (مثلاً «درست» یا «گاهی» و بیشتر) کلیدی است
+          const lo = Math.min(...values);
+          const hi = Math.max(...values);
+          return answers[q.id] > lo && answers[q.id] >= (lo + hi) / 2;
         })
       : [];
 
@@ -61,7 +65,15 @@ export default function InventoryProfile({ test, scores, alerts, answers, norm, 
       <section className="break-inside-avoid rounded-2xl border border-slate-200 bg-white p-5">
         <h3 className="font-extrabold">خلاصه‌ی نتیجه</h3>
 
-        <div className={`mt-4 rounded-xl border p-4 text-sm leading-7 ${v.tone}`} data-testid="validity">
+        {pattern && (
+          <div className={`mt-4 rounded-xl border p-4 text-sm leading-7 ${levelStyle(pattern.level).badge}`} data-testid="pattern">
+            <p className="text-xs opacity-80">الگوی غالب</p>
+            <p className="font-extrabold">{pattern.title}</p>
+            <p className="mt-1">{pattern.description}</p>
+          </div>
+        )}
+
+        {hasValidityGroup(test) && <div className={`mt-4 rounded-xl border p-4 text-sm leading-7 ${v.tone}`} data-testid="validity">
           <p className="font-bold">{v.title}</p>
           {validity.flagged.length === 0 ? (
             <p>به سؤال‌های کنترلی پاسخ هماهنگ و واقع‌بینانه داده‌اید.</p>
@@ -74,7 +86,7 @@ export default function InventoryProfile({ test, scores, alerts, answers, norm, 
               ))}
             </ul>
           )}
-        </div>
+        </div>}
 
         {higher && (
           <div className="mt-4 grid gap-3 sm:grid-cols-3">

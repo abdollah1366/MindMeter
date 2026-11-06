@@ -2,7 +2,7 @@
  * ابزارهای گزارش پرسشنامه‌های چندمقیاسی (تست‌هایی که `scaleGroups` دارند).
  * بدون وابستگی به سرور، تا در صفحه‌ی نتیجه (کلاینت) و گزارش چاپی (سرور) استفاده شود.
  */
-import type { PsychTest, ResultLevel, ScaleScore } from "./types";
+import type { PsychTest, ResultLevel, ResultPattern, ScaleScore } from "./types";
 
 export function isInventory(test: PsychTest) {
   return !!test.scaleGroups?.length;
@@ -35,6 +35,20 @@ export const VALIDITY_LABEL = {
   invalid: { title: "نیم‌رخ قابل تفسیر نیست", tone: "border-rose-200 bg-rose-50 text-rose-800" },
 } as const;
 
+export function hasValidityGroup(test: PsychTest) {
+  return !!test.scaleGroups?.some((g) => g.validity);
+}
+
+/** اولین قاعده‌ی «الگوی غالب» که با نمره‌ها جور است */
+export function matchPattern(test: PsychTest, scores: ScaleScore[]): ResultPattern | null {
+  const level = (key: string) => RANK[scores.find((s) => s.key === key)?.result?.level ?? "normal"];
+  return (
+    test.patterns?.find(
+      (p) => (p.all ?? []).every((c) => level(c.scale) >= RANK[c.min]) && !(p.none ?? []).some((c) => level(c.scale) >= RANK[c.min]),
+    ) ?? null
+  );
+}
+
 /** مقیاس‌های محتوایی برجسته (بالا یا شدید)، به ترتیب شدت و درصد */
 export function elevatedScales(test: PsychTest, scores: ScaleScore[]) {
   return scores
@@ -47,10 +61,13 @@ export function elevatedScales(test: PsychTest, scores: ScaleScore[]) {
 
 /** چند برچسب کوتاه برای فهرست نتایج (به جای نمایش همه‌ی مقیاس‌ها) */
 export function headlineChips(test: PsychTest, scores: ScaleScore[], limit = 4): { key: string; text: string; level?: ResultLevel }[] {
-  const v = validityStatus(test, scores);
-  const chips: { key: string; text: string; level?: ResultLevel }[] = [
-    { key: "validity", text: VALIDITY_LABEL[v.level].title, level: v.level === "ok" ? "normal" : v.level === "caution" ? "moderate" : "severe" },
-  ];
+  const chips: { key: string; text: string; level?: ResultLevel }[] = [];
+  if (hasValidityGroup(test)) {
+    const v = validityStatus(test, scores);
+    chips.push({ key: "validity", text: VALIDITY_LABEL[v.level].title, level: v.level === "ok" ? "normal" : v.level === "caution" ? "moderate" : "severe" });
+  }
+  const pattern = matchPattern(test, scores);
+  if (pattern) chips.push({ key: "pattern", text: pattern.title, level: pattern.level });
   const top = elevatedScales(test, scores).filter((s) => groupOf(test, s.key)?.key !== "traits");
   for (const s of top.slice(0, limit)) chips.push({ key: s.key, text: `${s.title}: ${s.result?.title}`, level: s.result?.level });
   if (!top.length) chips.push({ key: "none", text: "مقیاس برجسته‌ای دیده نشد", level: "normal" });
