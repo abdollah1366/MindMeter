@@ -33,6 +33,13 @@ export default async function AdminDashboard() {
     db.referral.count({ where: { status: "NEW" } }),
   ]);
 
+  const [students, students30, academyRevenue, certificates] = await Promise.all([
+    db.enrollment.count({ where: { status: "ACTIVE" } }),
+    db.enrollment.count({ where: { status: "ACTIVE", activatedAt: { gte: since30 } } }),
+    db.payment.aggregate({ where: { status: "PAID", enrollmentId: { not: null }, paidAt: { gte: since30 } }, _sum: { amount: true } }),
+    db.certificate.count({ where: { revokedAt: null } }),
+  ]);
+
   // تست‌های انجام‌شده در ۱۴ روز اخیر به تفکیک روز
   const days = Array.from({ length: 14 }, (_, i) => {
     const d = new Date(now - (13 - i) * DAY);
@@ -54,6 +61,8 @@ export default async function AdminDashboard() {
     { label: "نوبت‌های پیش رو", value: upcomingVisits, sub: `${toPersianDigits(completedVisits)} ویزیت انجام‌شده`, href: "/admin/appointments" },
     { label: "درآمد ۳۰ روز (هزار تومان)", value: Math.round((revenue._sum.amount ?? 0) / 1000), sub: "پرداخت‌های موفق", href: "/admin/appointments" },
     { label: "ارجاع‌های در انتظار", value: openReferrals, sub: "درخواست‌های مشاوره", href: "/admin/referrals" },
+    { label: "دانشجویان آکادمی", value: students, sub: `${toPersianDigits(students30)} ثبت‌نام در ۳۰ روز اخیر`, href: "/admin/courses" },
+    { label: "فروش آکادمی ۳۰ روز (هزار تومان)", value: Math.round((academyRevenue._sum.amount ?? 0) / 1000), sub: `${toPersianDigits(certificates)} گواهی صادرشده`, href: "/admin/courses" },
   ];
 
   return (

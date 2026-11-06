@@ -7,8 +7,9 @@ const links = [
   { href: "/tests", label: "همه‌ی تست‌ها" },
   { href: "/#categories", label: "دسته‌بندی‌ها" },
   { href: "/clinicians", label: "متخصصان" },
+  { href: "/academy", label: "آکادمی" },
   { href: "/blog", label: "مقالات" },
-    { href: "/about", label: "درباره ما" },
+  { href: "/about", label: "درباره ما" },
 ];
 
 type NavLink = { href: string; label: string };
@@ -27,7 +28,7 @@ export default function Header({ userLabel, extraLinks = [] }: { userLabel: stri
           مایندمتر
         </Link>
 
-        <nav className="hidden gap-6 text-sm text-slate-600 md:flex">
+        <nav className="hidden gap-5 text-sm text-slate-600 lg:flex">
           {all.map((l) => (
             <Link key={l.href} href={l.href} className="hover:text-brand-600">
               {l.label}
@@ -35,7 +36,7 @@ export default function Header({ userLabel, extraLinks = [] }: { userLabel: stri
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           <Link
             href={userLabel ? "/my-results" : "/login"}
             className="rounded-xl border border-brand-200 px-4 py-2 text-sm text-brand-700 hover:bg-brand-50"
@@ -48,7 +49,7 @@ export default function Header({ userLabel, extraLinks = [] }: { userLabel: stri
         </div>
 
         <button
-          className="rounded-lg p-2 text-slate-600 md:hidden"
+          className="rounded-lg p-2 text-slate-600 lg:hidden"
           aria-label="منو"
           onClick={() => setOpen(!open)}
         >
@@ -57,7 +58,7 @@ export default function Header({ userLabel, extraLinks = [] }: { userLabel: stri
       </div>
 
       {open && (
-        <nav className="border-t border-slate-100 bg-white px-4 py-2 md:hidden">
+        <nav className="border-t border-slate-100 bg-white px-4 py-2 lg:hidden">
           <Link href={userLabel ? "/my-results" : "/login"} onClick={() => setOpen(false)} className="block py-3 font-bold text-brand-700">
             {userLabel ?? "ورود / ثبت‌نام"}
           </Link>

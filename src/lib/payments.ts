@@ -1,14 +1,20 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { ACTIVE_STATUSES } from "@/lib/scheduling";
+import { activateEnrollment } from "@/lib/academy-server";
 
 /**
  * ثبت پرداخت موفق و قطعی کردن نوبت.
  * اگر مهلت نگه‌داری نوبت تمام شده و زمان آن در این فاصله رزرو شده باشد، نوبت لغو می‌ماند
  * و پرداخت برای بازگشت وجه در پنل ادمین دیده می‌شود.
+ * پرداخت دوره، ثبت‌نام را فعال می‌کند.
  */
 export async function markPaid(paymentId: string, refId: string) {
   const p = await db.payment.update({ where: { id: paymentId }, data: { status: "PAID", refId, paidAt: new Date() } });
+  if (p.enrollmentId) {
+    await activateEnrollment(p.enrollmentId);
+    return;
+  }
   if (!p.appointmentId) return;
   const a = await db.appointment.findUnique({ where: { id: p.appointmentId } });
   if (!a) return;
@@ -25,4 +31,14 @@ export async function markPaid(paymentId: string, refId: string) {
         : { status: "CONFIRMED", cancelReason: null },
     });
   }
+}
+
+/** صفحه‌ای که کاربر پس از پرداخت موفق به آن می‌رود */
+export async function afterPaymentPath(payment: { appointmentId: string | null; enrollmentId: string | null }) {
+  if (payment.enrollmentId) {
+    const e = await db.enrollment.findUnique({ where: { id: payment.enrollmentId }, include: { course: true } });
+    if (e) return `/academy/${e.course.slug}?enrolled=1`;
+    return "/my-courses";
+  }
+  return `/appointments?paid=${payment.appointmentId}`;
 }
