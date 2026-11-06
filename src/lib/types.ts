@@ -91,6 +91,20 @@ export type Scale = {
   results: ResultRange[];
 };
 
+/**
+ * قاعده‌ی «الگوی غالب» برای گزارش پرسشنامه‌های چندمقیاسی.
+ * قاعده‌ها به ترتیب بررسی می‌شوند و اولین قاعده‌ای که شرط‌هایش برقرار باشد نمایش داده می‌شود.
+ */
+export type ResultPattern = {
+  /** همه‌ی این مقیاس‌ها باید دست‌کم در این سطح باشند */
+  all?: { scale: string; min: ResultLevel }[];
+  /** هیچ‌کدام از این مقیاس‌ها نباید به این سطح برسند */
+  none?: { scale: string; min: ResultLevel }[];
+  title: string;
+  description: string;
+  level: ResultLevel;
+};
+
 export type ScaleGroup = {
   key: string;
   title: string;
@@ -142,6 +156,8 @@ export type PsychTest = {
   alsoIn?: string[];
   /** گروه‌بندی مقیاس‌ها؛ اگر باشد، نتیجه به شکل نیم‌رخ لایه‌ای نمایش داده می‌شود */
   scaleGroups?: ScaleGroup[];
+  /** قاعده‌های تعیین «الگوی غالب» در خلاصه‌ی گزارش (آخرین قاعده معمولاً بدون شرط است) */
+  patterns?: ResultPattern[];
   /** معیار نمره‌ی استاندارد در مقایسه با هنجار: «standard» (میانگین ۱۰۰، انحراف ۱۵) یا «T» (میانگین ۵۰، انحراف ۱۰) */
   normMetric?: "standard" | "T";
   /** تست محدود (مثلاً دارای مجوز تجاری): در فهرست‌ها و نقشه‌ی سایت نمی‌آید و فقط با ورود قابل اجراست */
