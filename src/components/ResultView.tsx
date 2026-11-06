@@ -8,6 +8,8 @@ import LevelBreakdown from "./LevelBreakdown";
 import ResultNote from "./ResultNote";
 import NormPanel from "./NormPanel";
 import InventoryProfile from "./InventoryProfile";
+import StrengthsProfile from "./StrengthsProfile";
+import { isStrengths } from "@/lib/strengths";
 import { isInventory, validityStatus, elevatedScales } from "@/lib/inventory";
 import { useEffect, useState } from "react";
 import { getNormReport } from "@/server/norms";
@@ -32,7 +34,10 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
   }, [savedId, test.kind, test.normMetric]);
 
   const inventory = isInventory(test);
-  const concerning = inventory
+  const strengths = isStrengths(test);
+  const concerning = strengths
+    ? alerts.length > 0
+    : inventory
     ? alerts.length > 0 || elevatedScales(test, scores).length > 0 || validityStatus(test, scores).level !== "ok"
     : alerts.length > 0 || scores.some((s) => ["moderate", "high", "severe"].includes(s.result?.level ?? ""));
 
@@ -41,11 +46,13 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
       <div className="rounded-2xl bg-gradient-to-l from-brand-50 to-calm-50 p-5">
         <p className="text-sm text-slate-500">نتیجه‌ی {test.code}</p>
         <h2 className="mt-1 text-xl font-extrabold text-brand-700">
-          {scores.length === 1 ? scores[0].result?.title : "نیم‌رخ شما در مقیاس‌های این تست"}
+          {strengths ? "استعدادهای شما" : scores.length === 1 ? scores[0].result?.title : "نیم‌رخ شما در مقیاس‌های این تست"}
         </h2>
       </div>
 
-      {inventory ? (
+      {strengths ? (
+        <StrengthsProfile test={test} scores={scores} />
+      ) : inventory ? (
         <InventoryProfile test={test} scores={scores} alerts={alerts} answers={answers} norm={norm} showCritical />
       ) : (
         <ScoreBreakdown test={test} scores={scores} alerts={alerts} />

@@ -46,6 +46,61 @@ import { isInventory, inventorySummary } from "@/lib/inventory";
 type Phase = "intro" | "questions" | "result";
 type Saved = { state: "saving" } | { state: "saved"; id: string } | { state: "guest" } | { state: "error" };
 
+/** سؤال «دو جمله‌ی متضاد»: دو جمله کنار هم و طیف پاسخ بین آن‌ها */
+function PairChoice({
+  a,
+  b,
+  options,
+  selected,
+  onChoose,
+}: {
+  a: string;
+  b: string;
+  options: { label: string; value: number }[];
+  selected?: number;
+  onChoose: (v: number) => void;
+}) {
+  const mid = (options.length - 1) / 2;
+  return (
+    <div className="mt-4" data-testid="pair">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <p className="rounded-2xl border border-brand-200 bg-brand-50 p-4 font-bold leading-8 text-brand-800">
+          <span className="me-1 text-xs font-normal text-brand-600">الف:</span>
+          {a}
+        </p>
+        <p className="rounded-2xl border border-calm-200 bg-calm-50 p-4 font-bold leading-8 text-calm-700">
+          <span className="me-1 text-xs font-normal text-calm-600">ب:</span>
+          {b}
+        </p>
+      </div>
+      <div className="mt-4 grid grid-cols-5 gap-1.5 sm:gap-2">
+        {options.map((o, i) => {
+          const side = i < mid ? "a" : i > mid ? "b" : "mid";
+          const strength = Math.abs(i - mid) / (mid || 1);
+          const on = selected === o.value;
+          const tone =
+            side === "a" ? "border-brand-300 hover:bg-brand-50" : side === "b" ? "border-calm-200 hover:bg-calm-50" : "border-slate-300 hover:bg-slate-50";
+          const active = side === "a" ? "bg-brand-600 text-white" : side === "b" ? "bg-calm-600 text-white" : "bg-slate-600 text-white";
+          return (
+            <button
+              key={o.value}
+              onClick={() => onChoose(o.value)}
+              title={o.label}
+              className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-[11px] leading-5 transition sm:text-xs ${on ? active : tone}`}
+            >
+              <span
+                className={`rounded-full ${on ? "bg-white" : side === "a" ? "bg-brand-500" : side === "b" ? "bg-calm-500" : "bg-slate-400"}`}
+                style={{ width: 8 + strength * 10, height: 8 + strength * 10 }}
+              />
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function TestRunner({ test }: { test: PsychTest }) {
   const [phase, setPhase] = useState<Phase>("intro");
   const [answers, setAnswers] = useState<Answers>({});
@@ -199,6 +254,16 @@ export default function TestRunner({ test }: { test: PsychTest }) {
         {/* راهنمای طولانی فقط در صفحه‌ی شروع نمایش داده می‌شود */}
         {test.instructions.length <= 160 && <span>{test.instructions}</span>}
       </div>
+      {question.textB ? (
+        <PairChoice
+          a={question.text}
+          b={question.textB}
+          options={mainOptions}
+          selected={answers[question.id]}
+          onChoose={choose}
+        />
+      ) : (
+        <>
       <h2 className="mt-2 min-h-16 text-lg font-bold leading-8">{question.text}</h2>
 
       {question.figure && (
@@ -249,6 +314,8 @@ export default function TestRunner({ test }: { test: PsychTest }) {
           );
         })}
       </div>
+        </>
+      )}
       {skipOption && (
         <button
           onClick={() => choose(skipOption.value)}

@@ -5,6 +5,8 @@ import ScoreBreakdown from "@/components/ScoreBreakdown";
 import ResultNote from "@/components/ResultNote";
 import NormPanel from "@/components/NormPanel";
 import InventoryProfile from "@/components/InventoryProfile";
+import StrengthsProfile from "@/components/StrengthsProfile";
+import { isStrengths } from "@/lib/strengths";
 import { isInventory } from "@/lib/inventory";
 import LevelBreakdown from "@/components/LevelBreakdown";
 import { buildNormReport } from "@/lib/norms";
@@ -111,7 +113,9 @@ export default async function ReportPage({ params }: Props) {
 
         <section className="mt-5">
           <h2 className="mb-3 text-sm font-bold text-slate-500">نتایج</h2>
-          {inventory ? (
+          {isStrengths(test) ? (
+            <StrengthsProfile test={test} scores={scores} print />
+          ) : inventory ? (
             <InventoryProfile test={test} scores={scores} alerts={alerts} answers={answers} norm={norm} print showCritical />
           ) : (
             <ScoreBreakdown test={test} scores={scores} alerts={alerts} />
@@ -148,7 +152,19 @@ export default async function ReportPage({ params }: Props) {
               {test.questions.map((q, i) => (
                 <tr key={q.id} className="border-b border-slate-100 align-top">
                   <td className="py-1.5 pe-2 text-slate-400">{toPersianDigits(i + 1)}</td>
-                  <td className="py-1.5 pe-3">{q.text}</td>
+                  <td className="py-1.5 pe-3">
+                    {q.textB ? (
+                      <>
+                        <span className="text-slate-400">الف: </span>
+                        {q.text}
+                        <br />
+                        <span className="text-slate-400">ب: </span>
+                        {q.textB}
+                      </>
+                    ) : (
+                      q.text
+                    )}
+                  </td>
                   <td className="py-1.5 whitespace-nowrap">
                     {(() => {
                       const o = optionsFor(test, q).find((x) => x.value === answers[q.id]);
