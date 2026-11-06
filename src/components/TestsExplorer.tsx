@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { PsychTest } from "@/lib/types";
+import { inCategory, type TestSummary } from "@/lib/test-summary";
 import type { Category } from "@/data/categories";
 import TestCard from "./TestCard";
 
 type Props = {
-  tests: PsychTest[];
+  tests: TestSummary[];
   categories: Category[];
   initialQuery?: string;
   initialCategory?: string;
@@ -20,7 +20,7 @@ export default function TestsExplorer({ tests, categories, initialQuery = "", in
     const q = query.trim();
     return tests.filter(
       (t) =>
-        (!category || t.category === category) &&
+        (!category || inCategory(t, category)) &&
         (!q || t.title.includes(q) || t.shortDescription.includes(q)),
     );
   }, [tests, query, category]);

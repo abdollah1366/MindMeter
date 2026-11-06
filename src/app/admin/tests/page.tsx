@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { tests } from "@/data/tests";
+import { tests, licensedLoadErrors } from "@/data/tests";
 import { getTestSettingsMap } from "@/lib/tests-service";
 import { getCategory } from "@/data/categories";
 import { toPersianDigits } from "@/lib/scoring";
@@ -37,9 +37,22 @@ export default async function AdminTests() {
     <>
       <h1 className="text-2xl font-extrabold">تست‌ها</h1>
       <p className="mt-2 text-sm leading-7 text-slate-500">
-        نمایش یا پنهان کردن تست‌ها و انتخاب تست‌های صفحه‌ی اصلی. محتوای سؤال‌ها در پوشه‌ی <code dir="ltr">src/data/tests</code> است؛
-        ویرایشگر کامل تست در فازهای بعد اضافه می‌شود.
+        نمایش یا پنهان کردن تست‌ها و انتخاب تست‌های صفحه‌ی اصلی. محتوای سؤال‌ها در پوشه‌ی <code dir="ltr">src/data/tests</code> است.
+        پرسشنامه‌های دارای مجوز تجاری را به شکل فایل JSON در پوشه‌ی <code dir="ltr">licensed-tests</code> روی سرور بگذارید (راهنما در
+        همان پوشه)؛ این فایل‌ها در گیت منتشر نمی‌شوند.
       </p>
+      {licensedLoadErrors.length > 0 && (
+        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+          <p className="font-bold">این فایل‌های پرسشنامه‌ی مجوزدار بارگذاری نشدند:</p>
+          <ul dir="ltr" className="mt-2 space-y-1 text-left font-mono text-xs">
+            {licensedLoadErrors.map((f) => (
+              <li key={f.file}>
+                <b>{f.file}</b>: {f.errors.join(" · ")}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
         <table className="w-full text-sm">
           <thead className="bg-surface text-slate-500">
@@ -62,6 +75,11 @@ export default async function AdminTests() {
                   <td className="p-3">
                     <Link href={`/tests/${t.slug}`} className="font-medium hover:text-brand-600">{t.code}</Link>
                     <p className="text-xs text-slate-500">{t.title}</p>
+                    {t.restricted && (
+                      <span className="mt-1 inline-block rounded-full bg-violet-50 px-2 py-0.5 text-[11px] text-violet-700">
+                        {t.licensed ? "مجوزدار · " : ""}فقط با لینک و ورود
+                      </span>
+                    )}
                   </td>
                   <td className="p-3 text-slate-600">{getCategory(t.category)?.title}</td>
                   <td className="p-3">{toPersianDigits(t.questions.length)}</td>

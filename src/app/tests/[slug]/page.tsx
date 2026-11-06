@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { summarize, inCategory } from "@/lib/test-summary";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import TestRunner from "@/components/TestRunner";
@@ -9,6 +10,7 @@ import { getCategory } from "@/data/categories";
 import { toPersianDigits } from "@/lib/scoring";
 import JsonLd from "@/components/JsonLd";
 import { absoluteUrl } from "@/lib/site";
+import { getCurrentUser } from "@/lib/auth/session";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -20,6 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: test.title,
     description: test.shortDescription,
     alternates: { canonical: url },
+    ...(test.restricted ? { robots: { index: false, follow: false } } : {}),
     openGraph: { type: "article", title: test.title, description: test.shortDescription, url },
   };
 }
@@ -28,16 +31,17 @@ export default async function TestPage({ params }: Props) {
   const test = await getVisibleTest((await params).slug);
   if (!test) notFound();
   const category = getCategory(test.category);
-  const related = (await getVisibleTests()).filter((t) => t.category === test.category && t.slug !== test.slug).slice(0, 3);
+  const related = (await getVisibleTests()).filter((t) => t.slug !== test.slug && (inCategory(t, test.category) || inCategory(test, t.category))).slice(0, 3);
 
   const pair = test.version ? getTest(test.version.pairSlug) : undefined;
+  const user = test.restricted ? await getCurrentUser() : null;
   const facts = [
     { label: "نام بین‌المللی", value: test.code },
     { label: "تعداد سؤال", value: toPersianDigits(test.questions.length) },
     { label: "زمان تقریبی", value: `${toPersianDigits(test.estimatedMinutes)} دقیقه` },
     { label: "دسته‌بندی", value: category?.title ?? "-" },
     { label: "مناسب برای", value: test.audience ?? "همه" },
-    { label: "هزینه", value: "رایگان" },
+    { label: "هزینه", value: test.licensed ? "طبق تعرفه‌ی متخصص" : "رایگان" },
   ];
 
   const ld = {
@@ -93,8 +97,49 @@ export default async function TestPage({ params }: Props) {
             </Link>
           )}
           <div className="mt-6">
-            <TestRunner test={test} />
+            {test.restricted && !user ? (
+              <div className="rounded-2xl border border-calm-200 bg-calm-50 p-6 text-center">
+                <p className="font-bold text-calm-700">این آزمون فقط برای مراجعان ثبت‌نام‌شده قابل اجراست.</p>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  این پرسشنامه با مجوز ناشر و زیر نظر متخصص اجرا می‌شود. برای شروع وارد حساب خود شوید.
+                </p>
+                <Link
+                  href={`/login?next=${encodeURIComponent(`/tests/${test.slug}`)}`}
+                  className="mt-4 inline-block rounded-xl bg-brand-600 px-6 py-2.5 font-bold text-white hover:bg-brand-700"
+                >
+                  ورود و شروع آزمون
+                </Link>
+              </div>
+            ) : (
+              <TestRunner test={test} />
+            )}
           </div>
+          {test.scaleGroups && (
+            <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
+              <h2 className="font-bold">این آزمون چه چیزهایی را می‌سنجد؟</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                {toPersianDigits(test.scales.filter((s) => test.scaleGroups!.some((g) => g.key === s.group)).length)} مقیاس در{" "}
+                {toPersianDigits(test.scaleGroups.length)} بخش:
+              </p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {test.scaleGroups.map((g) => (
+                  <div key={g.key}>
+                    <h3 className="text-sm font-bold text-brand-700">{g.title}</h3>
+                    {g.description && <p className="text-xs leading-6 text-slate-500">{g.description}</p>}
+                    <ul className="mt-1.5 flex flex-wrap gap-1.5">
+                      {test.scales
+                        .filter((s) => s.group === g.key)
+                        .map((s) => (
+                          <li key={s.key} className="rounded-lg bg-slate-50 px-2 py-1 text-xs text-slate-700" title={s.description}>
+                            {s.title}
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-5 lg:sticky lg:top-24">
@@ -120,7 +165,7 @@ export default async function TestPage({ params }: Props) {
           <h2 className="text-xl font-extrabold">تست‌های مرتبط</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((t) => (
-              <TestCard key={t.slug} test={t} />
+              <TestCard key={t.slug} test={summarize(t)} />
             ))}
           </div>
         </section>

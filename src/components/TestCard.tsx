@@ -1,9 +1,9 @@
 import Link from "next/link";
-import type { PsychTest } from "@/lib/types";
+import type { TestSummary } from "@/lib/test-summary";
 import { toPersianDigits } from "@/lib/scoring";
 import { getCategory } from "@/data/categories";
 
-export default function TestCard({ test }: { test: PsychTest }) {
+export default function TestCard({ test }: { test: TestSummary }) {
   const category = getCategory(test.category);
   return (
     <Link
@@ -21,7 +21,7 @@ export default function TestCard({ test }: { test: PsychTest }) {
       <p className="mt-2 flex-1 text-sm leading-7 text-slate-600">{test.shortDescription}</p>
       <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
         <span>
-          {toPersianDigits(test.questions.length)} سؤال · {toPersianDigits(test.estimatedMinutes)} دقیقه
+          {toPersianDigits(test.questionCount)} سؤال · {toPersianDigits(test.estimatedMinutes)} دقیقه
         </span>
         {test.version ? (
           <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-700">{test.version.kind === "short" ? "فرم کوتاه" : "فرم بلند"}</span>

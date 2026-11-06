@@ -32,11 +32,52 @@ export function scoreAnswer(test: PsychTest, q: Question, value: number) {
 
 /** آیا سؤال در این مقیاس (یا مقیاس ترکیبی) شمرده می‌شود */
 export function inScale(test: PsychTest, scale: Scale, q: Question) {
+  if (scale.method && scale.method !== "sum") return false;
+  if (scale.items) return scale.items.some((i) => i.id === q.id);
   const key = scaleOf(test, q);
   return scale.includes ? scale.includes.includes(key) : key === scale.key;
 }
 
+/** جهت کلید سؤال در این مقیاس (کلید صریح مقیاس بر جهت خود سؤال مقدم است) */
+function reversedIn(scale: Scale, q: Question) {
+  const item = scale.items?.find((i) => i.id === q.id);
+  return item ? !!item.reverse : !!q.reverse;
+}
+
+/** نمره‌ی جفت‌سؤال‌ها برای شاخص‌های اعتبار پاسخ */
+function scorePairs(test: PsychTest, scale: Scale, answers: Answers): ScaleScore {
+  const byId = new Map(test.questions.map((q) => [q.id, q]));
+  const pairs = scale.pairs ?? [];
+  let raw = 0;
+  for (const [a, b, kind] of pairs) {
+    const qa = byId.get(a);
+    const qb = byId.get(b);
+    const va = answers[a];
+    const vb = answers[b];
+    if (!qa || !qb || va === undefined || vb === undefined) continue;
+    // پاسخ‌ها روی بازه‌ی ۰ تا ۱ برده می‌شوند تا سؤال‌های چندگزینه‌ای هم قابل مقایسه باشند
+    const na = norm01(test, qa, va);
+    const nb = norm01(test, qb, vb);
+    if (scale.method === "inconsistency") {
+      const diff = kind === "same" ? Math.abs(na - nb) : Math.abs(na - (1 - nb));
+      if (diff >= 0.5) raw += 1;
+    } else if (kind === "opposite") {
+      if (na >= 0.5 && nb >= 0.5) raw += 1;
+      else if (na < 0.5 && nb < 0.5) raw -= 1;
+    }
+  }
+  const n = scale.method === "acquiescence" ? pairs.filter((p) => p[2] === "opposite").length : pairs.length;
+  const min = scale.method === "acquiescence" ? -n : 0;
+  return { key: scale.key, title: scale.title, raw, score: raw, min, max: n, result: scale.results.find((r) => raw >= r.min && raw <= r.max) };
+}
+
+function norm01(test: PsychTest, q: Question, value: number) {
+  const { lo, hi } = bounds(test, q);
+  return hi === lo ? 0 : (value - lo) / (hi - lo);
+}
+
 export function scoreScale(test: PsychTest, scale: Scale, answers: Answers): ScaleScore {
+  if (scale.method === "inconsistency" || scale.method === "acquiescence") return scorePairs(test, scale, answers);
   const m = scale.multiplier ?? 1;
   let raw = 0;
   let min = 0;
@@ -47,7 +88,9 @@ export function scoreScale(test: PsychTest, scale: Scale, answers: Answers): Sca
     min += lo;
     max += hi;
     const v = answers[q.id];
-    if (v !== undefined) raw += scoreAnswer(test, q, v);
+    if (v === undefined) continue;
+    if (q.answer !== undefined) raw += scoreAnswer(test, q, v);
+    else raw += reversedIn(scale, q) ? hi + lo - v : v;
   }
   const score = raw * m;
   return {

@@ -10,14 +10,15 @@ async function settings() {
 
 export async function getVisibleTests() {
   const s = await settings();
-  return tests.filter((t) => s.get(t.slug)?.enabled !== false);
+  // تست‌های محدود (مجوزدار) فقط با لینک مستقیم در دسترس‌اند
+  return tests.filter((t) => !t.restricted && s.get(t.slug)?.enabled !== false);
 }
 
 export async function getFeaturedVisibleTests() {
   const s = await settings();
   return tests.filter((t) => {
     const row = s.get(t.slug);
-    return row?.enabled !== false && (row?.featured ?? t.featured);
+    return !t.restricted && row?.enabled !== false && (row?.featured ?? t.featured);
   });
 }
 

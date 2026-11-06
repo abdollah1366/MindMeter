@@ -41,6 +41,7 @@ import { saveTestResult } from "@/server/results";
 import ResultView from "./ResultView";
 import { GlyphCell, Matrix } from "./Figure";
 import { track } from "@/lib/track-client";
+import { isInventory, inventorySummary } from "@/lib/inventory";
 
 type Phase = "intro" | "questions" | "result";
 type Saved = { state: "saving" } | { state: "saved"; id: string } | { state: "guest" } | { state: "error" };
@@ -95,7 +96,9 @@ export default function TestRunner({ test }: { test: PsychTest }) {
     saveResult({
       testSlug: test.slug,
       testTitle: test.title,
-      summary: scores.map((s) => (scores.length > 1 ? `${s.title}: ${s.result?.title}` : s.result?.title)).join("، "),
+      summary: isInventory(test)
+        ? inventorySummary(test, scores)
+        : scores.map((s) => (scores.length > 1 ? `${s.title}: ${s.result?.title}` : s.result?.title)).join("، "),
       takenAt: Date.now(),
     });
     try {
@@ -193,7 +196,8 @@ export default function TestRunner({ test }: { test: PsychTest }) {
         {question.level && (
           <span className={`rounded-full px-2 py-0.5 font-medium ${LEVEL_STYLE[question.level]}`}>سطح {LEVEL_LABEL[question.level]}</span>
         )}
-        <span>{test.instructions}</span>
+        {/* راهنمای طولانی فقط در صفحه‌ی شروع نمایش داده می‌شود */}
+        {test.instructions.length <= 160 && <span>{test.instructions}</span>}
       </div>
       <h2 className="mt-2 min-h-16 text-lg font-bold leading-8">{question.text}</h2>
 
@@ -205,7 +209,13 @@ export default function TestRunner({ test }: { test: PsychTest }) {
 
       <div
         className={`mt-5 grid gap-2 ${
-          mainOptions.some((o) => o.figure) ? "grid-cols-3 sm:grid-cols-5" : test.kind === "ability" ? "sm:grid-cols-2" : ""
+          mainOptions.some((o) => o.figure)
+            ? "grid-cols-3 sm:grid-cols-5"
+            : test.kind === "ability"
+              ? "sm:grid-cols-2"
+              : mainOptions.length === 2
+                ? "grid-cols-2"
+                : ""
         }`}
       >
         {mainOptions.map((opt, pos) => {

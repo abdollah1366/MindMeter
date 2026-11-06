@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { ageFrom } from "@/lib/jalali";
 import type { ScaleScore } from "@/lib/types";
+import { getTest } from "@/data/tests";
 
 /** گروه‌های سنی برای هنجار */
 export const AGE_BANDS: [number, number][] = [
@@ -83,6 +84,12 @@ export function normalCdf(z: number) {
   return z > 0 ? 1 - p : p;
 }
 
+/** نمره‌ی T با میانگین ۵۰ و انحراف معیار ۱۰ */
+export function tScore(x: number, mean: number, sd: number) {
+  if (!(sd > 0)) return null;
+  return Math.max(20, Math.min(120, Math.round(50 + (10 * (x - mean)) / sd)));
+}
+
 export function standardLabel(ss: number) {
   if (ss >= 130) return "بسیار بالاتر از میانگین";
   if (ss >= 120) return "بالاتر از میانگین";
@@ -96,6 +103,8 @@ export function standardLabel(ss: number) {
 export type ScaleComparison = { key: string; title: string; score: number; percentile: number | null; standard: number | null; mean: number; sd: number };
 export type NormComparison = {
   kind: "participants" | "official";
+  /** معیار ستون «standard»: میانگین ۱۰۰ (انحراف ۱۵) یا T (میانگین ۵۰، انحراف ۱۰) */
+  metric: "standard" | "T";
   groupLabel: string;
   n: number;
   /** وقتی گروه هم‌سن و هم‌جنس کم‌جمعیت بوده و گروه بزرگ‌تری استفاده شده */
@@ -117,6 +126,8 @@ export async function buildNormReport(resultId: string): Promise<NormReport | nu
   const result = await db.testResult.findUnique({ where: { id: resultId }, include: { user: true } });
   if (!result) return null;
   const scores = JSON.parse(result.scores) as ScaleScore[];
+  const metric = getTest(result.testSlug)?.normMetric ?? "standard";
+  const toStd = metric === "T" ? tScore : standardScore;
   const age = result.user.birthDate ? ageFrom(result.user.birthDate, result.createdAt) : null;
   const sex = result.user.sex === "MALE" || result.user.sex === "FEMALE" ? result.user.sex : null;
   const band = age != null ? ageBand(age) : null;
@@ -142,6 +153,7 @@ export async function buildNormReport(resultId: string): Promise<NormReport | nu
   const participants: NormComparison | null = chosen
     ? {
         kind: "participants",
+        metric,
         groupLabel: chosen.label,
         n: chosen.rows.length,
         fallbackNote: chosen === candidates[0] ? undefined : chosen.note,
@@ -153,7 +165,7 @@ export async function buildNormReport(resultId: string): Promise<NormReport | nu
             title: s.title,
             score: s.score,
             percentile: percentileRank(s.score, values),
-            standard: standardScore(s.score, st.mean, st.sd),
+            standard: toStd(s.score, st.mean, st.sd),
             mean: st.mean,
             sd: st.sd,
           };
@@ -172,11 +184,12 @@ export async function buildNormReport(resultId: string): Promise<NormReport | nu
       const first = rows[0].norm!;
       official = {
         kind: "official",
+        metric,
         groupLabel: `${SEX_GROUP_LABEL[first.sex] ?? ""} ${bandLabel([first.ageMin, first.ageMax])}`.trim(),
         n: first.n,
         source: first.source,
         scales: rows.map(({ s, norm }) => {
-          const ss = standardScore(s.score, norm!.mean, norm!.sd);
+          const ss = toStd(s.score, norm!.mean, norm!.sd);
           return {
             key: s.key,
             title: s.title,

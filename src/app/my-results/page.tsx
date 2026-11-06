@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { isInventory, headlineChips } from "@/lib/inventory";
 import Link from "next/link";
 import MyResults from "@/components/MyResults";
 import { getCurrentUser, isProfileComplete } from "@/lib/auth/session";
@@ -96,12 +97,18 @@ export default async function MyResultsPage() {
                     <p className="mt-1 text-xs text-slate-400">{formatJalali(r.createdAt)}</p>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {scores.map((s) => (
-                      <span key={s.key} className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(s.result?.level).badge}`}>
-                        {scores.length > 1 ? `${s.title}: ` : ""}
-                        {s.result?.title}
-                      </span>
-                    ))}
+                    {test && isInventory(test)
+                      ? headlineChips(test, scores).map((c) => (
+                          <span key={c.key} className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(c.level).badge}`}>
+                            {c.text}
+                          </span>
+                        ))
+                      : scores.map((s) => (
+                          <span key={s.key} className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(s.result?.level).badge}`}>
+                            {scores.length > 1 ? `${s.title}: ` : ""}
+                            {s.result?.title}
+                          </span>
+                        ))}
                   </div>
                 </Link>
               </li>

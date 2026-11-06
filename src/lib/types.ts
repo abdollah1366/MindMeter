@@ -44,6 +44,8 @@ export type Question = {
   answer?: number;
   /** سطح دشواری (در آزمون‌های توانایی) */
   level?: "easy" | "medium" | "hard";
+  /** پاسخ کلیدی به این سؤال در گزارش متخصص به عنوان «نیازمند پیگیری» فهرست می‌شود */
+  critical?: boolean;
   /** هشدار ایمنی: اگر مقدار پاسخ >= minValue بود پیام نشان داده می‌شود */
   alert?: { minValue: number; message: string };
 };
@@ -69,7 +71,32 @@ export type Scale = {
   multiplier?: number;
   /** مقیاس ترکیبی: جمع سؤال‌های این مقیاس‌ها (مثلاً نمره‌ی کل) */
   includes?: string[];
+  /**
+   * کلید صریح مقیاس (برای پرسشنامه‌هایی که یک سؤال در چند مقیاس شمرده می‌شود).
+   * اگر باشد، به جای `scale` سؤال‌ها و `includes` استفاده می‌شود.
+   */
+  items?: { id: string; reverse?: boolean }[];
+  /**
+   * روش نمره‌گذاری: «sum» جمع سؤال‌ها (پیش‌فرض)؛
+   * «inconsistency» تعداد جفت‌سؤال‌های ناهمخوان؛
+   * «acquiescence» تمایل به «بله» (+۱) یا «خیر» (−۱) در جفت‌های متضاد.
+   */
+  method?: "sum" | "inconsistency" | "acquiescence";
+  /** جفت‌سؤال‌ها برای روش‌های inconsistency و acquiescence: [سؤال الف، سؤال ب، هم‌معنا یا متضاد] */
+  pairs?: [string, string, "same" | "opposite"][];
+  /** کلید گروه مقیاس در `scaleGroups` تست (برای گزارش لایه‌ای) */
+  group?: string;
+  /** نام اختصاری مقیاس در نمودار، مثلاً INF */
+  code?: string;
   results: ResultRange[];
+};
+
+export type ScaleGroup = {
+  key: string;
+  title: string;
+  description?: string;
+  /** گروه اعتبار پاسخ: اگر نتیجه‌ی یکی از این مقیاس‌ها severe باشد، کل نیم‌رخ قابل تفسیر نیست */
+  validity?: boolean;
 };
 
 export type TestSource = {
@@ -111,6 +138,16 @@ export type PsychTest = {
   kind?: "questionnaire" | "ability";
   /** ترتیب سؤال‌ها و گزینه‌ها در هر بار اجرا تصادفی شود */
   shuffle?: boolean;
+  /** دسته‌های دیگری که تست در آن‌ها هم نمایش داده می‌شود */
+  alsoIn?: string[];
+  /** گروه‌بندی مقیاس‌ها؛ اگر باشد، نتیجه به شکل نیم‌رخ لایه‌ای نمایش داده می‌شود */
+  scaleGroups?: ScaleGroup[];
+  /** معیار نمره‌ی استاندارد در مقایسه با هنجار: «standard» (میانگین ۱۰۰، انحراف ۱۵) یا «T» (میانگین ۵۰، انحراف ۱۰) */
+  normMetric?: "standard" | "T";
+  /** تست محدود (مثلاً دارای مجوز تجاری): در فهرست‌ها و نقشه‌ی سایت نمی‌آید و فقط با ورود قابل اجراست */
+  restricted?: boolean;
+  /** از پوشه‌ی پرسشنامه‌های مجوزدار بارگذاری شده است (به‌صورت خودکار تنظیم می‌شود) */
+  licensed?: boolean;
   /** توضیح تکمیلی که بعد از نتیجه و در گزارش نشان داده می‌شود (مثلاً راهنمای ارجاع) */
   resultNote?: { title: string; paragraphs: string[] };
 };
