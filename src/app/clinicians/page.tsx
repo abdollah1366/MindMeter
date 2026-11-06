@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { CLINICIAN_KIND, displayName } from "@/lib/clinicians";
 import { toPersianDigits } from "@/lib/scoring";
+import Avatar from "@/components/Avatar";
 
 export const metadata: Metadata = { title: "متخصصان" };
 
@@ -33,9 +34,7 @@ export default async function CliniciansPage() {
           {list.map((c) => (
             <Link key={c.id} href={`/clinicians/${c.id}`} className="rounded-2xl border border-slate-200 bg-white p-5 hover:border-brand-400">
               <div className="flex items-center gap-3">
-                <span className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-brand-100 to-calm-100 text-lg font-bold text-brand-700">
-                  {c.user.firstName?.[0] ?? "؟"}
-                </span>
+                <Avatar avatarId={c.avatarId} name={c.user.firstName} size={48} />
                 <div>
                   <p className="font-bold">
                     {c.title} {displayName(c.user)}

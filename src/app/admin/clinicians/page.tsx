@@ -4,13 +4,14 @@ import { CLINICIAN_KIND, CLINICIAN_STATUS, displayName } from "@/lib/clinicians"
 import { formatJalali } from "@/lib/jalali";
 import { toPersianDigits } from "@/lib/scoring";
 import { reviewClinician } from "@/server/admin";
+import Avatar from "@/components/Avatar";
 
 export const metadata: Metadata = { title: "متخصصان" };
 
 const ORDER: Record<string, number> = { PENDING: 0, APPROVED: 1, REJECTED: 2 };
 
 export default async function AdminClinicians() {
-  const list = (await db.clinicianProfile.findMany({ include: { user: true, _count: { select: { grants: true } } } })).sort(
+  const list = (await db.clinicianProfile.findMany({ include: { user: { include: { uploads: { where: { kind: "DOCUMENT" }, orderBy: { createdAt: "desc" } } } }, _count: { select: { grants: true } } } })).sort(
     (a, b) => ORDER[a.status] - ORDER[b.status] || b.createdAt.getTime() - a.createdAt.getTime(),
   );
 
@@ -22,8 +23,9 @@ export default async function AdminClinicians() {
       <ul className="mt-5 space-y-3">
         {list.map((c) => (
           <li key={c.id} className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
+            <div className="flex flex-wrap items-start gap-4">
+              <Avatar avatarId={c.avatarId} name={c.user.firstName} size={56} />
+              <div className="min-w-0 flex-1">
                 <p className="font-bold">
                   {c.title} {displayName(c.user)}{" "}
                   <span className={`ms-2 rounded-full px-2.5 py-0.5 text-xs ${CLINICIAN_STATUS[c.status].style}`}>{CLINICIAN_STATUS[c.status].label}</span>
@@ -36,6 +38,18 @@ export default async function AdminClinicians() {
                   <span dir="ltr">{toPersianDigits(c.user.phone)}</span> · درخواست: {formatJalali(c.createdAt)} · مراجعان: {toPersianDigits(c._count.grants)}
                 </p>
                 {c.bio && <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">{c.bio}</p>}
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="text-slate-500">مدارک:</span>
+                  {c.user.uploads.length === 0 ? (
+                    <span className="text-amber-700">مدرکی بارگذاری نشده</span>
+                  ) : (
+                    c.user.uploads.map((d) => (
+                      <a key={d.id} href={`/api/files/${d.id}`} target="_blank" rel="noopener" className="rounded-full bg-brand-50 px-3 py-1 text-brand-700 hover:bg-brand-100" dir="auto">
+                        📎 {d.name}
+                      </a>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
             <form action={reviewClinician} className="mt-4 flex flex-wrap items-center gap-2">

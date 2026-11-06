@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   // بدون این، Next.js فایل‌های جاوااسکریپت را مسدود می‌کند و دکمه‌ها کار نمی‌کنند.
   allowedDevOrigins: ["127.0.0.1", "192.168.*.*", "10.*.*.*", "172.*.*.*"],
   poweredByHeader: false,
+  // آپلود عکس و مدارک تا ۵ مگابایت
+  experimental: { serverActions: { bodySizeLimit: "6mb" } },
   async headers() {
     return [
       {
