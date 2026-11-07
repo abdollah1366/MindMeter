@@ -275,7 +275,11 @@ export default function TestRunner({ test }: { test: PsychTest }) {
       <div
         className={`mt-5 grid gap-2 ${
           mainOptions.some((o) => o.figure)
-            ? "grid-cols-3 sm:grid-cols-5"
+            ? mainOptions.length > 6
+              ? "grid-cols-4"
+              : mainOptions.length === 6
+                ? "grid-cols-3 sm:grid-cols-6"
+                : "grid-cols-3 sm:grid-cols-5"
             : test.kind === "ability"
               ? "sm:grid-cols-2"
               : mainOptions.length === 2

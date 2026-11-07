@@ -23,13 +23,13 @@ export function rng(seed: number) {
   };
 }
 
-function hash(s: string) {
+export function hash(s: string) {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
   return h >>> 0;
 }
 
-function shuffle<T>(arr: T[], rand: () => number) {
+export function shuffle<T>(arr: T[], rand: () => number) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));

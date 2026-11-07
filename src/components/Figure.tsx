@@ -42,7 +42,9 @@ const LAYOUT: Record<number, [number, number][]> = {
 
 export function GlyphCell({ glyph, size = 64, id }: { glyph: Glyph | null; size?: number; id: string }) {
   const count = Math.min(4, Math.max(1, glyph?.count ?? 1));
-  const scale = count === 1 ? 1.6 : 0.95;
+  const scale = count === 1 ? (glyph?.size ? [1.15, 1.45, 1.85][glyph.size - 1] : 1.6) : 0.95;
+  const inner = count === 1 ? glyph?.inner : undefined;
+  const [innerColor, innerInk] = inner ? COLORS[inner.shape] : ["#000", "#000"];
   const pattern = `stripes-${id}`;
   const [color, ink] = glyph ? COLORS[glyph.shape] : ["#000", "#000"];
   const fill = glyph?.fill === "solid" ? color : glyph?.fill === "striped" ? `url(#${pattern})` : "white";
@@ -59,7 +61,15 @@ export function GlyphCell({ glyph, size = 64, id }: { glyph: Glyph | null; size?
           <g key={i} transform={`translate(${x} ${y}) scale(${scale}) rotate(${glyph.rotate ?? 0})`}>
             <ShapePath shape={glyph.shape} fill={fill} stroke={ink} />
           </g>
-        ))
+        )).concat(
+          inner ? (
+            <g key="inner" transform={`scale(${scale * 0.5})`}>
+              <ShapePath shape={inner.shape} fill={inner.fill === "empty" ? "white" : innerColor} stroke={inner.fill === "empty" ? innerInk : "white"} />
+            </g>
+          ) : (
+            []
+          ),
+        )
       ) : (
         <text x="0" y="9" textAnchor="middle" fontSize="26" fontWeight="700" fill="#8a78e0">
           ؟
@@ -72,7 +82,7 @@ export function GlyphCell({ glyph, size = 64, id }: { glyph: Glyph | null; size?
 /** ماتریس ۳×۳ (چیدمان چپ‌به‌راست، مثل منابع بین‌المللی) */
 export function Matrix({ figure, id }: { figure: MatrixFigure; id: string }) {
   return (
-    <div dir="ltr" className="mx-auto grid w-fit grid-cols-3 gap-1.5 rounded-2xl bg-slate-100 p-1.5">
+    <div dir="ltr" className={`mx-auto grid w-fit gap-1.5 rounded-2xl bg-slate-100 p-1.5 ${figure.cells.length === 4 ? "grid-cols-2" : "grid-cols-3"}`}>
       {figure.cells.map((c, i) => (
         <div key={i} className={`grid place-items-center rounded-xl ${c ? "bg-white" : "border-2 border-dashed border-calm-500 bg-calm-50"}`}>
           <GlyphCell glyph={c} id={`${id}-${i}`} size={76} />
