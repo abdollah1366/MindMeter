@@ -12,9 +12,13 @@ export type Glyph = {
   fill?: "solid" | "empty" | "striped";
   /** چرخش به درجه (ساعتگرد) */
   rotate?: number;
+  /** اندازه‌ی شکل وقتی تنهاست: ۱ کوچک، ۲ متوسط، ۳ بزرگ (پیش‌فرض: اندازه‌ی معمول) */
+  size?: 1 | 2 | 3;
+  /** شکل کوچک داخل شکل اصلی (فقط وقتی تعداد ۱ است) */
+  inner?: { shape: "circle" | "square" | "triangle" | "diamond"; fill?: "solid" | "empty" };
 };
 
-/** ماتریس ۳×۳ که خانه‌ی آخرش (null) باید پیدا شود */
+/** ماتریس ۳×۳ (یا ۲×۲ با ۴ خانه) که خانه‌ی آخرش (null) باید پیدا شود */
 export type MatrixFigure = { kind: "matrix"; cells: (Glyph | null)[] };
 
 export type AnswerOption = {

@@ -34,6 +34,7 @@ export function validateTest(t: PsychTest, all: PsychTest[] = []): string[] {
       if (new Set(real.map(key)).size !== real.length) fail(`${q.id}: two options look identical`);
     }
     if (q.figure && q.figure.cells.filter((c) => c === null).length !== 1) fail(`${q.id}: matrix needs exactly one blank`);
+    if (q.figure && q.figure.cells.length !== 9 && q.figure.cells.length !== 4) fail(`${q.id}: matrix must be 2×2 or 3×3`);
   }
 
   for (const s of t.scales) {
