@@ -5,7 +5,8 @@ import { tests, licensedLoadErrors } from "@/data/tests";
 import { getTestSettingsMap } from "@/lib/tests-service";
 import { getCategory } from "@/data/categories";
 import { toPersianDigits } from "@/lib/scoring";
-import { updateTestSetting } from "@/server/admin";
+import { faCount } from "@/lib/test-summary";
+import { updateTestPrice, updateTestSetting } from "@/server/admin";
 
 export const metadata: Metadata = { title: "مدیریت تست‌ها" };
 
@@ -27,9 +28,10 @@ function Toggle({ slug, field, on }: { slug: string; field: "enabled" | "feature
 }
 
 export default async function AdminTests() {
-  const [settings, counts] = await Promise.all([
+  const [settings, counts, revenue] = await Promise.all([
     getTestSettingsMap(),
     db.testResult.groupBy({ by: ["testSlug"], _count: { _all: true } }),
+    db.payment.aggregate({ where: { status: "PAID", testPurchaseId: { not: null } }, _sum: { amount: true }, _count: { _all: true } }),
   ]);
   const countOf = (slug: string) => counts.find((c) => c.testSlug === slug)?._count._all ?? 0;
 
@@ -37,9 +39,12 @@ export default async function AdminTests() {
     <>
       <h1 className="text-2xl font-extrabold">تست‌ها</h1>
       <p className="mt-2 text-sm leading-7 text-slate-500">
-        نمایش یا پنهان کردن تست‌ها و انتخاب تست‌های صفحه‌ی اصلی. محتوای سؤال‌ها در پوشه‌ی <code dir="ltr">src/data/tests</code> است.
+        نمایش یا پنهان کردن تست‌ها، انتخاب تست‌های صفحه‌ی اصلی و تعیین قیمت (۰ = رایگان؛ برای تست پولی، کاربر پیش از شروع با زرین‌پال پرداخت می‌کند و هر پرداخت یک بار اجراست). محتوای سؤال‌ها در پوشه‌ی <code dir="ltr">src/data/tests</code> است.
         پرسشنامه‌های دارای مجوز تجاری را به شکل فایل JSON در پوشه‌ی <code dir="ltr">licensed-tests</code> روی سرور بگذارید (راهنما در
         همان پوشه)؛ این فایل‌ها در گیت منتشر نمی‌شوند.
+      </p>
+      <p className="mt-3 text-sm text-slate-600" data-testid="test-revenue">
+        فروش تست‌ها: {toPersianDigits(revenue._count._all)} پرداخت · {faCount(revenue._sum.amount ?? 0)} تومان
       </p>
       {licensedLoadErrors.length > 0 && (
         <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
@@ -63,6 +68,7 @@ export default async function AdminTests() {
               <th className="p-3 text-start">دفعات انجام</th>
               <th className="p-3 text-start">فعال</th>
               <th className="p-3 text-start">صفحه‌ی اصلی</th>
+              <th className="p-3 text-start">قیمت (تومان)</th>
             </tr>
           </thead>
           <tbody>
@@ -86,6 +92,21 @@ export default async function AdminTests() {
                   <td className="p-3">{toPersianDigits(countOf(t.slug))}</td>
                   <td className="p-3"><Toggle slug={t.slug} field="enabled" on={enabled} /></td>
                   <td className="p-3"><Toggle slug={t.slug} field="featured" on={featured} /></td>
+                  <td className="p-3">
+                    <form action={updateTestPrice} className="flex items-center gap-1.5">
+                      <input type="hidden" name="slug" value={t.slug} />
+                      <input
+                        name="price"
+                        inputMode="numeric"
+                        defaultValue={s?.price ? String(s.price) : "0"}
+                        dir="ltr"
+                        aria-label={`قیمت ${t.code}`}
+                        className="w-28 rounded-lg border border-slate-200 px-2 py-1 text-left text-sm"
+                      />
+                      <button className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs hover:bg-brand-50 hover:text-brand-700">ذخیره</button>
+                    </form>
+                    <p className="mt-1 text-[11px] text-slate-400">{s?.price ? `${faCount(s.price)} تومان` : "رایگان"}</p>
+                  </td>
                 </tr>
               );
             })}

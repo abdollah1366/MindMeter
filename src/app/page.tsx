@@ -11,6 +11,7 @@ import { toPersianDigits } from "@/lib/scoring";
 import JsonLd from "@/components/JsonLd";
 import { SITE_NAME, absoluteUrl } from "@/lib/site";
 import { getSiteStats } from "@/lib/public-stats";
+import { testPrices } from "@/lib/test-pricing";
 import { faCount } from "@/lib/test-summary";
 
 const steps = [
@@ -20,11 +21,12 @@ const steps = [
 ];
 
 export default async function HomePage() {
-  const [tests, featured, articles, stats] = await Promise.all([
+  const [tests, featured, articles, stats, prices] = await Promise.all([
     getVisibleTests(),
     getFeaturedVisibleTests(),
     listPublishedArticles(4),
     getSiteStats(),
+    testPrices(),
   ]);
   return (
     <div className="space-y-16">
@@ -100,7 +102,7 @@ export default async function HomePage() {
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {featured.map((t) => (
-            <TestCard key={t.slug} test={summarize(t, stats.byTest[t.slug])} />
+            <TestCard key={t.slug} test={summarize(t, stats.byTest[t.slug], prices[t.slug])} />
           ))}
         </div>
       </section>

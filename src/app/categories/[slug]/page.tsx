@@ -6,6 +6,7 @@ import TestCard from "@/components/TestCard";
 import { categories, getCategory } from "@/data/categories";
 import { getVisibleTests } from "@/lib/tests-service";
 import { getSiteStats } from "@/lib/public-stats";
+import { testPrices } from "@/lib/test-pricing";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CategoryPage({ params }: Props) {
   const category = getCategory((await params).slug);
   if (!category) notFound();
-  const stats = await getSiteStats();
+  const [stats, prices] = await Promise.all([getSiteStats(), testPrices()]);
   const list = (await getVisibleTests()).filter((t) => inCategory(t, category.slug));
 
   return (
@@ -41,7 +42,7 @@ export default async function CategoryPage({ params }: Props) {
       {list.length ? (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((t) => (
-            <TestCard key={t.slug} test={summarize(t, stats.byTest[t.slug])} />
+            <TestCard key={t.slug} test={summarize(t, stats.byTest[t.slug], prices[t.slug])} />
           ))}
         </div>
       ) : (

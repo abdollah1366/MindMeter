@@ -24,11 +24,18 @@ export default function TestCard({ test }: { test: TestSummary }) {
           {toPersianDigits(test.questionCount)} سؤال · {toPersianDigits(test.estimatedMinutes)} دقیقه
           {test.taken ? <> · <span data-testid="taken">{faCount(test.taken)} بار انجام شده</span></> : null}
         </span>
-        {test.version ? (
-          <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-700">{test.version.kind === "short" ? "فرم کوتاه" : "فرم بلند"}</span>
-        ) : (
-          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">رایگان</span>
-        )}
+        <span className="flex shrink-0 gap-1">
+          {test.version && (
+            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-700">{test.version.kind === "short" ? "فرم کوتاه" : "فرم بلند"}</span>
+          )}
+          {test.price ? (
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-700" data-testid="price">
+              {faCount(test.price)} تومان
+            </span>
+          ) : (
+            !test.version && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">رایگان</span>
+          )}
+        </span>
       </div>
     </Link>
   );

@@ -12,6 +12,10 @@ import { notifyAppointmentConfirmed } from "@/lib/appointment-notify";
  */
 export async function markPaid(paymentId: string, refId: string) {
   const p = await db.payment.update({ where: { id: paymentId }, data: { status: "PAID", refId, paidAt: new Date() } });
+  if (p.testPurchaseId) {
+    await db.testPurchase.updateMany({ where: { id: p.testPurchaseId, status: "PENDING_PAYMENT" }, data: { status: "PAID", paidAt: new Date() } });
+    return;
+  }
   if (p.enrollmentId) {
     await activateEnrollment(p.enrollmentId);
     return;
@@ -37,7 +41,11 @@ export async function markPaid(paymentId: string, refId: string) {
 }
 
 /** صفحه‌ای که کاربر پس از پرداخت موفق به آن می‌رود */
-export async function afterPaymentPath(payment: { appointmentId: string | null; enrollmentId: string | null }) {
+export async function afterPaymentPath(payment: { appointmentId: string | null; enrollmentId: string | null; testPurchaseId?: string | null }) {
+  if (payment.testPurchaseId) {
+    const t = await db.testPurchase.findUnique({ where: { id: payment.testPurchaseId } });
+    return t ? `/tests/${t.testSlug}?paid=1` : "/tests";
+  }
   if (payment.enrollmentId) {
     const e = await db.enrollment.findUnique({ where: { id: payment.enrollmentId }, include: { course: true } });
     if (e) return `/academy/${e.course.slug}?enrolled=1`;

@@ -38,6 +38,7 @@ model User {
   payments     Payment[]
   referrals    Referral[]        @relation("PatientReferrals")
   enrollments  Enrollment[]
+  testPurchases TestPurchase[]
   certificates Certificate[]
   /// یادآوری پیامکی نوبت و کلاس‌ها
   smsReminders  Boolean            @default(true)
@@ -168,6 +169,8 @@ model TestSetting {
   slug      String   @id
   enabled   Boolean  @default(true)
   featured  Boolean?
+  /// قیمت هر بار اجرای تست به تومان (۰ = رایگان)
+  price     Int      @default(0)
   updatedAt DateTime @updatedAt
 }
 
@@ -220,6 +223,8 @@ model Payment {
   appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
   enrollmentId  String?
   enrollment    Enrollment?  @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+  testPurchaseId String?
+  testPurchase   TestPurchase? @relation(fields: [testPurchaseId], references: [id], onDelete: SetNull)
   /// مبلغ به تومان
   amount        Int
   /// ZARINPAL | DEV
@@ -625,4 +630,24 @@ model Payout {
   decidedAt   DateTime?
 
   @@index([status, createdAt])
+}
+
+/// خرید یک بار اجرای تست پولی
+model TestPurchase {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testSlug  String
+  /// مبلغ به تومان در لحظه‌ی خرید
+  amount    Int
+  /// PENDING_PAYMENT | PAID | USED
+  status    String    @default("PENDING_PAYMENT")
+  /// نتیجه‌ای که با این خرید ثبت شد
+  resultId  String?
+  createdAt DateTime  @default(now())
+  paidAt    DateTime?
+  usedAt    DateTime?
+  payments  Payment[]
+
+  @@index([userId, testSlug, status])
 }
