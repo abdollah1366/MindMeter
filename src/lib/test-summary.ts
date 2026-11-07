@@ -5,9 +5,11 @@ export type TestSummary = Pick<PsychTest, "slug" | "code" | "title" | "shortDesc
   questionCount: number;
   /** تعداد دفعات انجام (آمار عمومی) */
   taken?: number;
+  /** قیمت به تومان (۰ یا خالی = رایگان) */
+  price?: number;
 };
 
-export function summarize(t: PsychTest, taken?: number): TestSummary {
+export function summarize(t: PsychTest, taken?: number, price?: number): TestSummary {
   return {
     slug: t.slug,
     code: t.code,
@@ -19,6 +21,7 @@ export function summarize(t: PsychTest, taken?: number): TestSummary {
     version: t.version,
     questionCount: t.questions.length,
     ...(taken ? { taken } : {}),
+    ...(price ? { price } : {}),
   };
 }
 

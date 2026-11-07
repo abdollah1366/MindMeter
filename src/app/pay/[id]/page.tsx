@@ -9,6 +9,7 @@ import { PAYMENT_HOLD_MIN, releaseStaleHolds } from "@/lib/scheduling";
 import { toPersianDigits } from "@/lib/scoring";
 import { startPayment } from "@/server/booking";
 import { afterPaymentPath } from "@/lib/payments";
+import { getTest } from "@/data/tests";
 
 export const metadata: Metadata = { title: "پرداخت" };
 
@@ -22,10 +23,11 @@ export default async function PayPage({ params, searchParams }: Props) {
   await releaseStaleHolds();
   const payment = await db.payment.findUnique({
     where: { id },
-    include: { appointment: { include: { clinician: { include: { user: true } } } }, enrollment: { include: { course: true } } },
+    include: { appointment: { include: { clinician: { include: { user: true } } } }, enrollment: { include: { course: true } }, testPurchase: true },
   });
   if (!payment || payment.userId !== user.id) notFound();
   if (payment.status === "PAID") redirect(await afterPaymentPath(payment));
+  if (payment.testPurchase) return <TestPay payment={payment} purchase={payment.testPurchase} failed={Boolean(failed)} />;
   const e = payment.enrollment;
   if (payment.enrollmentId) return <CoursePay payment={payment} enrollment={e} failed={Boolean(failed)} />;
   const a = payment.appointment;
@@ -143,6 +145,57 @@ function CoursePay({
             بازگشت به صفحه‌ی دوره
           </Link>
         )}
+      </div>
+    </div>
+  );
+}
+
+function TestPay({
+  payment,
+  purchase,
+  failed,
+}: {
+  payment: { id: string; amount: number; provider: string };
+  purchase: { testSlug: string; status: string };
+  failed: boolean;
+}) {
+  const test = getTest(purchase.testSlug);
+  const payable = purchase.status === "PENDING_PAYMENT";
+  return (
+    <div className="mx-auto max-w-lg">
+      <h1 className="text-2xl font-extrabold">پرداخت هزینه‌ی آزمون</h1>
+      <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-6">
+        <dl className="space-y-3 text-sm">
+          <div className="flex justify-between gap-3">
+            <dt className="text-slate-500">آزمون</dt>
+            <dd className="text-end font-medium">{test?.title ?? purchase.testSlug}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt className="text-slate-500">تعداد اجرا</dt>
+            <dd className="font-medium">یک بار</dd>
+          </div>
+          <div className="flex justify-between gap-3 border-t border-slate-100 pt-3">
+            <dt className="text-slate-500">مبلغ قابل پرداخت</dt>
+            <dd className="text-lg font-extrabold text-brand-700">{formatToman(payment.amount)}</dd>
+          </div>
+        </dl>
+        {failed && payable && (
+          <p className="mt-5 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">پرداخت انجام نشد یا لغو شد. می‌توانید دوباره تلاش کنید.</p>
+        )}
+        {payable ? (
+          <form action={startPayment} className="mt-6">
+            <input type="hidden" name="paymentId" value={payment.id} />
+            <button className="w-full rounded-xl bg-brand-600 py-3 font-bold text-white hover:bg-brand-700">
+              {payment.provider === "DEV" ? "پرداخت آزمایشی (حالت توسعه)" : "پرداخت با زرین‌پال"}
+            </button>
+            {payment.provider === "DEV" && <p className="mt-3 text-center text-xs text-slate-400">در حالت توسعه پولی جابه‌جا نمی‌شود.</p>}
+          </form>
+        ) : (
+          <p className="mt-6 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">این پرداخت دیگر معتبر نیست.</p>
+        )}
+        <Link href={`/tests/${purchase.testSlug}`} className="mt-4 block text-center text-sm text-slate-500 hover:text-brand-600">
+          بازگشت به صفحه‌ی آزمون
+        </Link>
       </div>
     </div>
   );

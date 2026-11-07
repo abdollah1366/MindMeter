@@ -11,7 +11,10 @@ import { toPersianDigits } from "@/lib/scoring";
 import JsonLd from "@/components/JsonLd";
 import { absoluteUrl } from "@/lib/site";
 import { getCurrentUser } from "@/lib/auth/session";
+import { availablePurchase } from "@/lib/test-pricing";
+import { buyTest } from "@/server/test-purchase";
 import { getSiteStats } from "@/lib/public-stats";
+import { testPrices } from "@/lib/test-pricing";
 import { faCount } from "@/lib/test-summary";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -35,10 +38,12 @@ export default async function TestPage({ params }: Props) {
   const category = getCategory(test.category);
   const related = (await getVisibleTests()).filter((t) => t.slug !== test.slug && (inCategory(t, test.category) || inCategory(test, t.category))).slice(0, 3);
 
-  const stats = await getSiteStats();
+  const [stats, prices] = await Promise.all([getSiteStats(), testPrices()]);
+  const price = prices[test.slug] ?? 0;
   const taken = stats.byTest[test.slug] ?? 0;
   const pair = test.version ? getTest(test.version.pairSlug) : undefined;
-  const user = test.restricted ? await getCurrentUser() : null;
+  const user = test.restricted || price > 0 ? await getCurrentUser() : null;
+  const purchase = price > 0 && user ? await availablePurchase(user.id, test.slug) : null;
   const facts = [
     { label: "نام بین‌المللی", value: test.code },
     { label: "تعداد سؤال", value: toPersianDigits(test.questions.length) },
@@ -46,7 +51,7 @@ export default async function TestPage({ params }: Props) {
     { label: "دسته‌بندی", value: category?.title ?? "-" },
     { label: "تعداد انجام", value: taken ? `${faCount(taken)} بار` : "اولین نفر باشید" },
     { label: "مناسب برای", value: test.audience ?? "همه" },
-    { label: "هزینه", value: test.licensed ? "طبق تعرفه‌ی متخصص" : "رایگان" },
+    { label: "هزینه", value: price > 0 ? `${faCount(price)} تومان` : test.licensed ? "طبق تعرفه‌ی متخصص" : "رایگان" },
   ];
 
   const ld = {
@@ -58,7 +63,7 @@ export default async function TestPage({ params }: Props) {
         description: test.shortDescription,
         url: absoluteUrl(`/tests/${test.slug}`),
         inLanguage: "fa",
-        isAccessibleForFree: true,
+        isAccessibleForFree: price === 0,
         timeRequired: `PT${test.estimatedMinutes}M`,
         about: { "@type": "Thing", name: `${test.englishTitle} (${test.code})` },
         publisher: { "@type": "Organization", name: "مایندمتر", url: absoluteUrl("/") },
@@ -115,8 +120,36 @@ export default async function TestPage({ params }: Props) {
                   ورود و شروع آزمون
                 </Link>
               </div>
+            ) : price > 0 && !purchase ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center" data-testid="paywall">
+                <p className="text-sm text-amber-800">هزینه‌ی هر بار اجرای این آزمون</p>
+                <p className="mt-1 text-2xl font-extrabold text-amber-900">{faCount(price)} تومان</p>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  پس از پرداخت، آزمون را انجام می‌دهید و نتیجه‌ی کامل در پرونده‌ی شما ذخیره می‌شود و گزارش قابل چاپ دارد.
+                </p>
+                {user ? (
+                  <form action={buyTest} className="mt-4">
+                    <input type="hidden" name="slug" value={test.slug} />
+                    <button className="rounded-xl bg-brand-600 px-6 py-2.5 font-bold text-white hover:bg-brand-700">پرداخت و شروع آزمون</button>
+                  </form>
+                ) : (
+                  <Link
+                    href={`/login?next=${encodeURIComponent(`/tests/${test.slug}`)}`}
+                    className="mt-4 inline-block rounded-xl bg-brand-600 px-6 py-2.5 font-bold text-white hover:bg-brand-700"
+                  >
+                    ورود و پرداخت
+                  </Link>
+                )}
+              </div>
             ) : (
-              <TestRunner test={test} />
+              <>
+                {purchase && (
+                  <p className="mb-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800" data-testid="paid-note">
+                    پرداخت شما ثبت شده است. نتیجه‌ی این اجرا در پرونده‌تان ذخیره می‌شود.
+                  </p>
+                )}
+                <TestRunner test={test} />
+              </>
             )}
           </div>
           {test.scaleGroups && (
@@ -170,7 +203,7 @@ export default async function TestPage({ params }: Props) {
           <h2 className="text-xl font-extrabold">تست‌های مرتبط</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((t) => (
-              <TestCard key={t.slug} test={summarize(t, stats.byTest[t.slug])} />
+              <TestCard key={t.slug} test={summarize(t, stats.byTest[t.slug], prices[t.slug])} />
             ))}
           </div>
         </section>

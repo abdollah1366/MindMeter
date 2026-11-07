@@ -100,6 +100,19 @@ export async function updateTestSetting(form: FormData) {
   revalidatePath("/", "layout");
 }
 
+export async function updateTestPrice(form: FormData) {
+  await requireAdmin();
+  const slug = String(form.get("slug"));
+  if (!getTest(slug)) return;
+  const raw = String(form.get("price") ?? "").replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[^\d]/g, "");
+  const price = Math.min(100_000_000, Number(raw || 0));
+  // زرین‌پال کمتر از ۱۰۰۰ تومان را نمی‌پذیرد
+  const value = price > 0 && price < 1000 ? 1000 : price;
+  await db.testSetting.upsert({ where: { slug }, create: { slug, price: value }, update: { price: value } });
+  revalidatePath("/admin/tests");
+  revalidatePath("/", "layout");
+}
+
 /** اجرای دستی یادآوری‌ها از داشبورد (در production باید cron هم تنظیم شود) */
 export async function runRemindersNow() {
   await requireAdmin();

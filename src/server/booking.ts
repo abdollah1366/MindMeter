@@ -135,10 +135,14 @@ export async function startPayment(form: FormData) {
   const id = String(form.get("paymentId") ?? "");
   const user = await getCurrentUser();
   if (!user) redirect(`/login?next=/pay/${id}`);
-  const payment = await db.payment.findUnique({ where: { id }, include: { appointment: true, enrollment: true } });
+  const payment = await db.payment.findUnique({ where: { id }, include: { appointment: true, enrollment: true, testPurchase: true } });
   if (!payment || payment.userId !== user.id) redirect("/appointments");
   if (payment.status === "PAID") redirect(await afterPaymentPath(payment));
-  const payable = payment.enrollmentId ? payment.enrollment?.status === "PENDING_PAYMENT" : payment.appointment?.status === "PENDING_PAYMENT";
+  const payable = payment.testPurchaseId
+    ? payment.testPurchase?.status === "PENDING_PAYMENT"
+    : payment.enrollmentId
+      ? payment.enrollment?.status === "PENDING_PAYMENT"
+      : payment.appointment?.status === "PENDING_PAYMENT";
   if (!payable) redirect(`/pay/${id}`);
 
   if (payment.provider === "DEV") {
