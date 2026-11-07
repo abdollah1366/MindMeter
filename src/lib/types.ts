@@ -166,7 +166,9 @@ export type PsychTest = {
   /** قاعده‌های تعیین «الگوی غالب» در خلاصه‌ی گزارش (آخرین قاعده معمولاً بدون شرط است) */
   patterns?: ResultPattern[];
   /** شکل گزارش: «strengths» رتبه‌بندی استعدادها (۵ برتر، حوزه‌ها، شغل‌ها) به جای نیم‌رخ */
-  report?: "profile" | "strengths";
+  report?: "profile" | "strengths" | "bigfive";
+  /** هنجار منتشرشده‌ی همراه تست (مثلاً هنجارهای Johnson برای IPIP-NEO) برای محاسبه‌ی نمره‌ی T بر اساس سن و جنس */
+  builtInNorms?: { source: string; groups: BuiltInNormGroup[] };
   /** معیار نمره‌ی استاندارد در مقایسه با هنجار: «standard» (میانگین ۱۰۰، انحراف ۱۵) یا «T» (میانگین ۵۰، انحراف ۱۰) */
   normMetric?: "standard" | "T";
   /** تست محدود (مثلاً دارای مجوز تجاری): در فهرست‌ها و نقشه‌ی سایت نمی‌آید و فقط با ورود قابل اجراست */
@@ -175,6 +177,14 @@ export type PsychTest = {
   licensed?: boolean;
   /** توضیح تکمیلی که بعد از نتیجه و در گزارش نشان داده می‌شود (مثلاً راهنمای ارجاع) */
   resultNote?: { title: string; paragraphs: string[] };
+};
+
+export type BuiltInNormGroup = {
+  sex: "MALE" | "FEMALE";
+  ageMin: number;
+  ageMax: number;
+  label: string;
+  values: Record<string, { mean: number; sd: number }>;
 };
 
 export type ScaleScore = {
