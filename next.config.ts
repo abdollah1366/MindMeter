@@ -4,7 +4,8 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // در حالت توسعه، باز کردن سایت با 127.0.0.1 یا IP شبکه (مثلاً از موبایل) را مجاز می‌کند.
   // بدون این، Next.js فایل‌های جاوااسکریپت را مسدود می‌کند و دکمه‌ها کار نمی‌کنند.
-  allowedDevOrigins: ["127.0.0.1", "192.168.*.*", "10.*.*.*", "172.*.*.*"],
+  // برای باز کردن نسخه‌ی توسعه با IP عمومی سرور، آن را در DEV_ALLOWED_ORIGINS بگذارید (جدا با کاما)، مثلاً 82.115.17.7
+  allowedDevOrigins: ["127.0.0.1", "192.168.*.*", "10.*.*.*", "172.*.*.*", ...(process.env.DEV_ALLOWED_ORIGINS ?? "").split(",").map((s) => s.trim()).filter(Boolean)],
   poweredByHeader: false,
   // آپلود عکس و مدارک تا ۵ مگابایت
   experimental: { serverActions: { bodySizeLimit: "6mb" } },

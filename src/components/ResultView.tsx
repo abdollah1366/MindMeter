@@ -9,6 +9,7 @@ import ResultNote from "./ResultNote";
 import NormPanel from "./NormPanel";
 import InventoryProfile from "./InventoryProfile";
 import StrengthsProfile from "./StrengthsProfile";
+import BigFiveProfile from "./BigFiveProfile";
 import { isStrengths } from "@/lib/strengths";
 import { isInventory, validityStatus, elevatedScales } from "@/lib/inventory";
 import { useEffect, useState } from "react";
@@ -29,13 +30,14 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
   const savedId = saved.state === "saved" ? saved.id : null;
   const [norm, setNorm] = useState<NormReport | null>(null);
   useEffect(() => {
-    if ((test.kind !== "ability" && !test.normMetric) || !savedId) return;
+    if ((test.kind !== "ability" && !test.normMetric && !test.builtInNorms) || !savedId) return;
     getNormReport(savedId).then(setNorm).catch(() => {});
-  }, [savedId, test.kind, test.normMetric]);
+  }, [savedId, test.kind, test.normMetric, test.builtInNorms]);
 
   const inventory = isInventory(test);
   const strengths = isStrengths(test);
-  const concerning = strengths
+  const bigfive = test.report === "bigfive";
+  const concerning = strengths || bigfive
     ? alerts.length > 0
     : inventory
     ? alerts.length > 0 || elevatedScales(test, scores).length > 0 || validityStatus(test, scores).level !== "ok"
@@ -46,11 +48,13 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
       <div className="rounded-2xl bg-gradient-to-l from-brand-50 to-calm-50 p-5">
         <p className="text-sm text-slate-500">نتیجه‌ی {test.code}</p>
         <h2 className="mt-1 text-xl font-extrabold text-brand-700">
-          {strengths ? "استعدادهای شما" : scores.length === 1 ? scores[0].result?.title : "نیم‌رخ شما در مقیاس‌های این تست"}
+          {bigfive ? "نیم‌رخ شخصیت شما" : strengths ? "استعدادهای شما" : scores.length === 1 ? scores[0].result?.title : "نیم‌رخ شما در مقیاس‌های این تست"}
         </h2>
       </div>
 
-      {strengths ? (
+      {bigfive ? (
+        <BigFiveProfile test={test} scores={scores} age={norm?.age} sex={norm?.sex} />
+      ) : strengths ? (
         <StrengthsProfile test={test} scores={scores} />
       ) : inventory ? (
         <InventoryProfile test={test} scores={scores} alerts={alerts} answers={answers} norm={norm} showCritical />

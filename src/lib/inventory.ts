@@ -63,6 +63,8 @@ export function elevatedScales(test: PsychTest, scores: ScaleScore[]) {
 
 /** چند برچسب کوتاه برای فهرست نتایج (به جای نمایش همه‌ی مقیاس‌ها) */
 export function headlineChips(test: PsychTest, scores: ScaleScore[], limit = 4): { key: string; text: string; level?: ResultLevel }[] {
+  if (test.report === "bigfive")
+    return scores.filter((s) => s.key.length === 1).map((s) => ({ key: s.key, text: `${s.title}: ${s.result?.title ?? ""}` }));
   if (isStrengths(test)) return strengthsChips(test, scores, Math.max(limit, 5)).map((c) => ({ key: c.key, text: toPersianDigits(c.text) }));
   const chips: { key: string; text: string; level?: ResultLevel }[] = [];
   if (hasValidityGroup(test)) {
@@ -79,6 +81,7 @@ export function headlineChips(test: PsychTest, scores: ScaleScore[], limit = 4):
 }
 
 export function inventorySummary(test: PsychTest, scores: ScaleScore[]) {
+  if (test.report === "bigfive") return headlineChips(test, scores).map((c) => c.text).join("، ");
   if (isStrengths(test)) return "استعدادهای برتر: " + strengthsChips(test, scores).map((c) => c.text.replace(/^\d+\. /, "")).join("، ");
   return headlineChips(test, scores, 3)
     .map((c) => c.text)

@@ -17,9 +17,11 @@ import mcpiLong from "./mcpi-long";
 import mcpiShort from "./mcpi-short";
 import bipolar from "./bipolar";
 import strengths from "./strengths";
+import ipipNeo120 from "./ipip-neo-120";
+import ipipNeo300 from "./ipip-neo-300";
 
 /** تست‌های داخل کد. تست جدید را اینجا اضافه کنید. */
-const builtIn: PsychTest[] = [phq9, gad7, dass21, dass42, k10, k6, who5, rses, ipip50, miniIpip, intelligenceShort, intelligenceLong, mcpiLong, mcpiShort, bipolar, strengths];
+const builtIn: PsychTest[] = [phq9, gad7, dass21, dass42, k10, k6, who5, rses, ipip50, miniIpip, intelligenceShort, intelligenceLong, mcpiLong, mcpiShort, bipolar, strengths, ipipNeo120, ipipNeo300];
 
 const licensed = loadLicensedTests(builtIn);
 /** خطاهای بارگذاری پرسشنامه‌های مجوزدار (در پنل ادمین نمایش داده می‌شود) */
