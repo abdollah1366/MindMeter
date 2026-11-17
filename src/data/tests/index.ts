@@ -18,12 +18,13 @@ import mcpiShort from "./mcpi-short";
 import bipolar from "./bipolar";
 import strengths from "./strengths";
 import youngSchema from "./young-schema";
+import enrich from "./enrich";
 import ipipNeo120 from "./ipip-neo-120";
 import ipipNeo300 from "./ipip-neo-300";
 import { matrices2, matricesAdvanced, matricesChild, matricesStandard } from "./matrices";
 
 /** تست‌های داخل کد. تست جدید را اینجا اضافه کنید. */
-const builtIn: PsychTest[] = [phq9, gad7, dass21, dass42, k10, k6, who5, rses, ipip50, miniIpip, intelligenceShort, intelligenceLong, mcpiLong, mcpiShort, bipolar, strengths, youngSchema, ipipNeo120, ipipNeo300, matricesChild, matricesStandard, matricesAdvanced, matrices2];
+const builtIn: PsychTest[] = [phq9, gad7, dass21, dass42, k10, k6, who5, rses, ipip50, miniIpip, intelligenceShort, intelligenceLong, mcpiLong, mcpiShort, bipolar, strengths, youngSchema, enrich, ipipNeo120, ipipNeo300, matricesChild, matricesStandard, matricesAdvanced, matrices2];
 
 const licensed = loadLicensedTests(builtIn);
 /** خطاهای بارگذاری پرسشنامه‌های مجوزدار (در پنل ادمین نمایش داده می‌شود) */

@@ -8,6 +8,7 @@ import InventoryProfile from "@/components/InventoryProfile";
 import StrengthsProfile from "@/components/StrengthsProfile";
 import BigFiveProfile from "@/components/BigFiveProfile";
 import SchemaProfile from "@/components/SchemaProfile";
+import EnrichProfile from "@/components/EnrichProfile";
 import { isStrengths } from "@/lib/strengths";
 import { isInventory } from "@/lib/inventory";
 import LevelBreakdown from "@/components/LevelBreakdown";
@@ -119,6 +120,8 @@ export default async function ReportPage({ params }: Props) {
             <BigFiveProfile test={test} scores={scores} age={norm?.age} sex={norm?.sex} print />
           ) : test.report === "schema" ? (
             <SchemaProfile test={test} scores={scores} print />
+          ) : test.report === "enrich" ? (
+            <EnrichProfile test={test} scores={scores} print />
           ) : isStrengths(test) ? (
             <StrengthsProfile test={test} scores={scores} print />
           ) : inventory ? (

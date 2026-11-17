@@ -5,6 +5,7 @@
 import type { PsychTest, ResultLevel, ResultPattern, ScaleScore } from "./types";
 import { isStrengths, strengthsChips } from "./strengths";
 import { buildSchemaReport } from "./schema-report";
+import { buildEnrichReport } from "./enrich-report";
 import { toPersianDigits } from "./scoring";
 
 export function isInventory(test: PsychTest) {
@@ -73,6 +74,26 @@ export function headlineChips(test: PsychTest, scores: ScaleScore[], limit = 4):
       ? dominant.map((v) => ({ key: v.schema.key, text: `${v.schema.title}: ${v.score.result?.title ?? ""}`, level: v.score.result?.level }))
       : [{ key: "none", text: "طرحواره برجستهای دیده نشد", level: "normal" as ResultLevel }];
   }
+  if (test.report === "enrich") {
+    const report = buildEnrichReport(scores);
+    const chips: { key: string; text: string; level?: ResultLevel }[] = [];
+    if (report.overall) {
+      chips.push({
+        key: "overall",
+        text: `رضایت کلی: ${report.overall.result?.title ?? ""}`,
+        level: report.overall.result?.level,
+      });
+    }
+    for (const v of report.growth.slice(0, Math.max(0, limit - chips.length))) {
+      chips.push({
+        key: v.content.key,
+        text: `${v.content.title}: ${v.score.result?.title ?? ""}`,
+        level: v.score.result?.level,
+      });
+    }
+    if (chips.length <= 1) chips.push({ key: "ok", text: "همه مؤلفه ها در سطح مطلوب", level: "normal" });
+    return chips;
+  }
   const chips: { key: string; text: string; level?: ResultLevel }[] = [];
   if (hasValidityGroup(test)) {
     const v = validityStatus(test, scores);
@@ -91,6 +112,7 @@ export function inventorySummary(test: PsychTest, scores: ScaleScore[]) {
   if (test.report === "bigfive") return headlineChips(test, scores).map((c) => c.text).join("، ");
   if (isStrengths(test)) return "استعدادهای برتر: " + strengthsChips(test, scores).map((c) => c.text.replace(/^\d+\. /, "")).join("، ");
   if (test.report === "schema") return "طرحوارههای غالب: " + headlineChips(test, scores, 4).map((c) => c.text).join("، ");
+  if (test.report === "enrich") return "رضایت زناشویی: " + headlineChips(test, scores, 4).map((c) => c.text).join("، ");
   return headlineChips(test, scores, 3)
     .map((c) => c.text)
     .join("، ");
