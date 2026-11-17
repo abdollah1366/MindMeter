@@ -7,6 +7,7 @@ import NormPanel from "@/components/NormPanel";
 import InventoryProfile from "@/components/InventoryProfile";
 import StrengthsProfile from "@/components/StrengthsProfile";
 import BigFiveProfile from "@/components/BigFiveProfile";
+import SchemaProfile from "@/components/SchemaProfile";
 import { isStrengths } from "@/lib/strengths";
 import { isInventory } from "@/lib/inventory";
 import LevelBreakdown from "@/components/LevelBreakdown";
@@ -116,6 +117,8 @@ export default async function ReportPage({ params }: Props) {
           <h2 className="mb-3 text-sm font-bold text-slate-500">نتایج</h2>
           {test.report === "bigfive" ? (
             <BigFiveProfile test={test} scores={scores} age={norm?.age} sex={norm?.sex} print />
+          ) : test.report === "schema" ? (
+            <SchemaProfile test={test} scores={scores} print />
           ) : isStrengths(test) ? (
             <StrengthsProfile test={test} scores={scores} print />
           ) : inventory ? (

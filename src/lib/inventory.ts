@@ -4,6 +4,7 @@
  */
 import type { PsychTest, ResultLevel, ResultPattern, ScaleScore } from "./types";
 import { isStrengths, strengthsChips } from "./strengths";
+import { buildSchemaReport } from "./schema-report";
 import { toPersianDigits } from "./scoring";
 
 export function isInventory(test: PsychTest) {
@@ -66,6 +67,12 @@ export function headlineChips(test: PsychTest, scores: ScaleScore[], limit = 4):
   if (test.report === "bigfive")
     return scores.filter((s) => s.key.length === 1).map((s) => ({ key: s.key, text: `${s.title}: ${s.result?.title ?? ""}` }));
   if (isStrengths(test)) return strengthsChips(test, scores, Math.max(limit, 5)).map((c) => ({ key: c.key, text: toPersianDigits(c.text) }));
+  if (test.report === "schema") {
+    const dominant = buildSchemaReport(scores).dominant.slice(0, limit);
+    return dominant.length
+      ? dominant.map((v) => ({ key: v.schema.key, text: `${v.schema.title}: ${v.score.result?.title ?? ""}`, level: v.score.result?.level }))
+      : [{ key: "none", text: "طرحواره برجستهای دیده نشد", level: "normal" as ResultLevel }];
+  }
   const chips: { key: string; text: string; level?: ResultLevel }[] = [];
   if (hasValidityGroup(test)) {
     const v = validityStatus(test, scores);
@@ -83,6 +90,7 @@ export function headlineChips(test: PsychTest, scores: ScaleScore[], limit = 4):
 export function inventorySummary(test: PsychTest, scores: ScaleScore[]) {
   if (test.report === "bigfive") return headlineChips(test, scores).map((c) => c.text).join("، ");
   if (isStrengths(test)) return "استعدادهای برتر: " + strengthsChips(test, scores).map((c) => c.text.replace(/^\d+\. /, "")).join("، ");
+  if (test.report === "schema") return "طرحوارههای غالب: " + headlineChips(test, scores, 4).map((c) => c.text).join("، ");
   return headlineChips(test, scores, 3)
     .map((c) => c.text)
     .join("، ");

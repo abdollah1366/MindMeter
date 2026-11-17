@@ -1,4 +1,6 @@
 node_modules/
+# Nested duplicate checkout (keep local only; not part of this project)
+MindMeter/
 .next/
 out/
 build/

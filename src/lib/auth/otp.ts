@@ -8,8 +8,18 @@ const RESEND_MS = 60 * 1000; // فاصله‌ی ارسال مجدد: ۱ دقیق
 const MAX_PER_HOUR = 5;
 const MAX_ATTEMPTS = 5;
 
+/** همان قاعده‌ی session.ts: در پروداکشن بدون AUTH_SECRET نباید کد OTP ساخته یا تأیید شود. */
+function secret() {
+  const s = process.env.AUTH_SECRET;
+  if (!s || s.length < 16) {
+    if (process.env.NODE_ENV === "production") throw new Error("AUTH_SECRET is not set");
+    return "dev-only-insecure-secret-change-me";
+  }
+  return s;
+}
+
 function hash(phone: string, code: string) {
-  return createHmac("sha256", process.env.AUTH_SECRET || "dev-only-insecure-secret-change-me")
+  return createHmac("sha256", secret())
     .update(`${phone}:${code}`)
     .digest("hex");
 }

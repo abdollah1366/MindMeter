@@ -6,6 +6,27 @@ import "server-only";
  * در غیر این صورت (فقط در حالت توسعه) کد در ترمینال چاپ می‌شود.
  * برای سرویس‌دهنده‌ی دیگر (SMS.ir، ملی‌پیامک و…) کافی است همین تابع را تغییر دهید.
  */
+type KavenegarEnvelope = { return?: { status?: number; message?: string } };
+
+/**
+ * کاوهنگار حتی هنگام خطا هم HTTP 200 برمیگرداند و نتیجه‌ی واقعی در `return.status` است.
+ * بنابراین صرف بررسی res.ok کافی نیست و خطاهایی مثل قالب نامعتبر یا اتمام اعتبار پنهان میماند.
+ */
+async function assertKavenegar(res: Response, action: string) {
+  let body: KavenegarEnvelope | null = null;
+  try {
+    body = (await res.json()) as KavenegarEnvelope;
+  } catch {
+    // پاسخ غیر JSON (مثلاً صفحه‌ی خطای proxy)
+  }
+  const status = body?.return?.status;
+  if (!res.ok || status !== 200) {
+    throw new Error(
+      `Kavenegar ${action} failed: HTTP ${res.status}, status=${status ?? "unknown"}, message=${body?.return?.message ?? "-"}`,
+    );
+  }
+}
+
 export async function sendOtpSms(phone: string, code: string) {
   const key = process.env.KAVENEGAR_API_KEY;
   const template = process.env.KAVENEGAR_OTP_TEMPLATE;
@@ -20,8 +41,8 @@ export async function sendOtpSms(phone: string, code: string) {
   url.searchParams.set("receptor", phone);
   url.searchParams.set("token", code);
   url.searchParams.set("template", template);
-  const res = await fetch(url, { method: "POST", cache: "no-store" });
-  if (!res.ok) throw new Error(`Kavenegar error ${res.status}`);
+  const res = await fetch(url, { method: "POST", cache: "no-store", signal: AbortSignal.timeout(10_000) });
+  await assertKavenegar(res, "verify/lookup");
 }
 
 /**
@@ -40,6 +61,12 @@ export async function sendTextSms(phone: string, message: string) {
   url.searchParams.set("receptor", phone);
   url.searchParams.set("sender", sender);
   url.searchParams.set("message", message);
-  const res = await fetch(url, { method: "POST", cache: "no-store" });
-  return res.ok;
+  try {
+    const res = await fetch(url, { method: "POST", cache: "no-store", signal: AbortSignal.timeout(10_000) });
+    await assertKavenegar(res, "sms/send");
+    return true;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
 }
