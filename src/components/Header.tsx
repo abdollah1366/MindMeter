@@ -12,6 +12,7 @@ const links = [
 /** فقط در منوی موبایل (در نسخه‌ی دسکتاپ در پانویس هستند) */
 const mobileOnly = [
   { href: "/#categories", label: "دسته‌بندی‌ها" },
+  { href: "/support", label: "پشتیبانی و سوالات متداول" },
   { href: "/about", label: "درباره ما" },
 ];
 

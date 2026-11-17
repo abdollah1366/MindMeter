@@ -45,6 +45,8 @@ model User {
   notifications Notification[]
   pushSubs      PushSubscription[]
   uploads       Upload[]
+  tickets       Ticket[]
+  ticketMessages TicketMessage[]
 }
 
 /// کدهای یک‌بارمصرف ورود
@@ -650,4 +652,40 @@ model TestPurchase {
   payments  Payment[]
 
   @@index([userId, testSlug, status])
+}
+
+/// تیکت پشتیبانی موضوعی: customers | academy | doctors
+model Ticket {
+  id        String          @id @default(cuid())
+  /// customers | academy | doctors
+  topic     String          @default("customers")
+  subject   String
+  /// OPEN | ANSWERED | CLOSED
+  status    String          @default("OPEN")
+  /// LOW | NORMAL | HIGH
+  priority  String          @default("NORMAL")
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  TicketMessage[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  closedAt  DateTime?
+
+  @@index([userId, createdAt])
+  @@index([topic, status, createdAt])
+}
+
+/// پیام‌های داخل تیکت؛ نخستین پیام، متن اصلی تیکت است
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String
+  /// آیا پیام توسط تیم پشتیبانی یا متخصص ارسال شده است؟
+  isStaff   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([ticketId, createdAt])
 }

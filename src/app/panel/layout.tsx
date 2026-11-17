@@ -20,6 +20,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           <Link href="/panel/schedule" className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">برنامه‌ی کاری</Link>
           <Link href="/panel/courses" className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">دوره‌های آموزشی</Link>
           <Link href="/panel/wallet" className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">کیف پول</Link>
+          <Link href="/panel/tickets" className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">تیکتهای پزشکان</Link>
           <Link href={`/clinicians/${profile.id}`} className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">پروفایل عمومی</Link>
         </nav>
       </div>

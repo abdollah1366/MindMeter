@@ -35,6 +35,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       ? [
           { href: "/my-courses", label: "دوره‌های من" },
           { href: "/appointments", label: "نوبت‌های من" },
+          { href: "/tickets", label: "تیکتهای من" },
           { href: "/notifications", label: unread ? `اعلان‌ها (${toPersianDigits(unread)})` : "اعلان‌ها" },
         ]
       : []),
