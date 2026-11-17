@@ -28,8 +28,14 @@ export async function saveTestResult(slug: string, answers: Answers): Promise<Sa
     purchaseId = purchase!.id;
   }
 
-  // فقط پاسخ سؤال‌های همین تست ذخیره شود
-  const clean: Answers = Object.fromEntries(test.questions.map((q) => [q.id, answers[q.id]]));
+  // فقط پاسخ سؤال‌های همین تست ذخیره شود.
+  // کلیدهای `rt_<questionId>` حاوی زمان واکنش آزمون استروب اند و باید همراه پاسخ بمانند.
+  const clean: Answers = {};
+  for (const q of test.questions) {
+    if (answers[q.id] !== undefined) clean[q.id] = answers[q.id];
+    const rt = answers[`rt_${q.id}`];
+    if (typeof rt === "number" && Number.isFinite(rt)) clean[`rt_${q.id}`] = rt;
+  }
   const result = await db.testResult.create({
     data: {
       userId,

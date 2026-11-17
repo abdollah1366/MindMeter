@@ -12,6 +12,7 @@ import StrengthsProfile from "./StrengthsProfile";
 import BigFiveProfile from "./BigFiveProfile";
 import SchemaProfile from "./SchemaProfile";
 import EnrichProfile from "./EnrichProfile";
+import StroopProfile from "./StroopProfile";
 import { isStrengths } from "@/lib/strengths";
 import { isInventory, validityStatus, elevatedScales } from "@/lib/inventory";
 import { useEffect, useState } from "react";
@@ -41,6 +42,7 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
   const bigfive = test.report === "bigfive";
   const schemaReport = test.report === "schema";
   const enrichReport = test.report === "enrich";
+  const stroopReport = test.report === "stroop";
   const concerning = strengths || bigfive
     ? alerts.length > 0
     : inventory
@@ -52,7 +54,7 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
       <div className="rounded-2xl bg-gradient-to-l from-brand-50 to-calm-50 p-5">
         <p className="text-sm text-slate-500">نتیجه‌ی {test.code}</p>
         <h2 className="mt-1 text-xl font-extrabold text-brand-700">
-          {bigfive ? "نیم‌رخ شخصیت شما" : strengths ? "استعدادهای شما" : schemaReport ? "نیمه رخ طرحوارههای شما" : enrichReport ? "نیم رخ رضایت زناشویی شما" : scores.length === 1 ? scores[0].result?.title : "نیم‌رخ شما در مقیاس‌های این تست"}
+          {bigfive ? "نیم‌رخ شخصیت شما" : strengths ? "استعدادهای شما" : schemaReport ? "نیمه رخ طرحوارههای شما" : enrichReport ? "نیم رخ رضایت زناشویی شما" : stroopReport ? "نتیجه آزمون استروب" : scores.length === 1 ? scores[0].result?.title : "نیم رخ شما در مقیاس‌های این تست"}
         </h2>
       </div>
 
@@ -64,13 +66,15 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
         <SchemaProfile test={test} scores={scores} />
       ) : enrichReport ? (
         <EnrichProfile test={test} scores={scores} />
+      ) : stroopReport ? (
+        <StroopProfile test={test} answers={answers} />
       ) : inventory ? (
         <InventoryProfile test={test} scores={scores} alerts={alerts} answers={answers} norm={norm} showCritical />
       ) : (
         <ScoreBreakdown test={test} scores={scores} alerts={alerts} />
       )}
 
-      {test.kind === "ability" && <LevelBreakdown test={test} answers={answers} />}
+      {test.kind === "ability" && !stroopReport && <LevelBreakdown test={test} answers={answers} />}
 
       {norm && !inventory && <NormPanel report={norm} />}
       {test.kind === "ability" && saved.state === "guest" && (

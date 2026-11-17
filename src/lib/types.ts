@@ -21,6 +21,23 @@ export type Glyph = {
 /** ماتریس ۳×۳ (یا ۲×۲ با ۴ خانه) که خانه‌ی آخرش (null) باید پیدا شود */
 export type MatrixFigure = { kind: "matrix"; cells: (Glyph | null)[] };
 
+/**
+ * مشخصات محرک آزمون استروب. واژه روی کارت با رنگ `inkHex` نمایش داده می شود
+ * و آزمودنی باید رنگ جوهر را انتخاب کند، نه معنای واژه را.
+ */
+export type StroopStimulus = {
+  mode: "classic" | "emotional";
+  word: string;
+  /** نام رنگ جوهر، مثلاً «قرمز» */
+  ink: string;
+  /** کد رنگ CSS برای نمایش جوهر */
+  inkHex: string;
+  /** در حالت کلاسیک: آیا معنای واژه با رنگ جوهر برابر است */
+  congruent?: boolean;
+  /** در حالت هیجانی: آیا واژه هیجانی است (در برابر خنثی) */
+  emotional?: boolean;
+};
+
 export type AnswerOption = {
   /** متنی که به کاربر نشان داده می‌شود */
   label: string;
@@ -46,6 +63,8 @@ export type Question = {
   options?: AnswerOption[];
   /** تصویر سؤال (ماتریس) */
   figure?: MatrixFigure;
+  /** محرک مخصوص آزمون استروب (واژه رنگین یا هیجانی) */
+  stroop?: StroopStimulus;
   /**
    * سؤال توانایی با یک پاسخ درست: مقدار گزینه‌ی درست.
    * پاسخ درست ۱ امتیاز و پاسخ نادرست ۰ امتیاز دارد.
@@ -170,7 +189,7 @@ export type PsychTest = {
   /** قاعده‌های تعیین «الگوی غالب» در خلاصه‌ی گزارش (آخرین قاعده معمولاً بدون شرط است) */
   patterns?: ResultPattern[];
   /** شکل گزارش: «strengths» رتبه‌بندی استعدادها (۵ برتر، حوزه‌ها، شغل‌ها) به جای نیم‌رخ */
-  report?: "profile" | "strengths" | "bigfive" | "schema" | "enrich";
+  report?: "profile" | "strengths" | "bigfive" | "schema" | "enrich" | "stroop";
   /** هنجار منتشرشده‌ی همراه تست (مثلاً هنجارهای Johnson برای IPIP-NEO) برای محاسبه‌ی نمره‌ی T بر اساس سن و جنس */
   builtInNorms?: { source: string; groups: BuiltInNormGroup[] };
   /** معیار نمره‌ی استاندارد در مقایسه با هنجار: «standard» (میانگین ۱۰۰، انحراف ۱۵) یا «T» (میانگین ۵۰، انحراف ۱۰) */

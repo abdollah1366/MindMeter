@@ -3,6 +3,7 @@ import { summarize, inCategory } from "@/lib/test-summary";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import TestRunner from "@/components/TestRunner";
+import StroopRunner from "@/components/StroopRunner";
 import TestCard from "@/components/TestCard";
 import { getTest } from "@/data/tests";
 import { getVisibleTest, getVisibleTests } from "@/lib/tests-service";
@@ -148,7 +149,7 @@ export default async function TestPage({ params }: Props) {
                     پرداخت شما ثبت شده است. نتیجه‌ی این اجرا در پرونده‌تان ذخیره می‌شود.
                   </p>
                 )}
-                <TestRunner test={test} />
+                {test.report === "stroop" ? <StroopRunner test={test} /> : <TestRunner test={test} />}
               </>
             )}
           </div>

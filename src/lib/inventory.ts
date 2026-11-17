@@ -74,6 +74,15 @@ export function headlineChips(test: PsychTest, scores: ScaleScore[], limit = 4):
       ? dominant.map((v) => ({ key: v.schema.key, text: `${v.schema.title}: ${v.score.result?.title ?? ""}`, level: v.score.result?.level }))
       : [{ key: "none", text: "طرحواره برجستهای دیده نشد", level: "normal" as ResultLevel }];
   }
+  if (test.report === "stroop") {
+    const chips: { key: string; text: string; level?: ResultLevel }[] = [];
+    for (const [key, title] of [["classic", "دقت کلاسیک"], ["emotional", "دقت هیجانی"]] as const) {
+      const s = scores.find((x) => x.key === key);
+      if (!s || !s.max) continue;
+      chips.push({ key, text: `${title}: ${Math.round((s.raw / s.max) * 100)}٪`, level: s.result?.level });
+    }
+    return chips;
+  }
   if (test.report === "enrich") {
     const report = buildEnrichReport(scores);
     const chips: { key: string; text: string; level?: ResultLevel }[] = [];
@@ -113,6 +122,7 @@ export function inventorySummary(test: PsychTest, scores: ScaleScore[]) {
   if (isStrengths(test)) return "استعدادهای برتر: " + strengthsChips(test, scores).map((c) => c.text.replace(/^\d+\. /, "")).join("، ");
   if (test.report === "schema") return "طرحوارههای غالب: " + headlineChips(test, scores, 4).map((c) => c.text).join("، ");
   if (test.report === "enrich") return "رضایت زناشویی: " + headlineChips(test, scores, 4).map((c) => c.text).join("، ");
+  if (test.report === "stroop") return "تست استروب: " + headlineChips(test, scores, 2).map((c) => c.text).join("، ");
   return headlineChips(test, scores, 3)
     .map((c) => c.text)
     .join("، ");
