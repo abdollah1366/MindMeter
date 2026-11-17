@@ -1,6 +1,7 @@
 import "server-only";
 import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
 import { db } from "@/lib/db";
+import { normalizeIranMobile } from "@/lib/validation";
 
 export const OTP_LENGTH = 5;
 const TTL_MS = 2 * 60 * 1000; // اعتبار کد: ۲ دقیقه
@@ -25,20 +26,32 @@ function hash(phone: string, code: string) {
 }
 
 /**
- * کد ثابت برای توسعه (مثلاً 12345) تا وقتی سرویس پیامک وصل نشده است.
- * فقط وقتی فعال است که DEV_OTP_CODE تنظیم شده، پیامک تنظیم نشده و برنامه در حالت production نیست.
+ * کد ثابت برای توسعه تا وقتی سرویس پیامک وصل نشده است.
+ * فقط وقتی فعال است که کاوهنگار تنظیم نشده و برنامه در حالت production نیست.
+ *
+ * - DEV_OTP_CODES: نگاشت «شماره:کد» (مثلاً "09141199762:123456")؛ فقط همان شماره را تحت تأثیر قرار میدهد.
+ * - DEV_OTP_CODE: کد پیشفرض سایر شمارهها در حالت توسعه.
  */
-function devFixedCode() {
-  const fixed = process.env.DEV_OTP_CODE?.trim();
-  if (!fixed || process.env.NODE_ENV === "production" || process.env.KAVENEGAR_API_KEY) return null;
-  return /^\d{4,6}$/.test(fixed) ? fixed : null;
+function devFixedCode(phone: string) {
+  if (process.env.NODE_ENV === "production" || process.env.KAVENEGAR_API_KEY) return null;
+  const valid = (v?: string) => (v && /^\d{4,6}$/.test(v) ? v : null);
+
+  for (const entry of (process.env.DEV_OTP_CODES ?? "").split(/[,،]/)) {
+    const [rawPhone, rawCode] = entry.split(":");
+    if (!rawPhone || !rawCode) continue;
+    const matched = normalizeIranMobile(rawPhone.replace(/["']/g, "").trim());
+    if (matched !== phone) continue;
+    const scoped = valid(rawCode.replace(/["']/g, "").trim());
+    if (scoped) return scoped;
+  }
+  return valid(process.env.DEV_OTP_CODE?.trim());
 }
 
 export type IssueResult = { ok: true; code: string } | { ok: false; error: string; retryAfter?: number };
 
 export async function issueOtp(phone: string): Promise<IssueResult> {
   // در حالت کد ثابت توسعه، محدودیت ارسال لازم نیست
-  const fixed = devFixedCode();
+  const fixed = devFixedCode(phone);
   if (fixed) return { ok: true, code: fixed };
 
   const now = Date.now();
@@ -61,7 +74,7 @@ export async function issueOtp(phone: string): Promise<IssueResult> {
 }
 
 export async function verifyOtp(phone: string, code: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  const fixed = devFixedCode();
+  const fixed = devFixedCode(phone);
   if (fixed) return code === fixed ? { ok: true } : { ok: false, error: "کد واردشده درست نیست." };
 
   const otp = await db.otpCode.findFirst({
