@@ -20,7 +20,7 @@ export default async function MptSavedResultPage({ params }: Props) {
 
   // فیلتر مالکیت داخل سرویس اعمال میشود؛ نتیجه کاربر دیگری حتی با دانستن شناسه قابل خواندن نیست.
   const row = await getSpeechResultForUser(id, user.id);
-  if (!row || row.assessmentSlug !== "mpt") notFound();
+  if (!row || row.kind !== "mpt" || row.assessmentSlug !== "mpt") notFound();
 
   return (
     <div className="mx-auto max-w-3xl">

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AudioCapture, MIC_ERROR_LABELS, type MicError, type MicStatus } from "@/lib/speech/audio-recorder";
+import { MPT_CONFIG } from "@/lib/speech/mpt-config";
 import type { AudioFrame } from "@/lib/speech/mpt-types";
 
 type Props = {
@@ -10,6 +11,10 @@ type Props = {
   onFrame: (frame: AudioFrame) => void;
   onError?: (error: MicError) => void;
   onStatusChange?: (status: MicStatus) => void;
+  /** اختیاری؛ تنها تحلیل واکه پایدار برای تخمین F0 به نمونهها نیاز دارد. */
+  onSamples?: (samples: Float32Array, sampleRate: number) => void;
+  /** فاصله نمونهبرداری؛ پیشفرض همان مقدار MPT است. */
+  frameIntervalMs?: number;
 };
 
 const STATUS_LABEL: Record<MicStatus, string> = {
@@ -25,11 +30,19 @@ const STATUS_LABEL: Record<MicStatus, string> = {
  * رابط کاربری و چرخه حیات میکروفون. مجوز تنها پس از اقدام صریح کاربر ( active )
  * درخواست میشود و منابع در خروج از صفحه آزاد میشوند.
  */
-export default function AudioRecorder({ active, onFrame, onError, onStatusChange }: Props) {
+export default function AudioRecorder({
+  active,
+  onFrame,
+  onError,
+  onStatusChange,
+  onSamples,
+  frameIntervalMs = MPT_CONFIG.frameIntervalMs,
+}: Props) {
   const captureRef = useRef<AudioCapture | null>(null);
   const frameRef = useRef(onFrame);
   const errorRef = useRef(onError);
   const statusRef = useRef(onStatusChange);
+  const samplesRef = useRef(onSamples);
   const frameCount = useRef(0);
 
   const [status, setStatus] = useState<MicStatus>("idle");
@@ -40,6 +53,7 @@ export default function AudioRecorder({ active, onFrame, onError, onStatusChange
   frameRef.current = onFrame;
   errorRef.current = onError;
   statusRef.current = onStatusChange;
+  samplesRef.current = onSamples;
 
   useEffect(() => {
     if (!captureRef.current) captureRef.current = new AudioCapture();
@@ -69,6 +83,8 @@ export default function AudioRecorder({ active, onFrame, onError, onStatusChange
           setStatus(nextError === "DENIED" ? "denied" : nextError === "UNSUPPORTED" ? "unsupported" : "error");
           errorRef.current?.(nextError);
         },
+        frameIntervalMs,
+        (samples, sampleRate) => samplesRef.current?.(samples, sampleRate),
       )
       .then(() => {
         if (disposed || !capture.running) return;
@@ -79,7 +95,7 @@ export default function AudioRecorder({ active, onFrame, onError, onStatusChange
       disposed = true;
       capture.stop();
     };
-  }, [active, attempt]);
+  }, [active, attempt, frameIntervalMs]);
 
   useEffect(() => {
     statusRef.current?.(status);

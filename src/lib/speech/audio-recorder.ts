@@ -65,6 +65,11 @@ export class AudioCapture {
     return this.stopped ? 0 : Math.max(0, performance.now() - this.startedAt);
   }
 
+  /** نرخ نمونهبرداری AudioContext؛ صفر یعنی ضبط آغاز نشده است. */
+  get sampleRate(): number {
+    return this.context?.sampleRate ?? 0;
+  }
+
   /**
    * درخواست مجوز و آغاز نمونهبرداری. تنها باید در پاسخ به اقدام صریح کاربر فراخوانی شود.
    * فراخوانی دوم در حین ضبط نادیده گرفته میشود تا ضبط همزمان رخ ندهد.
@@ -73,6 +78,8 @@ export class AudioCapture {
     onFrame: (frame: AudioFrame) => void,
     onError: (error: MicError) => void,
     intervalMs: number = MPT_CONFIG.frameIntervalMs,
+    /** اختیاری؛ تنها آزمونی که به F0 نیاز دارد از آن استفاده میکند. */
+    onSamples?: (samples: Float32Array, sampleRate: number) => void,
   ): Promise<void> {
     if (!this.stopped) return;
 
@@ -134,8 +141,11 @@ export class AudioCapture {
             if (absolute > peak) peak = absolute;
           }
           const rms = Math.sqrt(sum / samples.length);
+          const t = performance.now() - this.startedAt;
           if (Number.isFinite(rms) && Number.isFinite(peak)) {
-            onFrame({ t: performance.now() - this.startedAt, rms, peak });
+            onFrame({ t, rms, peak });
+            // کپی مستقل از بفر چندبارمصرف AnalyserNode؛ فقط در حافظه و بدون ذخیره یا ارسال.
+            if (onSamples) onSamples(new Float32Array(samples), context.sampleRate);
           }
         }, intervalMs);
       } else {
