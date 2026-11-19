@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { ACTIVE_STATUSES } from "@/lib/scheduling";
 import { activateEnrollment } from "@/lib/academy-server";
 import { notifyAppointmentConfirmed } from "@/lib/appointment-notify";
+import { notifyLater } from "@/lib/notify";
+import { clinicianPlan, planTitle } from "@/lib/clinician-plans";
 
 /**
  * ثبت پرداخت موفق و قطعی کردن نوبت.
@@ -18,6 +20,31 @@ export async function markPaid(paymentId: string, refId: string) {
   }
   if (p.enrollmentId) {
     await activateEnrollment(p.enrollmentId);
+    return;
+  }
+  if (p.clinicianPlanId) {
+    const updated = await db.clinicianTestPlan.updateMany({
+      where: { id: p.clinicianPlanId, status: "PENDING_PAYMENT" },
+      data: { status: "ACTIVE", paidAt: new Date() },
+    });
+    if (updated.count) {
+      const plan = await db.clinicianTestPlan.findUnique({ where: { id: p.clinicianPlanId } });
+      if (plan) {
+        // اعتبار اشتراک از لحظه‌ی پرداخت محاسبه می‌شود، نه از لحظه‌ی ساخت سفارش
+        const def = clinicianPlan(plan.kind);
+        if (def?.durationDays) {
+          await db.clinicianTestPlan.update({
+            where: { id: plan.id },
+            data: { expiresAt: new Date(Date.now() + def.durationDays * 24 * 60 * 60 * 1000) },
+          });
+        }
+        notifyLater(p.userId, {
+          title: "بسته‌ی تست شما فعال شد",
+          body: `${planTitle(plan.kind)} با موفقیت به حساب متخصص شما اضافه شد. اکنون می‌توانید تستها را برای مراجعان خود اجرا کنید.`,
+          url: "/panel/tests",
+        });
+      }
+    }
     return;
   }
   if (!p.appointmentId) return;
@@ -41,7 +68,13 @@ export async function markPaid(paymentId: string, refId: string) {
 }
 
 /** صفحه‌ای که کاربر پس از پرداخت موفق به آن می‌رود */
-export async function afterPaymentPath(payment: { appointmentId: string | null; enrollmentId: string | null; testPurchaseId?: string | null }) {
+export async function afterPaymentPath(payment: {
+  appointmentId: string | null;
+  enrollmentId: string | null;
+  testPurchaseId?: string | null;
+  clinicianPlanId?: string | null;
+}) {
+  if (payment.clinicianPlanId) return "/panel/tests?purchased=1";
   if (payment.testPurchaseId) {
     const t = await db.testPurchase.findUnique({ where: { id: payment.testPurchaseId } });
     return t ? `/tests/${t.testSlug}?paid=1` : "/tests";

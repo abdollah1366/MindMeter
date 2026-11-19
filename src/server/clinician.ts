@@ -21,12 +21,14 @@ export async function applyAsClinician(_: ApplyState, form: FormData): Promise<A
   const title = str("title");
   const specialty = str("specialty");
   const licenseNumber = toEnglishDigits(str("licenseNumber"));
+  const city = str("city");
   const bio = str("bio");
   const years = Number(toEnglishDigits(str("yearsExperience")) || NaN);
 
   if (!["PSYCHOLOGIST", "PHYSICIAN"].includes(kind)) return { error: "نوع فعالیت را انتخاب کنید." };
   if (title.length < 2 || specialty.length < 2) return { error: "عنوان و تخصص را وارد کنید." };
   if (!/^[A-Za-z0-9\-\/]{3,20}$/.test(licenseNumber)) return { error: "شماره‌ی نظام معتبر نیست." };
+  if (!city || city.length > 80) return { error: "شهر محل فعالیت را وارد کنید." };
   if (bio.length > 2000) return { error: "معرفی حداکثر ۲۰۰۰ کاراکتر است." };
 
   const existing = await db.clinicianProfile.findUnique({ where: { userId: user.id } });
@@ -38,7 +40,7 @@ export async function applyAsClinician(_: ApplyState, form: FormData): Promise<A
     specialty,
     licenseNumber,
     bio,
-    city: str("city") || user.city,
+    city,
     yearsExperience: Number.isFinite(years) ? years : null,
     status: "PENDING",
     reviewNote: null,

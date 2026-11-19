@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { saveProfile, type ProfileState } from "@/server/profile";
 import { JALALI_MONTHS } from "@/lib/jalali";
+import { CITIES } from "@/lib/cities";
 
 export type ProfileDefaults = {
   firstName: string;
@@ -17,14 +18,6 @@ export type ProfileDefaults = {
 };
 
 const input = "mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none focus:border-brand-500";
-
-// فهرستی برای پیشنهاد هنگام ورود شهر؛ کاربر میتواند شهر دیگری هم بنویسد.
-const CITIES = [
-  "آبادان", "آمل", "اراک", "اردبیل", "اصفهان", "اهواز", "ایلام", "بجنورد", "بندرعباس",
-  "بوشهر", "تبریز", "تهران", "چابهار", "خرم آباد", "خوی", "دزفول", "رشت", "زاهدان",
-  "زنجان", "ساری", "سمنان", "سنندج", "شیراز", "گرگان", "گنبد کاووس", "کرج", "کرمان",
-  "کرمانشاه", "مشهد", "نجف آباد", "نیشابور", "همدان", "یاسوج", "یزد",
-];
 
 export default function ProfileForm({ defaults, next, years }: { defaults: ProfileDefaults; next: string; years: number[] }) {
   const [state, action, pending] = useActionState<ProfileState, FormData>(saveProfile, {});

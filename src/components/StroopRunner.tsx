@@ -7,6 +7,8 @@ import { scoreTest, toPersianDigits } from "@/lib/scoring";
 import { STROOP_OPTIONS, STROOP_PRACTICE, stroopInkHex, type StroopMode, type StroopSpec } from "@/data/stroop-content";
 import { saveResult, setPending } from "@/lib/history";
 import { saveTestResult } from "@/server/results";
+import { saveClinicianTestResult } from "@/server/clinician-tests";
+import type { RunContext } from "./TestRunner";
 import { inventorySummary } from "@/lib/inventory";
 import { track } from "@/lib/track-client";
 import ResultView from "./ResultView";
@@ -49,7 +51,7 @@ function nextReady(block: Block): Ready | null {
   return null;
 }
 
-export default function StroopRunner({ test }: { test: PsychTest }) {
+export default function StroopRunner({ test, run }: { test: PsychTest; run?: RunContext }) {
   const [phase, setPhase] = useState<Phase>("intro");
   const [block, setBlock] = useState<Block | null>(null);
   const [ready, setReady] = useState<Ready | null>(null);
@@ -109,6 +111,18 @@ export default function StroopRunner({ test }: { test: PsychTest }) {
     setPhase("result");
     track("test_complete", { ref: test.slug });
     setSaved({ state: "saving" });
+
+    // اجرای متخصص: نتیجه در پرونده‌ی مراجع ذخیره می‌شود و یک اعتبار کسر می‌گردد
+    if (run) {
+      try {
+        const res = await saveClinicianTestResult(run.runId, test.slug, final);
+        setSaved(res.ok ? { state: "saved", id: res.id } : { state: "error" });
+      } catch {
+        setSaved({ state: "error" });
+      }
+      return;
+    }
+
     const scores = scoreTest(test, final);
     saveResult({
       testSlug: test.slug,
@@ -194,12 +208,17 @@ export default function StroopRunner({ test }: { test: PsychTest }) {
   }, [phase, feedback]);
 
   if (phase === "result") {
-    return <ResultView test={test} answers={answers} saved={saved} onRestart={restart} />;
+    return <ResultView test={test} answers={answers} saved={saved} onRestart={restart} forPatientName={run?.patientName} />;
   }
 
   if (phase === "intro") {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {run && (
+          <p className="mb-4 rounded-xl bg-calm-50 p-3 text-sm leading-7 text-calm-700">
+            این تست توسط شما برای مراجع «{run.patientName}» اجرا می‌شود و نتیجه در پرونده‌ی او ذخیره می‌گردد.
+          </p>
+        )}
         <h2 className="text-xl font-extrabold text-brand-700">آزمون استروب فارسی</h2>
         <p className="mt-3 leading-8 text-slate-600">{test.instructions}</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">

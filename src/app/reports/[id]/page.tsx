@@ -18,6 +18,8 @@ import PrintButton from "@/components/PrintButton";
 import { getCurrentUser, isProfileComplete } from "@/lib/auth/session";
 import { hasAccess } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
+import { displayName } from "@/lib/clinicians";
+import { saveResultInterpretation, removeResultInterpretation } from "@/server/clinician-tests";
 import { getTest } from "@/data/tests";
 import { ageFrom, formatJalali } from "@/lib/jalali";
 import { SKIP_VALUE, optionsFor, toPersianDigits, type Answers } from "@/lib/scoring";
@@ -40,9 +42,11 @@ export default async function ReportPage({ params }: Props) {
 
   // دسترسی: صاحب پرونده، یا متخصص تأییدشده‌ای که بیمار به او اجازه داده است
   const isOwner = result.userId === user.id;
+  let viewerProfile: { id: string } | null = null;
   if (!isOwner) {
     const profile = await db.clinicianProfile.findUnique({ where: { userId: user.id } });
     if (!profile || profile.status !== "APPROVED" || !(await hasAccess(profile.id, result.userId))) notFound();
+    viewerProfile = profile;
     await audit(user.id, "report.view", { targetType: "TestResult", targetId: result.id, patientId: result.userId, meta: { test: result.testSlug } });
   }
   const patient = result.user;
@@ -50,6 +54,12 @@ export default async function ReportPage({ params }: Props) {
 
   const test = getTest(result.testSlug);
   if (!test) notFound();
+
+  const interpretation = await db.resultInterpretation.findUnique({
+    where: { resultId: result.id },
+    include: { clinician: { include: { user: true } } },
+  });
+  const canEditInterpretation = Boolean(viewerProfile) && (!interpretation || interpretation.clinicianId === viewerProfile!.id);
 
   const answers = JSON.parse(result.answers) as Answers;
   const scores = JSON.parse(result.scores) as ScaleScore[];
@@ -149,6 +159,56 @@ export default async function ReportPage({ params }: Props) {
           )}
         </section>
 
+        {/* تفسیر متخصص */}
+        <section className="mt-6">
+          <h2 className="mb-2 text-sm font-bold text-slate-500">تفسیر متخصص</h2>
+          {interpretation ? (
+            <div className="rounded-2xl border border-calm-100 bg-calm-50/60 p-4 text-sm leading-8">
+              <p className="whitespace-pre-line">{interpretation.body}</p>
+              <p className="mt-3 text-xs text-slate-500">
+                — {interpretation.clinician.title} {displayName(interpretation.clinician.user)}
+                {interpretation.clinician.licenseNumber
+                  ? ` · شماره‌ی نظام ${toPersianDigits(interpretation.clinician.licenseNumber)}`
+                  : ""}
+                {" · "}
+                {formatJalali(interpretation.updatedAt)}
+              </p>
+            </div>
+          ) : (
+            <p className="rounded-2xl border border-dashed border-slate-300 p-4 text-sm text-slate-500">
+              هنوز تفسیری توسط متخصص ثبت نشده است.
+            </p>
+          )}
+
+          {canEditInterpretation && (
+            <form action={saveResultInterpretation} className="no-print mt-3">
+              <input type="hidden" name="resultId" value={result.id} />
+              <textarea
+                name="body"
+                required
+                maxLength={5000}
+                rows={4}
+                defaultValue={interpretation?.body ?? ""}
+                placeholder="تفسیر بالینی خود را بنویسید؛ این متن در گزارش رسمی و برای مراجع نمایش داده می‌شود."
+                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-brand-500"
+              />
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <button className="rounded-xl bg-brand-600 px-5 py-2 text-sm text-white hover:bg-brand-700">ثبت تفسیر</button>
+                {interpretation && <span className="text-xs text-slate-400">با ثبت مجدد، تفسیر قبلی شما به‌روزرسانی می‌شود.</span>}
+              </div>
+            </form>
+          )}
+          {interpretation && viewerProfile && !canEditInterpretation && (
+            <p className="no-print mt-2 text-xs text-slate-400">این تفسیر توسط متخصص دیگری ثبت شده است.</p>
+          )}
+          {interpretation && canEditInterpretation && (
+            <form action={removeResultInterpretation} className="no-print mt-2">
+              <input type="hidden" name="resultId" value={result.id} />
+              <button className="text-xs text-rose-600 hover:underline">حذف تفسیر</button>
+            </form>
+          )}
+        </section>
+
         {/* پاسخ‌ها */}
         <section className="mt-6 break-before-auto">
           <h2 className="mb-2 text-sm font-bold text-slate-500">پاسخ‌های ثبت‌شده</h2>
@@ -197,9 +257,15 @@ export default async function ReportPage({ params }: Props) {
             باید توسط روانشناس بالینی یا روانپزشک و همراه با مصاحبه‌ی بالینی انجام شود.
           </p>
           <p className="mt-1">منبع: {test.source.citation}</p>
-          <div className="mt-6 grid grid-cols-2 gap-6 text-center text-slate-400">
-            <div className="border-t border-dashed border-slate-300 pt-2">مهر و امضای متخصص</div>
-            <div className="border-t border-dashed border-slate-300 pt-2">تاریخ بررسی</div>
+          <div className="mt-6 grid grid-cols-2 gap-6 text-center text-slate-500">
+            <div className="border-t border-dashed border-slate-300 pt-2">
+              {interpretation
+                ? `${interpretation.clinician.title} ${displayName(interpretation.clinician.user)}`
+                : "مهر و امضای متخصص"}
+            </div>
+            <div className="border-t border-dashed border-slate-300 pt-2">
+              {interpretation ? formatJalali(interpretation.updatedAt) : "تاریخ بررسی"}
+            </div>
           </div>
         </footer>
       </article>

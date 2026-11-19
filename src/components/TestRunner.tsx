@@ -38,10 +38,13 @@ function makeLayout(test: PsychTest): Layout {
 }
 import { saveResult, setPending } from "@/lib/history";
 import { saveTestResult } from "@/server/results";
+import { saveClinicianTestResult } from "@/server/clinician-tests";
 import ResultView from "./ResultView";
 import { GlyphCell, Matrix } from "./Figure";
 import { track } from "@/lib/track-client";
 import { isInventory, inventorySummary } from "@/lib/inventory";
+
+export type RunContext = { runId: string; patientName: string };
 
 type Phase = "intro" | "questions" | "result";
 type Saved = { state: "saving" } | { state: "saved"; id: string } | { state: "guest" } | { state: "error" };
@@ -101,7 +104,7 @@ function PairChoice({
   );
 }
 
-export default function TestRunner({ test }: { test: PsychTest }) {
+export default function TestRunner({ test, run }: { test: PsychTest; run?: RunContext }) {
   const [phase, setPhase] = useState<Phase>("intro");
   const [answers, setAnswers] = useState<Answers>({});
   const [index, setIndex] = useState(0);
@@ -121,8 +124,10 @@ export default function TestRunner({ test }: { test: PsychTest }) {
     if (!from) track("test_start", { ref: test.slug });
   }
 
-  // پیشرفت آزمون‌های طولانی در مرورگر نگه داشته می‌شود تا با بستن صفحه از دست نرود
+  // پیشرفت آزمون‌های طولانی در مرورگر نگه داشته می‌شود تا با بستن صفحه از دست نرود.
+  // در حالت اجرای متخصص، پیشرفت ذخیره نمی‌شود تا پاسخ دو مراجع با هم قاطی نشود.
   useEffect(() => {
+    if (run) return;
     try {
       const raw = localStorage.getItem(progressKey(test.slug));
       if (raw) {
@@ -130,23 +135,35 @@ export default function TestRunner({ test }: { test: PsychTest }) {
         if (saved && typeof saved.index === "number" && saved.index > 0 && saved.index < total) setResume(saved);
       }
     } catch {}
-  }, [test.slug, total]);
+  }, [test.slug, total, run]);
 
   useEffect(() => {
-    if (phase !== "questions" || index === 0) return;
+    if (run || phase !== "questions" || index === 0) return;
     try {
       localStorage.setItem(progressKey(test.slug), JSON.stringify({ answers, index, layout }));
     } catch {}
-  }, [phase, answers, index, layout, test.slug]);
+  }, [phase, answers, index, layout, test.slug, run]);
   const question = byId[layout.order[index]] ?? test.questions[index];
 
   async function finish(final: Answers) {
     setPhase("result");
     track("test_complete", { ref: test.slug });
     try {
-      localStorage.removeItem(progressKey(test.slug));
+      if (!run) localStorage.removeItem(progressKey(test.slug));
     } catch {}
     setSaved({ state: "saving" });
+
+    // اجرای متخصص: نتیجه در پرونده‌ی مراجع ذخیره می‌شود و یک اعتبار کسر می‌گردد
+    if (run) {
+      try {
+        const res = await saveClinicianTestResult(run.runId, test.slug, final);
+        setSaved(res.ok ? { state: "saved", id: res.id } : { state: "error" });
+      } catch {
+        setSaved({ state: "error" });
+      }
+      return;
+    }
+
     const scores = scoreTest(test, final);
     saveResult({
       testSlug: test.slug,
@@ -182,6 +199,11 @@ export default function TestRunner({ test }: { test: PsychTest }) {
   if (phase === "intro") {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {run && (
+          <p className="mb-4 rounded-xl bg-calm-50 p-3 text-sm leading-7 text-calm-700">
+            این تست توسط شما برای مراجع «{run.patientName}» اجرا می‌شود و نتیجه در پرونده‌ی او ذخیره می‌گردد.
+          </p>
+        )}
         <h2 className="font-bold">راهنمای پاسخ‌دهی</h2>
         <p className="mt-3 leading-8 text-slate-600">{test.instructions}</p>
         <ul className="mt-4 list-inside list-disc space-y-1 text-sm text-slate-500">
@@ -222,7 +244,7 @@ export default function TestRunner({ test }: { test: PsychTest }) {
   }
 
   if (phase === "result") {
-    return <ResultView test={test} answers={answers} saved={saved} onRestart={restart} />;
+    return <ResultView test={test} answers={answers} saved={saved} onRestart={restart} forPatientName={run?.patientName} />;
   }
 
   const progress = Math.round((index / total) * 100);

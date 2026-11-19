@@ -29,6 +29,16 @@ export async function getVisibleTest(slug: string) {
   return row?.enabled === false ? undefined : test;
 }
 
+/**
+ * همه‌ی تست‌های فعال برای اجرا توسط متخصص.
+ * برخلاف فهرست عمومی، تست‌های مجوزدار (restricted) هم شامل می‌شوند
+ * چون اجرای آن‌ها زیر نظر متخصص تأییدشده انجام می‌شود.
+ */
+export async function getRunnableTests() {
+  const s = await settings();
+  return tests.filter((t) => s.get(t.slug)?.enabled !== false);
+}
+
 export async function getTestSettingsMap() {
   return settings();
 }

@@ -20,6 +20,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   "payout.decide": "بررسی درخواست تسویه",
   "commission.change": "تغییر کمیسیون سایت",
   "wallet.adjust": "اصلاح موجودی متخصص",
+  "test.run": "اجرای تست برای مراجع",
+  "interpretation.save": "ثبت تفسیر متخصص بر نتیجه",
 };
 
 type Entry = { targetType?: string; targetId?: string; patientId?: string | null; meta?: Record<string, unknown> };

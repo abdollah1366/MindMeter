@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { applyAsClinician, type ApplyState } from "@/server/clinician";
+import { CITIES } from "@/lib/cities";
 
 const input = "mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none focus:border-brand-500";
 
@@ -32,8 +33,14 @@ export default function ClinicianApplyForm({ defaults }: { defaults: Defaults })
         <input name="specialty" required placeholder="مثلاً: اضطراب و افسردگی بزرگسالان" defaultValue={defaults.specialty} className={input} />
       </label>
       <label>
-        <span className="text-sm text-slate-600">شهر</span>
-        <input name="city" defaultValue={defaults.city} className={input} />
+        <span className="text-sm text-slate-600">شهر *</span>
+        <input name="city" list="clinician-cities" required maxLength={80} defaultValue={defaults.city} className={input} placeholder="مثلاً تهران" />
+        <datalist id="clinician-cities">
+          {CITIES.map((city) => <option key={city} value={city} />)}
+        </datalist>
+        <span className="mt-1 block text-xs leading-6 text-slate-500">
+          شهر محل فعالیت شما برای معرفی به مراجعان همان شهر استفاده میشود.
+        </span>
       </label>
       <label>
         <span className="text-sm text-slate-600">سابقه‌ی کار (سال)</span>

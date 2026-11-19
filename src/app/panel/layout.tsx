@@ -15,6 +15,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
         </div>
         <nav className="flex flex-wrap gap-2 text-sm">
           <Link href="/panel" className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">مراجعان</Link>
+          <Link href="/panel/tests" className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">تست‌های مراجعان</Link>
           <Link href="/panel/appointments" className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">نوبت‌ها</Link>
           <Link href="/panel/referrals" className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">ارجاع‌ها</Link>
           <Link href="/panel/schedule" className="rounded-xl bg-white px-4 py-2 hover:text-brand-600">برنامه‌ی کاری</Link>

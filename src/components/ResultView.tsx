@@ -25,9 +25,11 @@ type Props = {
   /** وضعیت ذخیره در پرونده */
   saved: { state: "saving" } | { state: "saved"; id: string } | { state: "guest" } | { state: "error" };
   onRestart: () => void;
+  /** در حالت اجرای متخصص: نام مراجع برای پیام ذخیره */
+  forPatientName?: string;
 };
 
-export default function ResultView({ test, answers, saved, onRestart }: Props) {
+export default function ResultView({ test, answers, saved, onRestart, forPatientName }: Props) {
   const scores = scoreTest(test, answers);
   const alerts = alertsFor(test, answers);
   const savedId = saved.state === "saved" ? saved.id : null;
@@ -86,7 +88,9 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
         {saved.state === "saved" && (
           <>
-            <p className="text-sm text-slate-600">✓ این نتیجه در پرونده‌ی شما ذخیره شد.</p>
+            <p className="text-sm text-slate-600">
+              {forPatientName ? `✓ این نتیجه در پرونده‌ی ${forPatientName} ذخیره شد.` : "✓ این نتیجه در پرونده‌ی شما ذخیره شد."}
+            </p>
             <Link
               href={`/reports/${saved.id}`}
               className="mt-3 inline-block rounded-xl bg-brand-600 px-5 py-2.5 text-white hover:bg-brand-700"
@@ -96,7 +100,7 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
           </>
         )}
         {saved.state === "saving" && <p className="text-sm text-slate-500">در حال ذخیره در پرونده…</p>}
-        {saved.state === "guest" && (
+        {saved.state === "guest" && !forPatientName && (
           <>
             <p className="text-sm leading-7 text-slate-600">
               برای ذخیره‌ی این نتیجه در پرونده‌ی خود و دریافت گزارش قابل چاپ، با شماره موبایل وارد شوید.
@@ -109,12 +113,18 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
             </Link>
           </>
         )}
-        {saved.state === "error" && <p className="text-sm text-rose-700">ذخیره‌ی نتیجه با خطا روبه‌رو شد.</p>}
+        {saved.state === "error" && (
+          <p className="text-sm text-rose-700">
+            {forPatientName
+              ? "ذخیره‌ی نتیجه انجام نشد؛ ممکن است اعتبار تست کافی نباشد یا دسترسی به پرونده لغو شده باشد."
+              : "ذخیره‌ی نتیجه با خطا روبه‌رو شد."}
+          </p>
+        )}
       </div>
 
       {test.resultNote && <ResultNote note={test.resultNote} resultId={saved.state === "saved" ? saved.id : undefined} />}
 
-      {concerning && (
+      {concerning && !forPatientName && (
         <div className="rounded-2xl border border-calm-200 bg-calm-50 p-5">
           <p className="font-bold text-calm-700">صحبت با یک متخصص می‌تواند کمک کند</p>
           <p className="mt-2 text-sm leading-7 text-slate-600">
@@ -140,12 +150,20 @@ export default function ResultView({ test, answers, saved, onRestart }: Props) {
       </p>
 
       <div className="flex flex-wrap gap-3">
-        <button onClick={onRestart} className="rounded-xl border border-slate-300 bg-white px-5 py-2 hover:bg-slate-50">
-          انجام دوباره
-        </button>
-        <Link href="/tests" className="rounded-xl border border-slate-300 bg-white px-5 py-2 hover:bg-slate-50">
-          تست‌های دیگر
-        </Link>
+        {forPatientName ? (
+          <Link href="/panel/tests" className="rounded-xl bg-brand-600 px-5 py-2.5 text-white hover:bg-brand-700">
+            بازگشت به پنل تست‌ها
+          </Link>
+        ) : (
+          <>
+            <button onClick={onRestart} className="rounded-xl border border-slate-300 bg-white px-5 py-2 hover:bg-slate-50">
+              انجام دوباره
+            </button>
+            <Link href="/tests" className="rounded-xl border border-slate-300 bg-white px-5 py-2 hover:bg-slate-50">
+              تست‌های دیگر
+            </Link>
+          </>
+        )}
       </div>
     </div>
   );

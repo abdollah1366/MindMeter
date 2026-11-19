@@ -51,7 +51,15 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   return (
     <>
       <Link href="/panel" className="text-sm text-slate-400 hover:text-brand-600">→ همه‌ی مراجعان</Link>
-      <h1 className="mt-3 text-2xl font-extrabold">{displayName(patient)}</h1>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <h1 className="text-2xl font-extrabold">{displayName(patient)}</h1>
+        <Link
+          href={`/panel/tests?patient=${patient.id}`}
+          className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-700"
+        >
+          اجرای تست برای این مراجع
+        </Link>
+      </div>
       <dl className="mt-4 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
         {info.map(([k, v]) => (
           <div key={k} className="rounded-xl bg-white p-3">

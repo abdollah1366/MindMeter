@@ -52,6 +52,8 @@ model User {
   uploads       Upload[]
   tickets       Ticket[]
   ticketMessages TicketMessage[]
+  /// تستهایی که متخصص برای این مراجع اجرا کرده است
+  clinicianRuns ClinicianTestRun[]
 }
 
 /// کدهای یک‌بارمصرف ورود
@@ -80,6 +82,11 @@ model TestResult {
   /// هشدارهای ایمنی به صورت JSON
   alerts    String   @default("[]")
   createdAt DateTime @default(now())
+
+  /// اجرای متخصص (در صورتی که تست توسط پزشک برای مراجع اجرا شده باشد)
+  clinicianRun   ClinicianTestRun?
+  /// تفسیر کتبی متخصص بر این نتیجه
+  interpretation ResultInterpretation?
 
   @@index([userId, createdAt])
 }
@@ -125,6 +132,12 @@ model ClinicianProfile {
   ibanOwner     String?
   ledger        LedgerEntry[]
   payouts       Payout[]
+  /// بستههای اعتبار تست خریداریشده توسط متخصص
+  testPlans     ClinicianTestPlan[]
+  /// تستهایی که متخصص اجرا کرده است
+  testRuns      ClinicianTestRun[]
+  /// تفاسیر نوشتهشده توسط متخصص
+  interpretations ResultInterpretation[]
 }
 
 /// اجازه‌ی بیمار به متخصص برای دیدن پرونده
@@ -232,6 +245,9 @@ model Payment {
   enrollment    Enrollment?  @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
   testPurchaseId String?
   testPurchase   TestPurchase? @relation(fields: [testPurchaseId], references: [id], onDelete: SetNull)
+  /// خرید بسته‌ی اعتبار تست توسط متخصص
+  clinicianPlanId String?
+  clinicianPlan   ClinicianTestPlan? @relation(fields: [clinicianPlanId], references: [id], onDelete: SetNull)
   /// مبلغ به تومان
   amount        Int
   /// ZARINPAL | DEV
@@ -693,4 +709,68 @@ model TicketMessage {
   createdAt DateTime @default(now())
 
   @@index([ticketId, createdAt])
+}
+
+// ─────────────── اعتبار تست پزشکان ───────────────
+
+/// بسته‌ی اعتبار اجرای تست توسط متخصص: تکی، ۵۰ تست یا اشتراک یکساله‌ی نامحدود
+model ClinicianTestPlan {
+  id          String           @id @default(cuid())
+  clinicianId String
+  clinician   ClinicianProfile @relation(fields: [clinicianId], references: [id], onDelete: Cascade)
+  /// SINGLE | PACK_50 | UNLIMITED_YEAR
+  kind        String
+  /// تعداد تستهای مجاز؛ null یعنی نامحدود
+  totalTests  Int?
+  /// تعداد تستهای اجراشده
+  usedTests   Int              @default(0)
+  /// مبلغ پرداختی به تومان
+  amount      Int
+  /// PENDING_PAYMENT | ACTIVE | EXHAUSTED | EXPIRED
+  status      String           @default("PENDING_PAYMENT")
+  /// پایان اعتبار اشتراک یکساله (برای بستههای دیگر خالی است)
+  expiresAt   DateTime?
+  paidAt      DateTime?
+  createdAt   DateTime         @default(now())
+
+  payments Payment[]
+  runs     ClinicianTestRun[]
+
+  @@index([clinicianId, status])
+}
+
+/// اجرای یک تست توسط متخصص برای مراجع
+model ClinicianTestRun {
+  id          String            @id @default(cuid())
+  clinicianId String
+  clinician   ClinicianProfile  @relation(fields: [clinicianId], references: [id], onDelete: Cascade)
+  patientId   String
+  patient     User              @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  testSlug    String
+  /// بستهای که اعتبار آن مصرف شد (پس از اتمام تست مشخص میشود)
+  planId      String?
+  plan        ClinicianTestPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+  resultId    String?           @unique
+  result      TestResult?       @relation(fields: [resultId], references: [id], onDelete: SetNull)
+  /// PENDING | DONE
+  status      String            @default("PENDING")
+  createdAt   DateTime          @default(now())
+  completedAt DateTime?
+
+  @@index([clinicianId, createdAt])
+  @@index([patientId, createdAt])
+}
+
+/// تفسیر کتبی متخصص بر نتیجهی تست؛ در گزارش رسمی نمایش داده میشود
+model ResultInterpretation {
+  id          String           @id @default(cuid())
+  resultId    String           @unique
+  result      TestResult       @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  clinicianId String
+  clinician   ClinicianProfile @relation(fields: [clinicianId], references: [id], onDelete: Cascade)
+  body        String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([clinicianId])
 }
