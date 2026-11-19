@@ -10,6 +10,7 @@ import BigFiveProfile from "@/components/BigFiveProfile";
 import SchemaProfile from "@/components/SchemaProfile";
 import EnrichProfile from "@/components/EnrichProfile";
 import StroopProfile from "@/components/StroopProfile";
+import D2Profile from "@/components/D2Profile";
 import { isStrengths } from "@/lib/strengths";
 import { isInventory } from "@/lib/inventory";
 import LevelBreakdown from "@/components/LevelBreakdown";
@@ -65,7 +66,7 @@ export default async function ReportPage({ params }: Props) {
   const scores = JSON.parse(result.scores) as ScaleScore[];
   const alerts = JSON.parse(result.alerts) as TestAlert[];
   const inventory = isInventory(test);
-  const norm = test.kind === "ability" || test.normMetric || test.builtInNorms ? await buildNormReport(result.id) : null;
+  const norm = (test.kind === "ability" || test.normMetric || test.builtInNorms) && test.report !== "d2" ? await buildNormReport(result.id) : null;
 
   const info = [
     ["نام و نام خانوادگی", [patient.firstName, patient.lastName].filter(Boolean).join(" ") || "-"],
@@ -135,6 +136,8 @@ export default async function ReportPage({ params }: Props) {
             <EnrichProfile test={test} scores={scores} print />
           ) : test.report === "stroop" ? (
             <StroopProfile test={test} answers={answers} print />
+          ) : test.report === "d2" ? (
+            <D2Profile test={test} answers={answers} print />
           ) : isStrengths(test) ? (
             <StrengthsProfile test={test} scores={scores} print />
           ) : inventory ? (
@@ -142,7 +145,7 @@ export default async function ReportPage({ params }: Props) {
           ) : (
             <ScoreBreakdown test={test} scores={scores} alerts={alerts} />
           )}
-          {test.kind === "ability" && test.report !== "stroop" && (
+          {test.kind === "ability" && test.report !== "stroop" && test.report !== "d2" && (
             <div className="mt-4">
               <LevelBreakdown test={test} answers={answers} />
             </div>
@@ -152,7 +155,7 @@ export default async function ReportPage({ params }: Props) {
               <NormPanel report={norm} print />
             </div>
           )}
-          {test.resultNote && (
+          {test.resultNote && test.report !== "d2" && (
             <div className="mt-4">
               <ResultNote note={test.resultNote} print />
             </div>
@@ -210,6 +213,7 @@ export default async function ReportPage({ params }: Props) {
         </section>
 
         {/* پاسخ‌ها */}
+        {test.report !== "d2" && (
         <section className="mt-6 break-before-auto">
           <h2 className="mb-2 text-sm font-bold text-slate-500">پاسخ‌های ثبت‌شده</h2>
           <table className="w-full text-xs">
@@ -250,6 +254,7 @@ export default async function ReportPage({ params }: Props) {
             </tbody>
           </table>
         </section>
+        )}
 
         <footer className="mt-8 border-t border-slate-200 pt-4 text-[11px] leading-6 text-slate-500">
           <p>

@@ -7,6 +7,7 @@ import { displayName } from "@/lib/clinicians";
 import { getVisibleTest } from "@/lib/tests-service";
 import TestRunner from "@/components/TestRunner";
 import StroopRunner from "@/components/StroopRunner";
+import D2Runner from "@/components/D2Runner";
 
 export const metadata: Metadata = { title: "اجرای تست برای مراجع", robots: { index: false } };
 
@@ -45,6 +46,8 @@ export default async function ClinicianRunPage({
       </div>
       {test.report === "stroop" ? (
         <StroopRunner test={test} run={{ runId: run.id, patientName: displayName(run.patient) }} />
+      ) : test.report === "d2" ? (
+        <D2Runner test={test} run={{ runId: run.id, patientName: displayName(run.patient) }} />
       ) : (
         <TestRunner test={test} run={{ runId: run.id, patientName: displayName(run.patient) }} />
       )}

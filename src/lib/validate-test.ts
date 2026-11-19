@@ -25,7 +25,8 @@ export function validateTest(t: PsychTest, all: PsychTest[] = []): string[] {
     if (!values.length) fail(`${q.id}: no options`);
     if (new Set(values).size !== values.length) fail(`${q.id}: duplicate option values`);
     if (q.answer !== undefined && !values.includes(q.answer)) fail(`${q.id}: answer ${q.answer} is not an option`);
-    if (t.kind === "ability") {
+    // آزمون d2 آیتم‌های اختصاصی دارد: هر ردیف یک امتیاز TN است و کلید پاسخ یا سطح ندارد
+    if (t.kind === "ability" && t.report !== "d2") {
       const real = optionsFor(t, q).filter((o) => o.value >= 0);
       if (real.length < 4) fail(`${q.id}: ability item needs at least 4 options`);
       if (!q.level) fail(`${q.id}: ability item needs a level`);

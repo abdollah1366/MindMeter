@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { isInventory, headlineChips } from "@/lib/inventory";
+import { d2HeadlineChip } from "@/lib/d2";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { hasAccess, requireClinician } from "@/lib/auth/guards";
@@ -7,7 +8,7 @@ import { db } from "@/lib/db";
 import { displayName } from "@/lib/clinicians";
 import { ageFrom, formatJalali } from "@/lib/jalali";
 import { levelStyle } from "@/lib/levels";
-import { toPersianDigits } from "@/lib/scoring";
+import { toPersianDigits, type Answers } from "@/lib/scoring";
 import type { ScaleScore, TestAlert } from "@/lib/types";
 import { getTest } from "@/data/tests";
 import { addClinicalNote } from "@/server/clinician";
@@ -80,6 +81,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
                 const scores = JSON.parse(r.scores) as ScaleScore[];
                 const alerts = JSON.parse(r.alerts) as TestAlert[];
                 const t = getTest(r.testSlug);
+                const d2Chip = t?.report === "d2" ? d2HeadlineChip(t, JSON.parse(r.answers) as Answers) : null;
                 return (
                   <li key={r.id}>
                     <Link href={`/reports/${r.id}`} className="block rounded-2xl border border-slate-200 bg-white p-4 hover:border-brand-400">
@@ -91,18 +93,22 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {alerts.length > 0 && <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-700">⚠ هشدار ایمنی</span>}
-                        {t && isInventory(t)
-                          ? headlineChips(t, scores).map((c) => (
-                              <span key={c.key} className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(c.level).badge}`}>
-                                {c.text}
-                              </span>
-                            ))
-                          : scores.map((s) => (
-                              <span key={s.key} className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(s.result?.level).badge}`}>
-                                {scores.length > 1 ? `${s.title}: ` : ""}
-                                {s.result?.title} ({toPersianDigits(s.score)})
-                              </span>
-                            ))}
+                        {d2Chip ? (
+                          <span className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(d2Chip.level).badge}`}>{d2Chip.text}</span>
+                        ) : t && isInventory(t) ? (
+                          headlineChips(t, scores).map((c) => (
+                            <span key={c.key} className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(c.level).badge}`}>
+                              {c.text}
+                            </span>
+                          ))
+                        ) : (
+                          scores.map((s) => (
+                            <span key={s.key} className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(s.result?.level).badge}`}>
+                              {scores.length > 1 ? `${s.title}: ` : ""}
+                              {s.result?.title} ({toPersianDigits(s.score)})
+                            </span>
+                          ))
+                        )}
                       </div>
                     </Link>
                   </li>

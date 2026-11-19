@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { isInventory, headlineChips } from "@/lib/inventory";
+import { d2HeadlineChip } from "@/lib/d2";
+import type { Answers } from "@/lib/scoring";
 import Link from "next/link";
 import MyResults from "@/components/MyResults";
 import { getCurrentUser, isProfileComplete } from "@/lib/auth/session";
@@ -84,6 +86,7 @@ export default async function MyResultsPage() {
           {results.map((r) => {
             const test = getTest(r.testSlug);
             const scores = JSON.parse(r.scores) as ScaleScore[];
+            const d2Chip = test?.report === "d2" ? d2HeadlineChip(test, JSON.parse(r.answers) as Answers) : null;
             return (
               <li key={r.id}>
                 <Link
@@ -97,18 +100,22 @@ export default async function MyResultsPage() {
                     <p className="mt-1 text-xs text-slate-400">{formatJalali(r.createdAt)}</p>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {test && isInventory(test)
-                      ? headlineChips(test, scores).map((c) => (
-                          <span key={c.key} className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(c.level).badge}`}>
-                            {c.text}
-                          </span>
-                        ))
-                      : scores.map((s) => (
-                          <span key={s.key} className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(s.result?.level).badge}`}>
-                            {scores.length > 1 ? `${s.title}: ` : ""}
-                            {s.result?.title}
-                          </span>
-                        ))}
+                    {d2Chip ? (
+                      <span className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(d2Chip.level).badge}`}>{d2Chip.text}</span>
+                    ) : test && isInventory(test) ? (
+                      headlineChips(test, scores).map((c) => (
+                        <span key={c.key} className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(c.level).badge}`}>
+                          {c.text}
+                        </span>
+                      ))
+                    ) : (
+                      scores.map((s) => (
+                        <span key={s.key} className={`rounded-full border px-2.5 py-0.5 text-xs ${levelStyle(s.result?.level).badge}`}>
+                          {scores.length > 1 ? `${s.title}: ` : ""}
+                          {s.result?.title}
+                        </span>
+                      ))
+                    )}
                   </div>
                 </Link>
               </li>

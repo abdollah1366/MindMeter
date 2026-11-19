@@ -4,6 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import TestRunner from "@/components/TestRunner";
 import StroopRunner from "@/components/StroopRunner";
+import D2Runner from "@/components/D2Runner";
+import D2Info from "@/components/D2Info";
 import TestCard from "@/components/TestCard";
 import { getTest } from "@/data/tests";
 import { getVisibleTest, getVisibleTests } from "@/lib/tests-service";
@@ -149,10 +151,17 @@ export default async function TestPage({ params }: Props) {
                     پرداخت شما ثبت شده است. نتیجه‌ی این اجرا در پرونده‌تان ذخیره می‌شود.
                   </p>
                 )}
-                {test.report === "stroop" ? <StroopRunner test={test} /> : <TestRunner test={test} />}
+                {test.report === "stroop" ? (
+                  <StroopRunner test={test} />
+                ) : test.report === "d2" ? (
+                  <D2Runner test={test} />
+                ) : (
+                  <TestRunner test={test} />
+                )}
               </>
             )}
           </div>
+          {test.report === "d2" && <D2Info />}
           {test.scaleGroups && (
             <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
               <h2 className="font-bold">این آزمون چه چیزهایی را می‌سنجد؟</h2>

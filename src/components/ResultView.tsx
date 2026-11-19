@@ -13,6 +13,7 @@ import BigFiveProfile from "./BigFiveProfile";
 import SchemaProfile from "./SchemaProfile";
 import EnrichProfile from "./EnrichProfile";
 import StroopProfile from "./StroopProfile";
+import D2Profile from "./D2Profile";
 import { isStrengths } from "@/lib/strengths";
 import { isInventory, validityStatus, elevatedScales } from "@/lib/inventory";
 import { useEffect, useState } from "react";
@@ -35,9 +36,10 @@ export default function ResultView({ test, answers, saved, onRestart, forPatient
   const savedId = saved.state === "saved" ? saved.id : null;
   const [norm, setNorm] = useState<NormReport | null>(null);
   useEffect(() => {
+    if (test.report === "d2") return;
     if ((test.kind !== "ability" && !test.normMetric && !test.builtInNorms) || !savedId) return;
     getNormReport(savedId).then(setNorm).catch(() => {});
-  }, [savedId, test.kind, test.normMetric, test.builtInNorms]);
+  }, [savedId, test.kind, test.normMetric, test.builtInNorms, test.report]);
 
   const inventory = isInventory(test);
   const strengths = isStrengths(test);
@@ -45,7 +47,10 @@ export default function ResultView({ test, answers, saved, onRestart, forPatient
   const schemaReport = test.report === "schema";
   const enrichReport = test.report === "enrich";
   const stroopReport = test.report === "stroop";
-  const concerning = strengths || bigfive
+  const d2Report = test.report === "d2";
+  const concerning = d2Report
+    ? false
+    : strengths || bigfive
     ? alerts.length > 0
     : inventory
     ? alerts.length > 0 || elevatedScales(test, scores).length > 0 || validityStatus(test, scores).level !== "ok"
@@ -56,7 +61,7 @@ export default function ResultView({ test, answers, saved, onRestart, forPatient
       <div className="rounded-2xl bg-gradient-to-l from-brand-50 to-calm-50 p-5">
         <p className="text-sm text-slate-500">نتیجه‌ی {test.code}</p>
         <h2 className="mt-1 text-xl font-extrabold text-brand-700">
-          {bigfive ? "نیم‌رخ شخصیت شما" : strengths ? "استعدادهای شما" : schemaReport ? "نیمه رخ طرحوارههای شما" : enrichReport ? "نیم رخ رضایت زناشویی شما" : stroopReport ? "نتیجه آزمون استروب" : scores.length === 1 ? scores[0].result?.title : "نیم رخ شما در مقیاس‌های این تست"}
+          {bigfive ? "نیم‌رخ شخصیت شما" : strengths ? "استعدادهای شما" : schemaReport ? "نیمه رخ طرحوارههای شما" : enrichReport ? "نیم رخ رضایت زناشویی شما" : stroopReport ? "نتیجه آزمون استروب" : d2Report ? "گزارش آزمون توجه و تمرکز d2" : scores.length === 1 ? scores[0].result?.title : "نیم رخ شما در مقیاس‌های این تست"}
         </h2>
       </div>
 
@@ -70,16 +75,18 @@ export default function ResultView({ test, answers, saved, onRestart, forPatient
         <EnrichProfile test={test} scores={scores} />
       ) : stroopReport ? (
         <StroopProfile test={test} answers={answers} />
+      ) : d2Report ? (
+        <D2Profile test={test} answers={answers} />
       ) : inventory ? (
         <InventoryProfile test={test} scores={scores} alerts={alerts} answers={answers} norm={norm} showCritical />
       ) : (
         <ScoreBreakdown test={test} scores={scores} alerts={alerts} />
       )}
 
-      {test.kind === "ability" && !stroopReport && <LevelBreakdown test={test} answers={answers} />}
+      {test.kind === "ability" && !stroopReport && !d2Report && <LevelBreakdown test={test} answers={answers} />}
 
-      {norm && !inventory && <NormPanel report={norm} />}
-      {test.kind === "ability" && saved.state === "guest" && (
+      {norm && !inventory && !d2Report && <NormPanel report={norm} />}
+      {test.kind === "ability" && !d2Report && saved.state === "guest" && (
         <p className="rounded-2xl bg-calm-50 p-4 text-sm leading-7 text-calm-700">
           برای مقایسه‌ی نتیجه با هم‌سن‌ها و هم‌جنس‌ها (صدک و نمره‌ی استاندارد)، وارد شوید تا نتیجه در پرونده‌تان ذخیره شود.
         </p>
@@ -122,7 +129,7 @@ export default function ResultView({ test, answers, saved, onRestart, forPatient
         )}
       </div>
 
-      {test.resultNote && <ResultNote note={test.resultNote} resultId={saved.state === "saved" ? saved.id : undefined} />}
+      {test.resultNote && !d2Report && <ResultNote note={test.resultNote} resultId={saved.state === "saved" ? saved.id : undefined} />}
 
       {concerning && !forPatientName && (
         <div className="rounded-2xl border border-calm-200 bg-calm-50 p-5">

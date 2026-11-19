@@ -62,6 +62,10 @@ export async function saveClinicianTestResult(runId: string, slug: string, answe
     const rt = answers[`rt_${q.id}`];
     if (typeof rt === "number" && Number.isFinite(rt)) clean[`rt_${q.id}`] = rt;
   }
+  // داده‌ی خام آزمون d2 (seed و ماسک کلیک هر ردیف) باید همراه پاسخ‌ها بماند
+  for (const [key, value] of Object.entries(answers)) {
+    if (/^d2_(seed|click_\d{1,2})$/.test(key) && typeof value === "number" && Number.isFinite(value)) clean[key] = value;
+  }
   const now = new Date();
 
   let resultId: string | null;

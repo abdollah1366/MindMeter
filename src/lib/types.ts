@@ -189,7 +189,7 @@ export type PsychTest = {
   /** قاعده‌های تعیین «الگوی غالب» در خلاصه‌ی گزارش (آخرین قاعده معمولاً بدون شرط است) */
   patterns?: ResultPattern[];
   /** شکل گزارش: «strengths» رتبه‌بندی استعدادها (۵ برتر، حوزه‌ها، شغل‌ها) به جای نیم‌رخ */
-  report?: "profile" | "strengths" | "bigfive" | "schema" | "enrich" | "stroop";
+  report?: "profile" | "strengths" | "bigfive" | "schema" | "enrich" | "stroop" | "d2";
   /** هنجار منتشرشده‌ی همراه تست (مثلاً هنجارهای Johnson برای IPIP-NEO) برای محاسبه‌ی نمره‌ی T بر اساس سن و جنس */
   builtInNorms?: { source: string; groups: BuiltInNormGroup[] };
   /** معیار نمره‌ی استاندارد در مقایسه با هنجار: «standard» (میانگین ۱۰۰، انحراف ۱۵) یا «T» (میانگین ۵۰، انحراف ۱۰) */
