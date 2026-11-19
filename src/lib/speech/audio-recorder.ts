@@ -6,6 +6,7 @@
  * فایل صوتیایی تولید نمیشود؛ پردازش از طریق Web Audio API و AnalyserNode است.
  */
 import { MPT_CONFIG } from "./mpt-config";
+import { micDebugLog } from "./mic-debug";
 import type { AudioFrame } from "./mpt-types";
 
 export type MicStatus = "idle" | "requesting" | "ready" | "denied" | "unsupported" | "error";
@@ -86,8 +87,10 @@ export class AudioCapture {
   ): Promise<void> {
     if (!this.stopped) return;
     const epoch = ++this.epoch;
+    micDebugLog("capture.start", { epoch });
 
     const support = getBrowserAudioSupport();
+    micDebugLog("capture.support", support);
     if (!isAudioCaptureSupported()) {
       onError(support.getUserMedia ? "UNSUPPORTED" : "NOT_FOUND");
       return;
@@ -110,6 +113,7 @@ export class AudioCapture {
       // برخی مرورگرها / WebViewها وعده getUserMedia را بیپاسخ میگذارند (مثلاً وقتی
       // پنجره مجوز پشت پنجره دیگری گیر میکند). بدون مهلت، نشانگر «درخواست دسترسی»
       // برای همیشه میماند و دکمه آغاز اندازهگیری قفل میشود.
+      micDebugLog("getUserMedia:call");
       mediaPromise = navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: false,
@@ -128,6 +132,11 @@ export class AudioCapture {
         }),
       ]);
       if (permissionTimer !== null) clearTimeout(permissionTimer);
+      micDebugLog("getUserMedia:resolved", {
+        audioTracks: stream.getAudioTracks().length,
+        epoch,
+        currentEpoch: this.epoch,
+      });
 
       // اگر کاربر حین درخواست مجوز تلاش دیگری را آغاز کرده یا صفحه را ترک کرده است،
       // استریم دیررس بیاستفاده را آزاد میکنیم.
@@ -143,6 +152,7 @@ export class AudioCapture {
           new Promise<void>((resolve) => setTimeout(resolve, 1200)),
         ]);
         if (epoch !== this.epoch) return;
+        micDebugLog("context.state", context.state);
         // اگر هنوز معلق است، تلاش دوباره پس از پذیرش مجوز توسط کاربر انجام میشود.
         if (context.state === "suspended") void context.resume().catch(() => undefined);
         const source = context.createMediaStreamSource(stream);
@@ -157,6 +167,7 @@ export class AudioCapture {
         this.analyser = analyser;
         this.startedAt = performance.now();
         this.stopped = false;
+        micDebugLog("capture:runs", { sampleRate, stopped: this.stopped });
 
         for (const track of stream.getAudioTracks()) {
           track.addEventListener("ended", () => {
@@ -192,6 +203,7 @@ export class AudioCapture {
       }
     } catch (error) {
       const name = error instanceof DOMException ? error.name : "";
+      micDebugLog("capture:error", { name, message: error instanceof Error ? error.message : String(error) });
       if (name === "NotAllowedError" || name === "PermissionDeniedError" || name === "SecurityError") {
         onError("DENIED");
       } else if (name === "NotFoundError" || name === "DevicesNotFoundError" || name === "OverconstrainedError") {
@@ -214,6 +226,7 @@ export class AudioCapture {
   /** آزادسازی کامل منابع؛ هنگام خروج از صفحه حتماً فراخوانی میشود. */
   stop(): void {
     this.epoch += 1;
+    micDebugLog("capture:stop", { epoch: this.epoch });
     this.cleanup();
   }
 

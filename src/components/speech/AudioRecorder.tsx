@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AudioCapture, MIC_ERROR_LABELS, type MicError, type MicStatus } from "@/lib/speech/audio-recorder";
 import { MPT_CONFIG } from "@/lib/speech/mpt-config";
+import { MIC_DEBUG_EVENTS, micDebugEnabled, micDebugLog } from "@/lib/speech/mic-debug";
 import type { AudioFrame } from "@/lib/speech/mpt-types";
 
 type Props = {
@@ -53,6 +54,7 @@ export default function AudioRecorder({
   const [error, setError] = useState<MicError | null>(null);
   const [level, setLevel] = useState(0);
   const [showWaitingHelp, setShowWaitingHelp] = useState(false);
+  const [debugLines, setDebugLines] = useState<string[]>([]);
 
   frameRef.current = onFrame;
   errorRef.current = onError;
@@ -65,6 +67,7 @@ export default function AudioRecorder({
    * نکند، در حالی که نشانگر داخلی میکروفون آماده است و دکمه شروع خاموش میماند.
    */
   const updateStatus = useCallback((next: MicStatus) => {
+    micDebugLog("ui:status", { next });
     setStatus(next);
     statusRef.current?.(next);
   }, []);
@@ -77,6 +80,7 @@ export default function AudioRecorder({
   const startCapture = useCallback(() => {
     // هر تلاش از یک نمونه تازه استفاده میکند تا استریم دیررس تلاش قبل نتواند
     // وضعیت تلاش فعلی را overwrite کند.
+    micDebugLog("ui:startCapture", { generation: generationRef.current + 1 });
     captureRef.current?.stop();
     const capture = new AudioCapture();
     captureRef.current = capture;
@@ -92,11 +96,13 @@ export default function AudioRecorder({
         (frame) => {
           if (generationRef.current !== generation) return;
           frameCount.current += 1;
+          if (frameCount.current === 1) micDebugLog("ui:firstFrame", { rms: frame.rms });
           if (frameCount.current % 2 === 0) setLevel(frame.rms);
           frameRef.current(frame);
         },
         (nextError) => {
           if (generationRef.current !== generation) return;
+          micDebugLog("ui:error", { nextError });
           setError(nextError);
           updateStatus(nextError === "DENIED" ? "denied" : nextError === "UNSUPPORTED" ? "unsupported" : "error");
           errorRef.current?.(nextError);
@@ -107,6 +113,11 @@ export default function AudioRecorder({
         },
       )
       .then(() => {
+        micDebugLog("ui:capture.start resolved", {
+          generation,
+          current: generationRef.current,
+          running: capture.running,
+        });
         if (generationRef.current !== generation || !capture.running) return;
         updateStatus("ready");
       });
@@ -140,6 +151,12 @@ export default function AudioRecorder({
     const id = setTimeout(() => setShowWaitingHelp(true), PERMISSION_HELP_DELAY_MS);
     return () => clearTimeout(id);
   }, [status]);
+
+  useEffect(() => {
+    if (!micDebugEnabled()) return;
+    const id = setInterval(() => setDebugLines([...MIC_DEBUG_EVENTS]), 500);
+    return () => clearInterval(id);
+  }, []);
 
   const retry = useCallback(() => startCapture(), [startCapture]);
 
@@ -229,6 +246,15 @@ export default function AudioRecorder({
             هنگام صحبت کنید تا بومی ببیند میکروفون صدا را دریافت میکند. نیازی به بلند صحبت کردن نیست.
           </p>
         </div>
+      ) : null}
+
+      {debugLines.length > 0 ? (
+        <pre
+          dir="ltr"
+          className="mt-4 max-h-56 overflow-auto rounded-lg bg-slate-900 p-3 text-left text-[10px] leading-5 text-emerald-300"
+        >
+          {debugLines.join("\n")}
+        </pre>
       ) : null}
     </div>
   );
