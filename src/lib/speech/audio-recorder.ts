@@ -144,8 +144,10 @@ export class AudioCapture {
         stream.getTracks().forEach((track) => track.stop());
         return;
       }
-      // اگر کاربر در حین درخواست مجوز صفحه را ترک کرده باشد، استریم بلافاصله آزاد میشود.
-      if (!this.stopped) {
+      // در این نقطه stopped هنوز true است (پیش از دریافت مجوز ضبط آغاز نشده).
+      // شرط معکوس قدیمی (`!this.stopped`) باعث میشد استریم بلافاصله آزاد شود و
+      // وضعیت هرگز به «آماده» نرسد، با وجود اینکه کروم مجوز داده بود.
+      if (this.stopped) {
         this.stream = stream;
         await Promise.race([
           resumed,
@@ -199,6 +201,7 @@ export class AudioCapture {
           }
         }, intervalMs);
       } else {
+        micDebugLog("stream:discarded", { reason: "capture already running" });
         stream.getTracks().forEach((track) => track.stop());
       }
     } catch (error) {
