@@ -337,7 +337,8 @@ export default function VoiceQualityRunner({ isLoggedIn }: { isLoggedIn: boolean
               <div className="mt-3 rounded-xl bg-brand-50 p-4 text-brand-800">{FREE_SPEECH_PROMPT}</div>
             ) : null}
             <p className="mt-3 text-xs text-slate-500">
-              سطح ورودی صدا را در کادر میکروفون بررسی کنید. پس از آماده شدن، دکمه آغاز اندازهگیری را بفشارید.
+              ابتدا دکمه «فعال کردن میکروفون» را بفشارید و در پنجره کروم اجازه را بدهید. سپس سطح ورودی صدا را بررسی
+              کرده و دکمه آغاز اندازهگیری را بفشارید.
             </p>
           </section>
           <div className="flex flex-wrap gap-3">

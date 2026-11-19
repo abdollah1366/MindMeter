@@ -289,8 +289,8 @@ export default function SustainedVowelRunner({ isLoggedIn }: { isLoggedIn: boole
           <section className="rounded-2xl border border-slate-200 bg-white p-5 text-sm leading-7 text-slate-600">
             <h2 className="font-bold text-slate-800">آمادگی برای آزمون</h2>
             <p className="mt-2">
-              اجازه میکروفون تنها پس از کلیک شما درخواست شد. واکه آآآ را در سطح صدای معمولی تولید کنید تا سطح
-              ورودی را ببینید. پس از آماده شدن میکروفون، دکمه زیر را بفشارید.
+              ابتدا دکمه «فعال کردن میکروفون» را بفشارید و در پنجره کروم اجازه را بدهید. سپس واکه آآآ را در سطح
+              صدای معمولی تولید کنید تا سطح ورودی را ببینید و دکمه زیر را بفشارید.
             </p>
           </section>
           <div className="flex flex-wrap gap-3">

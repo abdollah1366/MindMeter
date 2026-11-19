@@ -75,11 +75,13 @@ export default function AudioRecorder({
    * که مجوز را تنها در پاسخ به کلیک صریح میپذیرند ضروری است.
    */
   const startCapture = useCallback(() => {
-    if (!captureRef.current) captureRef.current = new AudioCapture();
-    const capture = captureRef.current;
+    // هر تلاش از یک نمونه تازه استفاده میکند تا استریم دیررس تلاش قبل نتواند
+    // وضعیت تلاش فعلی را overwrite کند.
+    captureRef.current?.stop();
+    const capture = new AudioCapture();
+    captureRef.current = capture;
     const generation = ++generationRef.current;
 
-    capture.stop();
     setError(null);
     setLevel(0);
     setShowWaitingHelp(false);
@@ -110,6 +112,10 @@ export default function AudioRecorder({
       });
   }, [frameIntervalMs, updateStatus]);
 
+  // درخواست مجوز عمداً در effect آغاز نمیشود: چرخه StrictMode / تغییرات
+  // بیاهمیت prop میتواند دو درخواست getUserMedia رقابتی ایجاد کند و استریمی
+  // که کروم میدهد باطل شود، در حالی که نقطه میکروفون روشن میماند. تنها یک کلیک
+  // صریح کاربر مجوز را میخواهد.
   useEffect(() => {
     if (!active) {
       generationRef.current += 1;
@@ -117,14 +123,12 @@ export default function AudioRecorder({
       updateStatus("idle");
       setLevel(0);
       setShowWaitingHelp(false);
-      return;
     }
-    startCapture();
     return () => {
       generationRef.current += 1;
       captureRef.current?.stop();
     };
-  }, [active, startCapture, updateStatus]);
+  }, [active, updateStatus]);
 
   // اگر پنجره مجوز ظاهر نشد، بهجای ماندن بیپایان در حالت «درخواست دسترسی»،
   // راهنما و دکمه تلاش دوباره را نشان میدهیم.
@@ -158,6 +162,18 @@ export default function AudioRecorder({
           {STATUS_LABEL[status]}
         </span>
       </div>
+
+      {active && status === "idle" ? (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={startCapture}
+            className="rounded-lg bg-brand-600 px-4 py-2 text-xs font-medium text-white hover:bg-brand-700"
+          >
+            فعال کردن میکروفون
+          </button>
+        </div>
+      ) : null}
 
       {error ? (
         <div className="mt-3 rounded-xl bg-rose-50 p-3 text-xs leading-6 text-rose-800">
