@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth/session";
 import { parseMptPayload } from "@/lib/speech/mpt-payload";
 import { parseSustainedVowelPayload } from "@/lib/speech/sustained-vowel-payload";
+import { parseVoiceQualityPayload } from "@/lib/speech/voice-quality-payload";
 
 export type SaveResultResponse =
   | { ok: true; id: string }
@@ -77,6 +78,42 @@ export async function saveSustainedVowelResult(input: unknown): Promise<SaveResu
 
   const row = await db.speechResult.create({
     data: { userId, assessmentSlug: "sustained-vowel-analysis", data },
+  });
+  return { ok: true, id: row.id };
+}
+
+/**
+ * ذخیره نتیجه ارزیابی کیفیت صوت. کاربر فقط از session سرور گرفته میشود،
+ * ورودی کاملاً اعتبارسنجی و خلاصه آن دوباره محاسبه میشود و هیچ نمونه خامی
+ * ذخیره نمیشود.
+ */
+export async function saveVoiceQualityResult(input: unknown): Promise<SaveResultResponse> {
+  const userId = await getSessionUserId();
+  if (!userId) return { ok: false, reason: "auth" };
+
+  const assessment = await db.speechAssessment.findFirst({
+    where: { slug: "voice-quality-assessment", published: true, status: "AVAILABLE" },
+    select: { id: true },
+  });
+  if (!assessment) return { ok: false, reason: "invalid" };
+
+  const payload = parseVoiceQualityPayload(input);
+  if (!payload || payload.validSampleCount < 1) return { ok: false, reason: "invalid" };
+  const data = JSON.stringify(payload);
+
+  const recent = await db.speechResult.findFirst({
+    where: {
+      userId,
+      assessmentSlug: "voice-quality-assessment",
+      createdAt: { gte: new Date(Date.now() - DEDUPE_WINDOW_MS) },
+    },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, data: true },
+  });
+  if (recent?.data === data) return { ok: true, id: recent.id };
+
+  const row = await db.speechResult.create({
+    data: { userId, assessmentSlug: "voice-quality-assessment", data },
   });
   return { ok: true, id: row.id };
 }

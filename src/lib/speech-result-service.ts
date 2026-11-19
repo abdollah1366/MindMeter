@@ -5,6 +5,8 @@ import { parseMptPayload } from "@/lib/speech/mpt-payload";
 import type { MptStoredResult } from "@/lib/speech/mpt-types";
 import { parseSustainedVowelPayload } from "@/lib/speech/sustained-vowel-payload";
 import type { SustainedVowelStoredResult } from "@/lib/speech/sustained-vowel-types";
+import { parseVoiceQualityPayload } from "@/lib/speech/voice-quality-payload";
+import type { VoiceQualityStoredResult } from "@/lib/speech/voice-quality-types";
 
 type BaseView = {
   id: string;
@@ -13,13 +15,14 @@ type BaseView = {
 };
 
 /**
- * نتیجه ذخیرهشده میتواند متعلق به MPT یا تحلیل واکه پایدار باشد. discriminate
- * بر اساس assessmentSlug صورت میگیرد که فقط توسط سرور هنگام درج تنظیم شده است؛
+ * نتیجه ذخیرهشده میتواند متعلق به MPT، تحلیل واکه پایدار یا ارزیابی کیفیت صوت
+ * باشد. discriminate بر اساس assessmentSlug صورت میگیرد که فقط توسط سرور هنگام درج تنظیم شده است؛
  * سپس payload با اعتبارسنج مربوط به همان نوع بررسی میشود.
  */
 export type SpeechResultView =
   | (BaseView & { kind: "mpt"; result: MptStoredResult })
-  | (BaseView & { kind: "sustained-vowel"; result: SustainedVowelStoredResult });
+  | (BaseView & { kind: "sustained-vowel"; result: SustainedVowelStoredResult })
+  | (BaseView & { kind: "voice-quality"; result: VoiceQualityStoredResult });
 
 type ResultRow = { id: string; assessmentSlug: string; createdAt: Date; userId: string; data: string };
 
@@ -29,6 +32,10 @@ function decodeRow(row: ResultRow, userId: string): SpeechResultView | null {
   const base: BaseView = { id: row.id, assessmentSlug: row.assessmentSlug, createdAt: row.createdAt };
   try {
     const parsed: unknown = JSON.parse(row.data);
+    if (row.assessmentSlug === "voice-quality-assessment") {
+      const result = parseVoiceQualityPayload(parsed);
+      return result ? { ...base, kind: "voice-quality", result } : null;
+    }
     if (row.assessmentSlug === "sustained-vowel-analysis") {
       const result = parseSustainedVowelPayload(parsed);
       return result ? { ...base, kind: "sustained-vowel", result } : null;

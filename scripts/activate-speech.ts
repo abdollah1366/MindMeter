@@ -2,9 +2,10 @@
  * فعالسازی صریح آزمونهای گفتار پیادهایشده در کاتالوگ.
  * اجرا: npm run speech:activate
  *
- * این اسکریپت idempotent است و فقط دو آزمون دارای پیادهسازی واقعی (MPT و
- * تحلیل واکه پایدار) را به وضعیت اجراشده درمیآورد. وضعیت سایر آزمونها تغییری
- * نمیکند. هیچ فایل صوتی و هیچ داده کاربری در آن خوانده یا نوشته نمیشود.
+ * این اسکریپت idempotent است و فقط سه آزمون دارای پیادهسازی واقعی (MPT،
+ * تحلیل واکه پایدار و ارزیابی کیفیت صوت) را به وضعیت اجراشده درمیآورد. وضعیت
+ * سایر آزمونها تغییری نمیکند. هیچ فایل صوتی و هیچ داده کاربری خوانده یا نوشته
+ * نمیشود.
  */
 import { PrismaClient } from "@prisma/client";
 
@@ -14,6 +15,11 @@ const IMPLEMENTED = [
     slug: "sustained-vowel-analysis",
     implementationKey: "sustained-vowel",
     implementationPath: "/speech/sustained-vowel",
+  },
+  {
+    slug: "voice-quality-assessment",
+    implementationKey: "voice-quality",
+    implementationPath: "/speech/voice-quality",
   },
 ] as const;
 

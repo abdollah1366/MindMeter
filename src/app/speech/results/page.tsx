@@ -11,16 +11,37 @@ export const metadata: Metadata = {
 };
 
 function ResultCard({ row }: { row: SpeechResultView }) {
-  const isSustainedVowel = row.kind === "sustained-vowel";
-  const href = isSustainedVowel
-    ? `/speech/sustained-vowel/result/${row.id}`
-    : `/speech/mpt/result/${row.id}`;
-  const title = isSustainedVowel ? "تحلیل آکوستیکی واکه پایدار" : "آزمون حداکثر زمان آواسازی";
-  const detail = isSustainedVowel
-    ? row.result.f0MeanHz === null
-      ? "F0 نامشخص"
-      : `F0: ${toPersianDigits(row.result.f0MeanHz.toFixed(1))} Hz`
-    : `بهترین: ${toPersianDigits(((row.result.bestMs ?? 0) / 1000).toFixed(2))} ثانیه`;
+  let href: string;
+  let title: string;
+  let detail: string;
+  let validCount: number;
+  let countLabel: string;
+  if (row.kind === "voice-quality") {
+    countLabel = "نمونه معتبر";
+    href = `/speech/voice-quality/result/${row.id}`;
+    title = "ارزیابی کیفیت صوت";
+    const vowel = row.result.samples.find((sample) => sample.kind === "vowel");
+    detail =
+      vowel?.f0MeanHz === null || vowel?.f0MeanHz === undefined
+        ? "شاخص F0 نامشخص"
+        : `F0: ${toPersianDigits(vowel.f0MeanHz.toFixed(1))} Hz`;
+    validCount = row.result.validSampleCount;
+  } else if (row.kind === "sustained-vowel") {
+    countLabel = "تلاش معتبر";
+    href = `/speech/sustained-vowel/result/${row.id}`;
+    title = "تحلیل آکوستیکی واکه پایدار";
+    detail =
+      row.result.f0MeanHz === null
+        ? "F0 نامشخص"
+        : `F0: ${toPersianDigits(row.result.f0MeanHz.toFixed(1))} Hz`;
+    validCount = row.result.validCount;
+  } else {
+    countLabel = "تلاش معتبر";
+    href = `/speech/mpt/result/${row.id}`;
+    title = "آزمون حداکثر زمان آواسازی";
+    detail = `بهترین: ${toPersianDigits(((row.result.bestMs ?? 0) / 1000).toFixed(2))} ثانیه`;
+    validCount = row.result.validCount;
+  }
 
   return (
     <li>
@@ -35,7 +56,7 @@ function ResultCard({ row }: { row: SpeechResultView }) {
         <span className="flex flex-wrap items-center gap-2 text-xs">
           <span className="rounded-full bg-brand-50 px-2.5 py-1 text-brand-700">{detail}</span>
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
-            {toPersianDigits(row.result.validCount)} تلاش معتبر
+            {toPersianDigits(validCount)} {countLabel}
           </span>
         </span>
       </Link>
@@ -63,6 +84,12 @@ export default async function SpeechResultsPage() {
             className="rounded-xl border border-brand-300 bg-white px-4 py-2 text-sm text-brand-700 hover:bg-brand-50"
           >
             تحلیل واکه پایدار
+          </Link>
+          <Link
+            href="/speech/voice-quality"
+            className="rounded-xl border border-brand-300 bg-white px-4 py-2 text-sm text-brand-700 hover:bg-brand-50"
+          >
+            ارزیابی کیفیت صوت
           </Link>
         </div>
       </div>
