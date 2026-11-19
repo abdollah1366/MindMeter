@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1", "192.168.*.*", "10.*.*.*", "172.*.*.*", ...(process.env.DEV_ALLOWED_ORIGINS ?? "").split(",").map((s) => s.trim()).filter(Boolean)],
   poweredByHeader: false,
   // آپلود عکس و مدارک تا ۵ مگابایت
-  experimental: { serverActions: { bodySizeLimit: "6mb" } },
+  experimental: { serverActions: { bodySizeLimit: "6mb" }, agentUpgrade: "security" },
   async headers() {
     return [
       {
