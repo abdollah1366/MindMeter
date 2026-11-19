@@ -5,7 +5,7 @@
  * صفحه‌ی /speech داده را از دیتابیس می‌خواند تا فعال‌سازی هر آزمون در آینده
  * بدون تغییر سایر آزمون‌ها ممکن باشد.
  *
- * در این مرحله هیچ آزمونی اجرا نمی‌شود؛ همه با وضعیت COMING_SOON ثبت می‌شوند.
+ * فقط آزمون MPT فعال شده است؛ بقیه با وضعیت COMING_SOON باقی میمانند.
  */
 import type { SpeechAssessmentType, SpeechStatus } from "../lib/speech";
 
@@ -109,11 +109,13 @@ export const speechAssessments: SpeechAssessmentSeed[] = [
     description: "اندازه‌گیری مدت زمان تولید پیوسته‌ی واکه برای بررسی پایداری و کارایی صوت.",
     assessmentType: "PERFORMANCE_MEASURE",
     method: "ضبط نمونه‌ی واکه‌ی کشیده و اندازه‌گیری مدت زمان آواسازی.",
-    status: "COMING_SOON",
+    status: "AVAILABLE",
     published: true,
     order: 1,
     categorySlug: "voice",
     requiresRightsReview: false,
+    implementationKey: "mpt",
+    implementationPath: "/speech/mpt",
   },
   {
     slug: "sustained-vowel-analysis",

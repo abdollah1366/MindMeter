@@ -9,6 +9,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "validate:tests": "tsx scripts/validate-tests.ts",
+    "test:mpt": "node --import tsx --test scripts/test-mpt.ts",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",

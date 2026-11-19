@@ -54,6 +54,8 @@ model User {
   ticketMessages TicketMessage[]
   /// تستهایی که متخصص برای این مراجع اجرا کرده است
   clinicianRuns ClinicianTestRun[]
+  /// نتایج ارزیابیهای گفتار و زبان (فقط داده عددی، بدون فایل صوتی)
+  speechResults SpeechResult[]
 }
 
 /// کدهای یک‌بارمصرف ورود
@@ -835,4 +837,21 @@ model SpeechAssessment {
 
   @@index([categoryId, published, order])
   @@index([status, published])
+}
+
+/**
+ * نتیجه ذخیرهشده یک ارزیابی گفتار و زبان.
+ * فیلد data فقط شامل اعداد و متادیتای اعتبارسنجیشده است؛ هیچ فایل صوتی خامی
+ * در آن ذخیره نمیشود و هیچ مسیر عمومی برای خواندن آن وجود ندارد.
+ */
+model SpeechResult {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessmentSlug String
+  /// JSON اعتبارسنجیشده شامل تلاشها، مدتزمانها و وضعیت کیفیت
+  data           String
+  createdAt      DateTime @default(now())
+
+  @@index([userId, assessmentSlug, createdAt])
 }

@@ -1,0 +1,154 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AudioCapture, MIC_ERROR_LABELS, type MicError, type MicStatus } from "@/lib/speech/audio-recorder";
+import type { AudioFrame } from "@/lib/speech/mpt-types";
+
+type Props = {
+  /** در تمام مراحلی که میکروفون باید فعال باشد true باشد. */
+  active: boolean;
+  onFrame: (frame: AudioFrame) => void;
+  onError?: (error: MicError) => void;
+  onStatusChange?: (status: MicStatus) => void;
+};
+
+const STATUS_LABEL: Record<MicStatus, string> = {
+  idle: "میکروفون فعال نشده است",
+  requesting: "درخواست دسترسی به میکروفون…",
+  ready: "میکروفون آماده است",
+  denied: "دسترسی رد شد",
+  unsupported: "مرورگر پشتیبانی نمیکند",
+  error: "خطای میکروفون",
+};
+
+/**
+ * رابط کاربری و چرخه حیات میکروفون. مجوز تنها پس از اقدام صریح کاربر ( active )
+ * درخواست میشود و منابع در خروج از صفحه آزاد میشوند.
+ */
+export default function AudioRecorder({ active, onFrame, onError, onStatusChange }: Props) {
+  const captureRef = useRef<AudioCapture | null>(null);
+  const frameRef = useRef(onFrame);
+  const errorRef = useRef(onError);
+  const statusRef = useRef(onStatusChange);
+  const frameCount = useRef(0);
+
+  const [status, setStatus] = useState<MicStatus>("idle");
+  const [error, setError] = useState<MicError | null>(null);
+  const [level, setLevel] = useState(0);
+  const [attempt, setAttempt] = useState(0);
+
+  frameRef.current = onFrame;
+  errorRef.current = onError;
+  statusRef.current = onStatusChange;
+
+  useEffect(() => {
+    if (!captureRef.current) captureRef.current = new AudioCapture();
+    const capture = captureRef.current;
+    let disposed = false;
+
+    if (!active) {
+      capture.stop();
+      setStatus("idle");
+      setLevel(0);
+      return;
+    }
+
+    setStatus("requesting");
+    setError(null);
+    void capture
+      .start(
+        (frame) => {
+          if (disposed) return;
+          frameCount.current += 1;
+          if (frameCount.current % 2 === 0) setLevel(frame.rms);
+          frameRef.current(frame);
+        },
+        (nextError) => {
+          if (disposed) return;
+          setError(nextError);
+          setStatus(nextError === "DENIED" ? "denied" : nextError === "UNSUPPORTED" ? "unsupported" : "error");
+          errorRef.current?.(nextError);
+        },
+      )
+      .then(() => {
+        if (disposed || !capture.running) return;
+        setStatus("ready");
+      });
+
+    return () => {
+      disposed = true;
+      capture.stop();
+    };
+  }, [active, attempt]);
+
+  useEffect(() => {
+    statusRef.current?.(status);
+  }, [status]);
+
+  const retry = useCallback(() => setAttempt((value) => value + 1), []);
+
+  const levelPercent = Math.min(100, Math.round(level * 500));
+  const showMeter = status === "ready";
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="font-bold text-slate-700">بررسی میکروفون</p>
+        <span
+          className={`rounded-full px-2.5 py-1 text-xs ${
+            status === "ready"
+              ? "bg-emerald-50 text-emerald-700"
+              : status === "denied" || status === "error" || status === "unsupported"
+                ? "bg-rose-50 text-rose-700"
+                : "bg-slate-100 text-slate-600"
+          }`}
+        >
+          {STATUS_LABEL[status]}
+        </span>
+      </div>
+
+      {error ? (
+        <div className="mt-3 rounded-xl bg-rose-50 p-3 text-xs leading-6 text-rose-800">
+          <p>{MIC_ERROR_LABELS[error]}</p>
+          <ul className="mt-2 list-inside list-disc space-y-1 text-rose-700/90">
+            <li>اجازه میکروفون را در نوار آدرس مرورگر بررسی کنید.</li>
+            <li>میکروفون دیگری را وصل کنید یا دستگاه پیشفرض صدا را تغییر دهید.</li>
+            <li>از اتصال امن HTTPS استفاده کنید (آدرس سایت باید با https آغاز شود).</li>
+          </ul>
+          <button
+            type="button"
+            onClick={retry}
+            className="mt-3 rounded-lg bg-rose-700 px-4 py-2 text-xs font-medium text-white hover:bg-rose-800"
+          >
+            تلاش دوباره
+          </button>
+        </div>
+      ) : null}
+
+      {showMeter ? (
+        <div className="mt-4" aria-live="off">
+          <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
+            <span>سطح ورودی صدا</span>
+            <span dir="ltr">{levelPercent}%</span>
+          </div>
+          <div
+            role="meter"
+            aria-label="سطح ورودی میکروفون"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={levelPercent}
+            className="h-3 overflow-hidden rounded-full bg-slate-100"
+          >
+            <div
+              className="h-full rounded-full bg-brand-500 transition-[width] duration-100"
+              style={{ width: `${levelPercent}%` }}
+            />
+          </div>
+          <p className="mt-2 text-[11px] leading-6 text-slate-500">
+            هنگام صحبت کنید تا بومی ببیند میکروفون صدا را دریافت میکند. نیازی به بلند صحبت کردن نیست.
+          </p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
