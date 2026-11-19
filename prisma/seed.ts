@@ -5,6 +5,7 @@
 import { PrismaClient } from "@prisma/client";
 import { seedArticles } from "./seed-articles";
 import { seedCourses } from "./seed-courses";
+import { seedSpeech } from "./seed-speech";
 
 const db = new PrismaClient();
 
@@ -64,6 +65,8 @@ async function main() {
     created++;
   }
   console.log(`✓ ${created} sample courses created`);
+
+  await seedSpeech(db);
 }
 
 main().finally(() => db.$disconnect());

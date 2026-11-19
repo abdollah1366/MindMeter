@@ -774,3 +774,65 @@ model ResultInterpretation {
 
   @@index([clinicianId])
 }
+
+// ─────────────── ماژول ارزیابی گفتار و زبان ───────────────
+
+/**
+ * دسته‌بندی‌های فهرست ارزیابی گفتار و زبان.
+ * این ماژول در ابتدا فقط فهرست/معرفی است و آزمون‌های آن از طریق PsychTest اجرا نمی‌شوند.
+ */
+model SpeechCategory {
+  id          String             @id @default(cuid())
+  slug        String             @unique
+  title       String
+  titleEn     String
+  description String             @default("")
+  /// ایموجی یا شناسه‌ی آیکون برای نمایش در رابط کاربری
+  icon        String             @default("")
+  /// کلاس رنگ Tailwind برای پس‌زمینه‌ی آیکون
+  color       String             @default("bg-slate-100")
+  order       Int                @default(0)
+  published   Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  assessments SpeechAssessment[]
+
+  @@index([published, order])
+}
+
+/**
+ * آزمون‌های فهرست ارزیابی گفتار و زبان.
+ * وضعیت و مسیر پیاده‌سازی، فعال‌سازی مستقل هر آزمون را در آینده ممکن می‌کند.
+ */
+model SpeechAssessment {
+  id                   String         @id @default(cuid())
+  slug                 String         @unique
+  title                String
+  titleEn              String
+  description          String
+  /// STANDARDIZED_QUESTIONNAIRE | STANDARDIZED_SCALE | PERFORMANCE_MEASURE |
+  /// CLINICAL_ASSESSMENT | CLINICAL_TASK | SCREENING_TOOL
+  assessmentType       String         @default("CLINICAL_ASSESSMENT")
+  /// روش پیشنهادی ارزیابی؛ فقط اطلاعاتی است و در این مرحله اجرا نمی‌شود
+  method               String         @default("")
+  /// COMING_SOON | IN_DEVELOPMENT | AVAILABLE | DISABLED
+  status               String         @default("COMING_SOON")
+  published            Boolean        @default(true)
+  order                Int            @default(0)
+  /// ابزار استاندارد بیرونی؛ پیش از فعال‌سازی نیازمند بررسی حقوقی/مجوز است
+  requiresRightsReview Boolean        @default(false)
+  rightsNote           String?
+  /// کلید پیاده‌سازی آینده برای اتصال به موتور اجرای همان آزمون
+  implementationKey    String?
+  /// مسیر صفحه‌ی اجرای آینده؛ تا زمان فعال‌شدن خالی می‌ماند
+  implementationPath   String?
+  /// فراداده‌ی آینده به صورت JSON string (دستورالعمل، معیار ورود، گزارش و ...)
+  metadata             String?
+  categoryId           String
+  category             SpeechCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  @@index([categoryId, published, order])
+  @@index([status, published])
+}

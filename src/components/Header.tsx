@@ -5,6 +5,7 @@ import { useState } from "react";
 
 const links = [
   { href: "/tests", label: "همه‌ی تست‌ها" },
+  { href: "/speech", label: "ارزیابی گفتار و زبان" },
   { href: "/clinicians", label: "متخصصان" },
   { href: "/academy", label: "آکادمی" },
   { href: "/blog", label: "مقالات" },

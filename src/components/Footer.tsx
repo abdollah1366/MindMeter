@@ -27,6 +27,7 @@ export default function Footer() {
           <p className="font-bold">لینک‌ها</p>
           <ul className="mt-3 space-y-2 text-slate-500">
             <li><Link href="/tests" className="hover:text-brand-600">همه‌ی تست‌ها</Link></li>
+            <li><Link href="/speech" className="hover:text-brand-600">ارزیابی گفتار و زبان</Link></li>
             <li><Link href="/blog" className="hover:text-brand-600">مقالات</Link></li>
             <li><Link href="/clinicians" className="hover:text-brand-600">روانشناسان و پزشکان</Link></li>
             <li><Link href="/academy" className="hover:text-brand-600">آکادمی و دوره‌ها</Link></li>

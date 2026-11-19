@@ -92,6 +92,25 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ماژول ارزیابی گفتار و زبان */}
+      <section className="rounded-3xl border border-brand-200 bg-gradient-to-l from-brand-50 to-calm-50 p-6 sm:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-bold text-brand-600">ماژول جدید</p>
+            <h2 className="mt-1 text-xl font-extrabold">ارزیابی گفتار و زبان</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+              فهرست آزمون‌های صوت، تولید گفتار، روانی گفتار، زبان، اختلالات نورولوژیک و بلع؛ همه در حال آماده‌سازی.
+            </p>
+          </div>
+          <Link
+            href="/speech"
+            className="shrink-0 rounded-xl bg-brand-600 px-5 py-2.5 text-center text-sm text-white hover:bg-brand-700"
+          >
+            مشاهده‌ی فهرست ←
+          </Link>
+        </div>
+      </section>
+
       {/* تست‌های پرطرفدار */}
       <section>
         <div className="flex items-end justify-between">
