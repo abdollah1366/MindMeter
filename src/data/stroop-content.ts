@@ -102,6 +102,61 @@ export function classicSpecs(count: number, prefix: string): StroopSpec[] {
   return out;
 }
 
+/**
+ * PRNG قطعی (mulberry32). سرور و مرورگر با همان seed همان توالی را میسازند،
+ * بنابراین ترتیب شانسی در hydration بههم نمیخورد و نتیجهی ذخیرشده بازسازیشدنی است.
+ */
+function seededRandom(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** seed پایدار و مستقل از محیط اجرا، ساختهشده از روی نام بلوک. */
+function seedFrom(text: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/**
+ * جابهجایی شانسی ولی قطعی ترتیب نمایش محرکها. فقط ترتیب کارتها عوض میشود؛
+ * شناسه، رنگ و پاسخ هر کارت ثابت میماند تا نتایج ذخیرهشده پیشین با همان
+ * کلید پاسخ دوباره نمرهگذاری شوند. تعداد حضور هر رنگ هم حفظ میشود و از
+ * تکرار رنگ در دو کارت مجاور جلوگیری میشود.
+ */
+export function shuffledSpecs(specs: StroopSpec[], prefix: string): StroopSpec[] {
+  const random = seededRandom(seedFrom(`stroop:${prefix}:${specs.length}`));
+  const remaining = specs.map((s) => s.ink);
+  const order: string[] = [];
+
+  while (remaining.length) {
+    const choices = remaining
+      .map((ink, index) => ({ ink, index }))
+      .filter(({ ink }) => order.length === 0 || ink !== order[order.length - 1]);
+    const pool = choices.length ? choices : remaining.map((ink, index) => ({ ink, index }));
+    const picked = pool[Math.floor(random() * pool.length)];
+    order.push(picked.ink);
+    remaining.splice(picked.index, 1);
+  }
+
+  const queues = new Map<string, StroopSpec[]>();
+  for (const spec of specs) {
+    const queue = queues.get(spec.ink) ?? [];
+    queue.push(spec);
+    queues.set(spec.ink, queue);
+  }
+  return order.map((ink) => queues.get(ink)!.shift()!);
+}
+
 /** محرک های حالت هیجانی: نیمی واژه هیجانی و نیمی خنثی، با رنگ جوهر متغیر. */
 export function emotionalSpecs(count: number, prefix: string): StroopSpec[] {
   const out: StroopSpec[] = [];
@@ -127,5 +182,5 @@ export function emotionalSpecs(count: number, prefix: string): StroopSpec[] {
 /** ۱۵ کارت تمرینی کلاسیک + ۱۵ کارت تمرینی هیجانی (بدون نمرهدهی). */
 export const STROOP_PRACTICE: StroopSpec[] = [
   ...classicSpecs(15, "pc"),
-  ...emotionalSpecs(15, "pe"),
+  ...shuffledSpecs(emotionalSpecs(15, "pe"), "pe"),
 ];

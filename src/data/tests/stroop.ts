@@ -5,9 +5,9 @@
  * وظیفه آزمودنی در هر دو حالت، نام گذاری رنگ جوهر و نادیده گرفتن معنای واژه است.
  */
 import type { AnswerOption, PsychTest, Question, ResultRange, Scale } from "@/lib/types";
-import { STROOP_OPTIONS, classicSpecs, emotionalSpecs } from "../stroop-content";
+import { STROOP_OPTIONS, classicSpecs, emotionalSpecs, shuffledSpecs } from "../stroop-content";
 
-const MAIN = [...classicSpecs(30, "cm"), ...emotionalSpecs(30, "em")];
+const MAIN = [...classicSpecs(30, "cm"), ...shuffledSpecs(emotionalSpecs(30, "em"), "em")];
 
 /**
  * بازه های پیوسته نمره دقت. نمره پایین بهعنوان سطح نگران کننده (severe)
