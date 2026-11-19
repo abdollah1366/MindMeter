@@ -10,7 +10,7 @@ import type { AudioFrame } from "./mpt-types";
 
 export type MicStatus = "idle" | "requesting" | "ready" | "denied" | "unsupported" | "error";
 
-export type MicError = "UNSUPPORTED" | "DENIED" | "NOT_FOUND" | "DISCONNECTED" | "CAPTURE_FAILED";
+export type MicError = "UNSUPPORTED" | "DENIED" | "NOT_FOUND" | "DISCONNECTED" | "CAPTURE_FAILED" | "TIMEOUT";
 
 export type BrowserAudioSupport = {
   getUserMedia: boolean;
@@ -25,6 +25,7 @@ export const MIC_ERROR_LABELS: Record<MicError, string> = {
   NOT_FOUND: "میکروفونی پیدا نشد. ابتدا میکروفون را وصل یا فعال کنید.",
   DISCONNECTED: "میکروفون حین ضبط قطع شد. اتصال آن را بررسی کرده و آزمون را تکرار کنید.",
   CAPTURE_FAILED: "آغاز ضبط صوت با مشکل مواجه شد. صفحه را دوباره بارگذاری کرده و تلاش کنید.",
+  TIMEOUT: "درخواست مجوز میکروفون بیپاسخ ماند. پنجره اجازه میکروفون مرورگر را بررسی کنید و دوباره تلاش کنید.",
 };
 
 type AudioContextConstructor = new () => AudioContext;
@@ -56,6 +57,8 @@ export class AudioCapture {
   private timer: ReturnType<typeof setInterval> | null = null;
   private startedAt = 0;
   private stopped = true;
+  /** هر تلاش جدید یا توقف، تلاشهای قدیمی را باطل میکند تا استریم دیررس آزاد شود. */
+  private epoch = 0;
 
   get running(): boolean {
     return !this.stopped;
@@ -82,6 +85,7 @@ export class AudioCapture {
     onSamples?: (samples: Float32Array, sampleRate: number) => void,
   ): Promise<void> {
     if (!this.stopped) return;
+    const epoch = ++this.epoch;
 
     const support = getBrowserAudioSupport();
     if (!isAudioCaptureSupported()) {
@@ -90,6 +94,7 @@ export class AudioCapture {
     }
 
     let context: AudioContext | null = null;
+    let mediaPromise: Promise<MediaStream> | null = null;
     try {
       const legacy = globalThis as typeof globalThis & { webkitAudioContext?: AudioContextConstructor };
       const Context = legacy.AudioContext ?? legacy.webkitAudioContext;
@@ -102,13 +107,34 @@ export class AudioCapture {
       const resumed =
         context.state === "suspended" ? context.resume().catch(() => undefined) : Promise.resolve();
 
-      const stream = await navigator.mediaDevices.getUserMedia({
+      // برخی مرورگرها / WebViewها وعده getUserMedia را بیپاسخ میگذارند (مثلاً وقتی
+      // پنجره مجوز پشت پنجره دیگری گیر میکند). بدون مهلت، نشانگر «درخواست دسترسی»
+      // برای همیشه میماند و دکمه آغاز اندازهگیری قفل میشود.
+      mediaPromise = navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: false,
         },
       });
+      let permissionTimer: ReturnType<typeof setTimeout> | null = null;
+      const stream = await Promise.race([
+        mediaPromise,
+        new Promise<never>((_, reject) => {
+          permissionTimer = setTimeout(
+            () => reject(new DOMException("Microphone permission timed out", "TimeoutError")),
+            12000,
+          );
+        }),
+      ]);
+      if (permissionTimer !== null) clearTimeout(permissionTimer);
+
+      // اگر کاربر حین درخواست مجوز تلاش دیگری را آغاز کرده یا صفحه را ترک کرده است،
+      // استریم دیررس بیاستفاده را آزاد میکنیم.
+      if (epoch !== this.epoch) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       // اگر کاربر در حین درخواست مجوز صفحه را ترک کرده باشد، استریم بلافاصله آزاد میشود.
       if (!this.stopped) {
         this.stream = stream;
@@ -116,6 +142,7 @@ export class AudioCapture {
           resumed,
           new Promise<void>((resolve) => setTimeout(resolve, 1200)),
         ]);
+        if (epoch !== this.epoch) return;
         // اگر هنوز معلق است، تلاش دوباره پس از پذیرش مجوز توسط کاربر انجام میشود.
         if (context.state === "suspended") void context.resume().catch(() => undefined);
         const source = context.createMediaStreamSource(stream);
@@ -133,7 +160,7 @@ export class AudioCapture {
 
         for (const track of stream.getAudioTracks()) {
           track.addEventListener("ended", () => {
-            if (!this.stopped) {
+            if (!this.stopped && epoch === this.epoch) {
               onError("DISCONNECTED");
               this.cleanup();
             }
@@ -169,6 +196,12 @@ export class AudioCapture {
         onError("DENIED");
       } else if (name === "NotFoundError" || name === "DevicesNotFoundError" || name === "OverconstrainedError") {
         onError("NOT_FOUND");
+      } else if (name === "TimeoutError") {
+        onError("TIMEOUT");
+        // ممکن است مجوز بعد از مهلت داده شود؛ استریم دیررس نباید بدون استفاده بماند.
+        void mediaPromise
+          ?.then((stream) => stream.getTracks().forEach((track) => track.stop()))
+          .catch(() => undefined);
       } else {
         onError("CAPTURE_FAILED");
       }
@@ -180,6 +213,7 @@ export class AudioCapture {
 
   /** آزادسازی کامل منابع؛ هنگام خروج از صفحه حتماً فراخوانی میشود. */
   stop(): void {
+    this.epoch += 1;
     this.cleanup();
   }
 

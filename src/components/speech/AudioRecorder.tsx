@@ -26,6 +26,8 @@ const STATUS_LABEL: Record<MicStatus, string> = {
   error: "خطای میکروفون",
 };
 
+const PERMISSION_HELP_DELAY_MS = 4000;
+
 /**
  * رابط کاربری و چرخه حیات میکروفون. مجوز تنها پس از اقدام صریح کاربر ( active )
  * درخواست میشود و منابع در خروج از صفحه آزاد میشوند.
@@ -44,11 +46,13 @@ export default function AudioRecorder({
   const statusRef = useRef(onStatusChange);
   const samplesRef = useRef(onSamples);
   const frameCount = useRef(0);
+  /** تلاشهای قدیمی نباید وضعیت یا فریمهای تلاش جدید را تحت تأثیر قرار دهند. */
+  const generationRef = useRef(0);
 
   const [status, setStatus] = useState<MicStatus>("idle");
   const [error, setError] = useState<MicError | null>(null);
   const [level, setLevel] = useState(0);
-  const [attempt, setAttempt] = useState(0);
+  const [showWaitingHelp, setShowWaitingHelp] = useState(false);
 
   frameRef.current = onFrame;
   errorRef.current = onError;
@@ -65,49 +69,75 @@ export default function AudioRecorder({
     statusRef.current?.(next);
   }, []);
 
-  useEffect(() => {
+  /**
+   * درخواست مجوز را هم هنگام ورود به فاز بررسی و هم مستقیماً از روی دکمه «تلاش
+   * دوباره» فراخوانی میکنیم. حالت دوم درون اقدام کاربر است و برای مرورگرهایی
+   * که مجوز را تنها در پاسخ به کلیک صریح میپذیرند ضروری است.
+   */
+  const startCapture = useCallback(() => {
     if (!captureRef.current) captureRef.current = new AudioCapture();
     const capture = captureRef.current;
-    let disposed = false;
+    const generation = ++generationRef.current;
 
-    if (!active) {
-      capture.stop();
-      updateStatus("idle");
-      setLevel(0);
-      return;
-    }
-
-    updateStatus("requesting");
+    capture.stop();
     setError(null);
+    setLevel(0);
+    setShowWaitingHelp(false);
+    updateStatus("requesting");
+
     void capture
       .start(
         (frame) => {
-          if (disposed) return;
+          if (generationRef.current !== generation) return;
           frameCount.current += 1;
           if (frameCount.current % 2 === 0) setLevel(frame.rms);
           frameRef.current(frame);
         },
         (nextError) => {
-          if (disposed) return;
+          if (generationRef.current !== generation) return;
           setError(nextError);
           updateStatus(nextError === "DENIED" ? "denied" : nextError === "UNSUPPORTED" ? "unsupported" : "error");
           errorRef.current?.(nextError);
         },
         frameIntervalMs,
-        (samples, sampleRate) => samplesRef.current?.(samples, sampleRate),
+        (samples, sampleRate) => {
+          if (generationRef.current === generation) samplesRef.current?.(samples, sampleRate);
+        },
       )
       .then(() => {
-        if (disposed || !capture.running) return;
+        if (generationRef.current !== generation || !capture.running) return;
         updateStatus("ready");
       });
+  }, [frameIntervalMs, updateStatus]);
 
+  useEffect(() => {
+    if (!active) {
+      generationRef.current += 1;
+      captureRef.current?.stop();
+      updateStatus("idle");
+      setLevel(0);
+      setShowWaitingHelp(false);
+      return;
+    }
+    startCapture();
     return () => {
-      disposed = true;
-      capture.stop();
+      generationRef.current += 1;
+      captureRef.current?.stop();
     };
-  }, [active, attempt, frameIntervalMs, updateStatus]);
+  }, [active, startCapture, updateStatus]);
 
-  const retry = useCallback(() => setAttempt((value) => value + 1), []);
+  // اگر پنجره مجوز ظاهر نشد، بهجای ماندن بیپایان در حالت «درخواست دسترسی»،
+  // راهنما و دکمه تلاش دوباره را نشان میدهیم.
+  useEffect(() => {
+    if (status !== "requesting") {
+      setShowWaitingHelp(false);
+      return;
+    }
+    const id = setTimeout(() => setShowWaitingHelp(true), PERMISSION_HELP_DELAY_MS);
+    return () => clearTimeout(id);
+  }, [status]);
+
+  const retry = useCallback(() => startCapture(), [startCapture]);
 
   const levelPercent = Math.min(100, Math.round(level * 500));
   const showMeter = status === "ready";
@@ -141,6 +171,19 @@ export default function AudioRecorder({
             type="button"
             onClick={retry}
             className="mt-3 rounded-lg bg-rose-700 px-4 py-2 text-xs font-medium text-white hover:bg-rose-800"
+          >
+            تلاش دوباره
+          </button>
+        </div>
+      ) : null}
+
+      {status === "requesting" && showWaitingHelp ? (
+        <div className="mt-3 rounded-xl bg-amber-50 p-3 text-xs leading-6 text-amber-900">
+          <p>پنجره اجازه میکروفون مرورگر را نمیدبینید؟ اجازه میکروفون را در نوار آدرس بررسی کنید و دوباره تلاش کنید.</p>
+          <button
+            type="button"
+            onClick={retry}
+            className="mt-2 rounded-lg bg-amber-700 px-4 py-2 text-xs font-medium text-white hover:bg-amber-800"
           >
             تلاش دوباره
           </button>
