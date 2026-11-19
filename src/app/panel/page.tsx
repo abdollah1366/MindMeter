@@ -27,7 +27,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
 
   const term = q.trim();
   const rows = grants.filter(
-    (g) => !term || displayName(g.patient).includes(term) || g.patient.phone.includes(term) || g.patient.nationalId?.includes(term),
+    (g) => !term || displayName(g.patient).includes(term) || (g.patient.phone ?? "").includes(term) || (g.patient.username ?? "").includes(term) || g.patient.nationalId?.includes(term),
   );
 
   return (

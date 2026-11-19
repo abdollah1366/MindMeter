@@ -34,7 +34,7 @@ export function canUseDoctorsTopic(role: string) {
   return STAFF_ROLES.includes(role);
 }
 
-export function displayUser(u: { firstName?: string | null; lastName?: string | null; phone?: string }) {
+export function displayUser(u: { firstName?: string | null; lastName?: string | null; phone?: string | null }) {
   const name = [u.firstName, u.lastName].filter(Boolean).join(" ");
   return name || `کاربر ${u.phone?.slice(-4) ?? ""}`.trim();
 }

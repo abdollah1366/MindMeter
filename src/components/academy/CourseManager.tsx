@@ -175,7 +175,7 @@ export default async function CourseManager({ courseId, isAdmin, error }: { cour
                 {course.enrollments.map((e) => (
                   <tr key={e.id} className="border-b border-slate-100">
                     <td className="py-2">{displayName(e.user)}</td>
-                    {isAdmin && <td className="py-2" dir="ltr">{toPersianDigits(e.user.phone)}</td>}
+                    {isAdmin && <td className="py-2" dir="ltr">{e.user.phone ? toPersianDigits(e.user.phone) : "-"}</td>}
                     <td className="py-2">
                       {ENROLL_STATUS[e.status] ?? e.status}
                       {isAdmin && e.status === "ACTIVE" && e.price > 0 && <span className="text-xs text-slate-400"> ({formatToman(e.price)})</span>}

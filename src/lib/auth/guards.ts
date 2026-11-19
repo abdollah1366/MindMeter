@@ -11,7 +11,7 @@ export const ROLES = {
 } as const;
 export type Role = keyof typeof ROLES;
 
-export { isBootstrapAdmin } from "./session";
+export { isBootstrapAdmin, isBootstrapAdminUsername } from "./session";
 
 export async function requireUser(next: string) {
   const user = await getCurrentUser();

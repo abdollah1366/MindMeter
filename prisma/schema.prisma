@@ -14,7 +14,12 @@ datasource db {
 /// کاربران سایت: بیمار، متخصص (روانشناس/پزشک) و ادمین
 model User {
   id          String    @id @default(cuid())
-  phone       String    @unique /// شماره موبایل به فرم 09xxxxxxxxx
+  /// نام کاربری منحصربهفرد برای ورود (حروف لاتین کوچک، اعداد و زیرخط)
+  username     String?   @unique
+  /// هش رمز عبور با scrypt؛ فقط حسابهای نامکاربری/رمز از آن استفاده میکنند
+  passwordHash String?
+  /// شماره موبایل به فرم 09xxxxxxxxx — برای حسابهای جدید اختیاری است
+  phone       String?   @unique
   /// PATIENT | PSYCHOLOGIST | PHYSICIAN | ADMIN
   role        String    @default("PATIENT")
   firstName   String?

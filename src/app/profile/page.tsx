@@ -2,32 +2,49 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import ProfileForm from "@/components/ProfileForm";
 import { getCurrentUser, isProfileComplete } from "@/lib/auth/session";
-import { currentJalaliYear, dateToJalali } from "@/lib/jalali";
+import { ageFrom, currentJalaliYear, dateToJalali } from "@/lib/jalali";
 import { toPersianDigits } from "@/lib/scoring";
 
 export const metadata: Metadata = { title: "اطلاعات من" };
 
-type Props = { searchParams: Promise<{ next?: string }> };
+type Props = { searchParams: Promise<{ next?: string; welcome?: string }> };
 
 export default async function ProfilePage({ searchParams }: Props) {
-  const { next = "" } = await searchParams;
+  const { next = "", welcome } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/profile");
 
   const b = user.birthDate ? dateToJalali(user.birthDate) : null;
+  const age = user.birthDate ? ageFrom(user.birthDate) : null;
   const thisYear = currentJalaliYear();
   const years = Array.from({ length: 100 }, (_, i) => thisYear - 5 - i);
 
   return (
     <div className="mx-auto max-w-2xl">
       <h1 className="text-2xl font-extrabold">اطلاعات من</h1>
-      <p className="mt-2 text-sm text-slate-500">
-        شماره موبایل: <span dir="ltr">{toPersianDigits(user.phone)}</span>
-      </p>
-      {next && !isProfileComplete(user) && (
+      <div className="mt-2 space-y-1 text-sm text-slate-500">
+        {user.username && (
+          <p>
+            نام کاربری: <span dir="ltr">{user.username}</span>
+          </p>
+        )}
+        {user.phone && (
+          <p>
+            شماره موبایل: <span dir="ltr">{toPersianDigits(user.phone)}</span>
+          </p>
+        )}
+        {age !== null && <p>سن: {toPersianDigits(age)} سال</p>}
+      </div>
+      {welcome === "1" ? (
         <p className="mt-4 rounded-xl bg-calm-50 p-4 text-sm leading-7 text-calm-700">
-          برای صدور گزارش رسمی قابل چاپ، تکمیل اطلاعات زیر لازم است. این اطلاعات فقط در گزارش شما و برای متخصصی که به او دسترسی بدهید نمایش داده می‌شود.
+          به مایندمتر خوش آمدید! برای ادامه، مشخصات زیر را تکمیل کنید. شهر شما برای پیشنهاد متخصصان و ارسال درخواست مشاوره لازم است.
         </p>
+      ) : (
+        next && !isProfileComplete(user) && (
+          <p className="mt-4 rounded-xl bg-calm-50 p-4 text-sm leading-7 text-calm-700">
+            برای صدور گزارش رسمی قابل چاپ و ارسال درخواست به متخصص، تکمیل اطلاعات زیر لازم است. این اطلاعات فقط در گزارش شما و برای متخصصی که به او دسترسی بدهید نمایش داده میشود.
+          </p>
+        )
       )}
       <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6">
         <ProfileForm

@@ -27,11 +27,13 @@ export async function saveProfile(_: ProfileState, form: FormData): Promise<Prof
   const lastName = str("lastName");
   const nationalId = toEnglishDigits(str("nationalId"));
   const sex = str("sex");
+  const city = str("city").slice(0, 80);
   const jy = num("birthYear"), jm = num("birthMonth"), jd = num("birthDay");
 
   if (firstName.length < 2 || lastName.length < 2) return fail("نام و نام خانوادگی را کامل وارد کنید.");
   if (!isValidNationalId(nationalId)) return fail("کد ملی معتبر نیست.");
   if (!SEXES.includes(sex)) return fail("جنسیت را انتخاب کنید.");
+  if (!city) return fail("شهر محل سکونت را وارد کنید؛ ارسال درخواست به متخصصان بر اساس شهر انجام میشود.");
   const thisYear = currentJalaliYear();
   if (!(jy >= thisYear - 110 && jy <= thisYear - 5 && jm >= 1 && jm <= 12 && jd >= 1 && jd <= 31)) {
     return fail("تاریخ تولد معتبر نیست.");
@@ -49,7 +51,7 @@ export async function saveProfile(_: ProfileState, form: FormData): Promise<Prof
       sex,
       birthDate: jalaliToDate(jy, jm, jd),
       education: str("education") || null,
-      city: str("city") || null,
+      city,
     },
   });
   revalidatePath("/", "layout");

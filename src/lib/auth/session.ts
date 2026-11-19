@@ -58,12 +58,28 @@ export function isBootstrapAdmin(phone: string) {
     .includes(phone);
 }
 
+/** نامکاربریهایی که باید نقش ADMIN بگیرند (جدا با کاما، مانند ADMIN_PHONES) */
+export function isBootstrapAdminUsername(username: string | null | undefined) {
+  if (!username) return false;
+  const name = username.trim().toLowerCase().replace(/^@/, "");
+  if (!name) return false;
+  return (process.env.ADMIN_USERNAMES ?? "")
+    .split(/[,،]/)
+    .map((u) => u.trim().toLowerCase().replace(/^@/, ""))
+    .filter(Boolean)
+    .includes(name);
+}
+
 export async function getCurrentUser() {
   const id = await getSessionUserId();
   if (!id) return null;
   const user = await db.user.findUnique({ where: { id } });
-  // اگر شماره بعد از ورود به ADMIN_PHONES اضافه شده باشد، نیازی به خروج و ورود دوباره نیست
-  if (user && user.role !== "ADMIN" && isBootstrapAdmin(user.phone)) {
+  // اگر شماره/نامکاربری بعد از ورود به لیست ادمینها اضافه شده باشد، نیازی به خروج و ورود دوباره نیست
+  const shouldBeAdmin =
+    user &&
+    user.role !== "ADMIN" &&
+    ((user.phone && isBootstrapAdmin(user.phone)) || isBootstrapAdminUsername(user.username));
+  if (shouldBeAdmin) {
     return db.user.update({ where: { id }, data: { role: "ADMIN" } });
   }
   return user;
@@ -71,7 +87,7 @@ export async function getCurrentUser() {
 
 export type CurrentUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
 
-/** آیا اطلاعات لازم برای چاپ گزارش کامل است؟ */
+/** آیا اطلاعات لازم برای چاپ گزارش و ارسال درخواست به متخصص کامل است؟ */
 export function isProfileComplete(u: CurrentUser) {
-  return Boolean(u.firstName && u.lastName && u.nationalId && u.birthDate && u.sex);
+  return Boolean(u.firstName && u.lastName && u.nationalId && u.birthDate && u.sex && u.city);
 }

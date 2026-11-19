@@ -14,7 +14,7 @@ export async function setUserRole(form: FormData) {
   const role = String(form.get("role"));
   if (!(role in ROLES) || userId === admin.id) return; // ادمین نقش خودش را تغییر نمی‌دهد
   const before = await db.user.update({ where: { id: userId }, data: { role } });
-  await audit(admin.id, "role.change", { targetType: "User", targetId: userId, meta: { role, phoneTail: before.phone.slice(-4) } });
+  await audit(admin.id, "role.change", { targetType: "User", targetId: userId, meta: { role, phoneTail: before.phone?.slice(-4) ?? "" } });
   revalidatePath("/admin/users");
 }
 

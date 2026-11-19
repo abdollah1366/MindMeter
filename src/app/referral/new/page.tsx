@@ -14,11 +14,12 @@ type Props = { searchParams: Promise<{ result?: string; to?: string }> };
 
 export default async function NewReferralPage({ searchParams }: Props) {
   const { result, to } = await searchParams;
+  const qs = new URLSearchParams({ ...(result ? { result } : {}), ...(to ? { to } : {}) }).toString();
+  const back = `/referral/new${qs ? `?${qs}` : ""}`;
   const user = await getCurrentUser();
-  if (!user) {
-    const qs = new URLSearchParams({ ...(result ? { result } : {}), ...(to ? { to } : {}) }).toString();
-    redirect(`/login?next=${encodeURIComponent(`/referral/new${qs ? `?${qs}` : ""}`)}`);
-  }
+  if (!user) redirect(`/login?next=${encodeURIComponent(back)}`);
+  // ارسال به متخصص بر اساس شهر است؛ بدون شهر ابتدا پروفایل را کامل میکنیم.
+  if (!user.city) redirect(`/profile?next=${encodeURIComponent(back)}`);
 
   const r = result ? await db.testResult.findUnique({ where: { id: result } }) : null;
   const testResult = r && r.userId === user.id ? r : null;
@@ -26,7 +27,12 @@ export default async function NewReferralPage({ searchParams }: Props) {
   const target = to ? await db.clinicianProfile.findFirst({ where: { id: to, status: "APPROVED" }, include: { user: true } }) : null;
 
   const suggested = await db.clinicianProfile.findMany({
-    where: { status: "APPROVED", acceptsOnline: true, userId: { not: user.id } },
+    where: {
+      status: "APPROVED",
+      acceptsOnline: true,
+      userId: { not: user.id },
+      city: user.city,
+    },
     include: { user: true, _count: { select: { availability: true } } },
     orderBy: { yearsExperience: "desc" },
     take: 6,
@@ -57,9 +63,12 @@ export default async function NewReferralPage({ searchParams }: Props) {
       </div>
 
       <aside>
-        <h2 className="font-bold">یا مستقیم نوبت بگیرید</h2>
+        <h2 className="font-bold">متخصصان شهر {user.city}</h2>
+        <p className="mt-1 text-xs leading-6 text-slate-500">
+          بر اساس شهر پروفایلتان نمایش داده میشوند؛ میتوانید مستقیم هم نوبت بگیرید.
+        </p>
         <div className="mt-3 space-y-3">
-          {suggested.length === 0 && <p className="text-sm text-slate-500">فعلاً متخصصی با نوبت آنلاین ثبت نشده است.</p>}
+          {suggested.length === 0 && <p className="text-sm text-slate-500">فعلاً متخصصی با نوبت آنلاین در شهر شما ثبت نشده است.</p>}
           {suggested.map((c) => (
             <Link
               key={c.id}

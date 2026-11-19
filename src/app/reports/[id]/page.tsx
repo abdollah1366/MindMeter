@@ -64,7 +64,7 @@ export default async function ReportPage({ params }: Props) {
     ["جنسیت", patient.sex ? SEX_LABEL[patient.sex] ?? "-" : "-"],
     ["تاریخ تولد", patient.birthDate ? formatJalali(patient.birthDate) : "-"],
     ["تحصیلات", patient.education ?? "-"],
-    ["شماره تماس", toPersianDigits(patient.phone)],
+    ["شماره تماس", patient.phone ? toPersianDigits(patient.phone) : "-"],
     ["تاریخ آزمون", formatJalali(result.createdAt)],
   ];
 

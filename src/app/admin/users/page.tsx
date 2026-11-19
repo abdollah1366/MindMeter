@@ -18,7 +18,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
     where: {
       ...(role ? { role } : {}),
       ...(term
-        ? { OR: [{ phone: { contains: term } }, { firstName: { contains: term } }, { lastName: { contains: term } }, { nationalId: { contains: term } }] }
+        ? { OR: [{ phone: { contains: term } }, { username: { contains: term } }, { firstName: { contains: term } }, { lastName: { contains: term } }, { nationalId: { contains: term } }] }
         : {}),
     },
     include: { _count: { select: { results: true } } },
@@ -30,7 +30,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
     <>
       <h1 className="text-2xl font-extrabold">کاربران</h1>
       <form className="mt-4 flex flex-wrap gap-2">
-        <input name="q" defaultValue={q} placeholder="موبایل، نام یا کد ملی" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" />
+        <input name="q" defaultValue={q} placeholder="موبایل، نام کاربری، نام یا کد ملی" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" />
         <select name="role" defaultValue={role} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
           <option value="">همه‌ی نقش‌ها</option>
           {Object.entries(ROLES).map(([k, v]) => (
@@ -45,6 +45,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
           <thead className="bg-surface text-slate-500">
             <tr>
               <th className="p-3 text-start">نام</th>
+              <th className="p-3 text-start">نام کاربری</th>
               <th className="p-3 text-start">موبایل</th>
               <th className="p-3 text-start">تست‌ها</th>
               <th className="p-3 text-start">عضویت</th>
@@ -55,7 +56,8 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
             {users.map((u) => (
               <tr key={u.id} className="border-t border-slate-100">
                 <td className="p-3">{displayName({ ...u, phone: undefined })}</td>
-                <td className="p-3" dir="ltr">{toPersianDigits(u.phone)}</td>
+                <td className="p-3" dir="ltr">{u.username ?? "-"}</td>
+                <td className="p-3" dir="ltr">{u.phone ? toPersianDigits(u.phone) : "-"}</td>
                 <td className="p-3">{toPersianDigits(u._count.results)}</td>
                 <td className="p-3 text-slate-500">{formatJalali(u.createdAt)}</td>
                 <td className="p-3">

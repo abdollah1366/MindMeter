@@ -11,7 +11,7 @@ export const CLINICIAN_STATUS: Record<string, { label: string; style: string }> 
   REJECTED: { label: "ردشده", style: "bg-rose-50 text-rose-700" },
 };
 
-export function displayName(u: { firstName: string | null; lastName: string | null; phone?: string }) {
+export function displayName(u: { firstName: string | null; lastName: string | null; phone?: string | null }) {
   const n = [u.firstName, u.lastName].filter(Boolean).join(" ");
   return n || (u.phone ? toPersianDigits(u.phone) : "بدون نام");
 }

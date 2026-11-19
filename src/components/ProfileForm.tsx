@@ -18,6 +18,14 @@ export type ProfileDefaults = {
 
 const input = "mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none focus:border-brand-500";
 
+// فهرستی برای پیشنهاد هنگام ورود شهر؛ کاربر میتواند شهر دیگری هم بنویسد.
+const CITIES = [
+  "آبادان", "آمل", "اراک", "اردبیل", "اصفهان", "اهواز", "ایلام", "بجنورد", "بندرعباس",
+  "بوشهر", "تبریز", "تهران", "چابهار", "خرم آباد", "خوی", "دزفول", "رشت", "زاهدان",
+  "زنجان", "ساری", "سمنان", "سنندج", "شیراز", "گرگان", "گنبد کاووس", "کرج", "کرمان",
+  "کرمانشاه", "مشهد", "نجف آباد", "نیشابور", "همدان", "یاسوج", "یزد",
+];
+
 export default function ProfileForm({ defaults, next, years }: { defaults: ProfileDefaults; next: string; years: number[] }) {
   const [state, action, pending] = useActionState<ProfileState, FormData>(saveProfile, {});
   // بعد از ارسال، فرم با مقادیر واردشده دوباره ساخته می‌شود تا در صورت خطا پاک نشود
@@ -80,8 +88,14 @@ export default function ProfileForm({ defaults, next, years }: { defaults: Profi
         </select>
       </label>
       <label>
-        <span className="text-sm text-slate-600">شهر</span>
-        <input name="city" defaultValue={v.city} className={input} />
+        <span className="text-sm text-slate-600">شهر *</span>
+        <input name="city" list="iran-cities" required maxLength={80} defaultValue={v.city} className={input} placeholder="مثلاً تهران" />
+        <datalist id="iran-cities">
+          {CITIES.map((city) => <option key={city} value={city} />)}
+        </datalist>
+        <span className="mt-1 block text-xs leading-6 text-slate-500">
+          متخصصان بر اساس شهر شما پیشنهاد میشوند.
+        </span>
       </label>
 
       <div className="sm:col-span-2">

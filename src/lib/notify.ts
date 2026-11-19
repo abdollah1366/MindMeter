@@ -46,7 +46,7 @@ export async function notify(userId: string, msg: Message) {
 
   if (msg.sms) {
     const user = await db.user.findUnique({ where: { id: userId }, select: { phone: true, smsReminders: true } });
-    if (user?.smsReminders) {
+    if (user?.smsReminders && user.phone) {
       const link = msg.url ? `\n${absoluteUrl(msg.url)}` : "";
       await sendTextSms(user.phone, `مایندمتر: ${msg.title}\n${msg.body}${link}\nلغو یادآوری: ${absoluteUrl("/notifications")}`).catch(() => false);
     }

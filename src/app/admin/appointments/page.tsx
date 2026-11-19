@@ -45,7 +45,7 @@ export default async function AdminAppointments({ searchParams }: { searchParams
           <ul className="mt-2 list-inside list-disc">
             {refunds.map((p) => (
               <li key={p.id}>
-                {displayName(p.user)} ({toPersianDigits(p.user.phone)}) · {formatToman(p.amount)} · کد پیگیری <span dir="ltr">{p.refId}</span>
+                {displayName(p.user)} ({p.user.phone ? toPersianDigits(p.user.phone) : "-"}) · {formatToman(p.amount)} · کد پیگیری <span dir="ltr">{p.refId}</span>
               </li>
             ))}
           </ul>

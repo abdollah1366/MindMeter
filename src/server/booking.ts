@@ -154,7 +154,7 @@ export async function startPayment(form: FormData) {
     payment.amount,
     payment.description,
     `${await baseUrl()}/api/pay/zarinpal/callback`,
-    user.phone,
+    user.phone ?? "",
   );
   await db.payment.update({ where: { id }, data: { authority } });
   redirect(url);

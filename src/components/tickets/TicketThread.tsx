@@ -6,7 +6,7 @@ type MessageView = {
   body: string;
   isStaff: boolean;
   createdAt: Date;
-  user: { firstName: string | null; lastName: string | null; phone: string; role: string };
+  user: { firstName: string | null; lastName: string | null; phone: string | null; role: string };
 };
 
 /** نمایش رشته پیامهای تیکت؛ نخستین پیام، متن اصلی تیکت است */

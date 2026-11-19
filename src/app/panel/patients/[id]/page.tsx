@@ -43,7 +43,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
     ["کد ملی", patient.nationalId ? toPersianDigits(patient.nationalId) : "-"],
     ["سن", patient.birthDate ? `${toPersianDigits(ageFrom(patient.birthDate))} سال` : "-"],
     ["جنسیت", patient.sex ? SEX[patient.sex] : "-"],
-    ["موبایل", toPersianDigits(patient.phone)],
+    ["موبایل", patient.phone ? toPersianDigits(patient.phone) : "-"],
     ["تحصیلات", patient.education ?? "-"],
     ["شهر", patient.city ?? "-"],
   ];

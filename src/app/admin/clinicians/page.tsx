@@ -35,7 +35,7 @@ export default async function AdminClinicians() {
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
                   شماره‌ی نظام: <span dir="ltr">{c.licenseNumber}</span> · کد ملی: {toPersianDigits(c.user.nationalId ?? "-")} · موبایل:{" "}
-                  <span dir="ltr">{toPersianDigits(c.user.phone)}</span> · درخواست: {formatJalali(c.createdAt)} · مراجعان: {toPersianDigits(c._count.grants)}
+                  <span dir="ltr">{c.user.phone ? toPersianDigits(c.user.phone) : "-"}</span> · درخواست: {formatJalali(c.createdAt)} · مراجعان: {toPersianDigits(c._count.grants)}
                 </p>
                 {c.bio && <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">{c.bio}</p>}
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
