@@ -89,7 +89,19 @@ export class AudioCapture {
       return;
     }
 
+    let context: AudioContext | null = null;
     try {
+      const legacy = globalThis as typeof globalThis & { webkitAudioContext?: AudioContextConstructor };
+      const Context = legacy.AudioContext ?? legacy.webkitAudioContext;
+      if (!Context) throw new Error("AudioContext unavailable");
+
+      // AudioContext پیش از درخواست مجوز و در همان تیک اقدام کاربر ساخته میشود تا
+      // سیاست پخش خودکار مرورگر آن را معلق نکند. وعده resume نیز میتواند تا یک
+      // اقدام بعدی کاربر حل نشود، بنابراین منتظر نامحدود نمیمانیم.
+      context = new Context();
+      const resumed =
+        context.state === "suspended" ? context.resume().catch(() => undefined) : Promise.resolve();
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: false,
@@ -100,19 +112,19 @@ export class AudioCapture {
       // اگر کاربر در حین درخواست مجوز صفحه را ترک کرده باشد، استریم بلافاصله آزاد میشود.
       if (!this.stopped) {
         this.stream = stream;
-        const legacy = globalThis as typeof globalThis & { webkitAudioContext?: AudioContextConstructor };
-        const Context = legacy.AudioContext ?? legacy.webkitAudioContext;
-        if (!Context) throw new Error("AudioContext unavailable");
-
-        const context = new Context();
+        await Promise.race([
+          resumed,
+          new Promise<void>((resolve) => setTimeout(resolve, 1200)),
+        ]);
+        // اگر هنوز معلق است، تلاش دوباره پس از پذیرش مجوز توسط کاربر انجام میشود.
+        if (context.state === "suspended") void context.resume().catch(() => undefined);
         const source = context.createMediaStreamSource(stream);
         const analyser = context.createAnalyser();
         analyser.fftSize = 2048;
         analyser.smoothingTimeConstant = 0;
         source.connect(analyser);
 
-        if (context.state === "suspended") await context.resume();
-
+        const sampleRate = context.sampleRate;
         this.context = context;
         this.source = source;
         this.analyser = analyser;
@@ -145,7 +157,7 @@ export class AudioCapture {
           if (Number.isFinite(rms) && Number.isFinite(peak)) {
             onFrame({ t, rms, peak });
             // کپی مستقل از بفر چندبارمصرف AnalyserNode؛ فقط در حافظه و بدون ذخیره یا ارسال.
-            if (onSamples) onSamples(new Float32Array(samples), context.sampleRate);
+            if (onSamples) onSamples(new Float32Array(samples), sampleRate);
           }
         }, intervalMs);
       } else {
@@ -161,6 +173,8 @@ export class AudioCapture {
         onError("CAPTURE_FAILED");
       }
       this.cleanup();
+      // در صورت شکست پیش از واگذاری context به کلاس، منبع محلی هم آزاد میشود.
+      if (context) void context.close().catch(() => undefined);
     }
   }
 

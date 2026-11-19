@@ -33,6 +33,7 @@ const INSTRUCTIONS = [
 export default function SpeechMptRunner({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [phase, setPhase] = useState<Phase>("intro");
   const [micStatus, setMicStatus] = useState<MicStatus>("idle");
+  const [micSignal, setMicSignal] = useState(false);
   const [micError, setMicError] = useState<MicError | null>(null);
   const [countdown, setCountdown] = useState(3);
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -51,9 +52,13 @@ export default function SpeechMptRunner({ isLoggedIn }: { isLoggedIn: boolean })
   const completeRef = useRef<() => void>(() => {});
   const startRecordingRef = useRef<() => void>(() => {});
   const savingRef = useRef(false);
+  const micSignalRef = useRef(false);
 
   const summary = useMemo(() => summarizeAttempts(attempts), [attempts]);
   const microphoneActive = phase === "check" || phase === "countdown" || phase === "recording";
+  // پشتیبان: اگر انتقال وضعیت «آماده» به والد به دلیلی صورت نگیرد، دریافت فریم واقعی
+  // از میکروفون نشان میدهد که ضبط کار میکند و دکمه شروع باید فعال شود.
+  const micReady = micStatus === "ready" || (micStatus === "requesting" && micSignal);
 
   function resetCaptureState() {
     analyzerRef.current = null;
@@ -65,7 +70,7 @@ export default function SpeechMptRunner({ isLoggedIn }: { isLoggedIn: boolean })
   }
 
   function beginCountdown() {
-    if (micStatus !== "ready") return;
+    if (!micReady) return;
     resetCaptureState();
     setCountdown(3);
     setPhase("countdown");
@@ -94,6 +99,10 @@ export default function SpeechMptRunner({ isLoggedIn }: { isLoggedIn: boolean })
   startRecordingRef.current = beginRecording;
 
   function handleFrame(frame: AudioFrame) {
+    if (!micSignalRef.current && frame.rms > 0) {
+      micSignalRef.current = true;
+      setMicSignal(true);
+    }
     const current = phaseRef.current;
     if (current === "countdown") {
       if (countdownStartRef.current === null) countdownStartRef.current = frame.t;
@@ -134,6 +143,8 @@ export default function SpeechMptRunner({ isLoggedIn }: { isLoggedIn: boolean })
     setLastAttempt(null);
     setCompletedAt(null);
     setMicError(null);
+    micSignalRef.current = false;
+    setMicSignal(false);
     setSaveState({ state: "idle" });
     setPhase("intro");
   }
@@ -253,7 +264,7 @@ export default function SpeechMptRunner({ isLoggedIn }: { isLoggedIn: boolean })
             <button
               type="button"
               onClick={beginCountdown}
-              disabled={micStatus !== "ready"}
+              disabled={!micReady}
               className="rounded-xl bg-brand-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
             >
               آغاز اندازهگیری

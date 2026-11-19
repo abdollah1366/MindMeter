@@ -55,6 +55,16 @@ export default function AudioRecorder({
   statusRef.current = onStatusChange;
   samplesRef.current = onSamples;
 
+  /**
+   * وضعیت را همزمان هم در همین کامپوننت و هم در والد بهروز میکنیم. اتکا به
+   * effect جداگانه میتواند در برخی مرورگرها باعث شود والد «آماده» را دریافت
+   * نکند، در حالی که نشانگر داخلی میکروفون آماده است و دکمه شروع خاموش میماند.
+   */
+  const updateStatus = useCallback((next: MicStatus) => {
+    setStatus(next);
+    statusRef.current?.(next);
+  }, []);
+
   useEffect(() => {
     if (!captureRef.current) captureRef.current = new AudioCapture();
     const capture = captureRef.current;
@@ -62,12 +72,12 @@ export default function AudioRecorder({
 
     if (!active) {
       capture.stop();
-      setStatus("idle");
+      updateStatus("idle");
       setLevel(0);
       return;
     }
 
-    setStatus("requesting");
+    updateStatus("requesting");
     setError(null);
     void capture
       .start(
@@ -80,7 +90,7 @@ export default function AudioRecorder({
         (nextError) => {
           if (disposed) return;
           setError(nextError);
-          setStatus(nextError === "DENIED" ? "denied" : nextError === "UNSUPPORTED" ? "unsupported" : "error");
+          updateStatus(nextError === "DENIED" ? "denied" : nextError === "UNSUPPORTED" ? "unsupported" : "error");
           errorRef.current?.(nextError);
         },
         frameIntervalMs,
@@ -88,18 +98,14 @@ export default function AudioRecorder({
       )
       .then(() => {
         if (disposed || !capture.running) return;
-        setStatus("ready");
+        updateStatus("ready");
       });
 
     return () => {
       disposed = true;
       capture.stop();
     };
-  }, [active, attempt, frameIntervalMs]);
-
-  useEffect(() => {
-    statusRef.current?.(status);
-  }, [status]);
+  }, [active, attempt, frameIntervalMs, updateStatus]);
 
   const retry = useCallback(() => setAttempt((value) => value + 1), []);
 
