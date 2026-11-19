@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { PsychTest } from "@/lib/types";
 import type { Answers } from "@/lib/scoring";
 import { scoreTest, toPersianDigits } from "@/lib/scoring";
-import { STROOP_OPTIONS, STROOP_PRACTICE, type StroopMode, type StroopSpec } from "@/data/stroop-content";
+import { STROOP_OPTIONS, STROOP_PRACTICE, stroopInkHex, type StroopMode, type StroopSpec } from "@/data/stroop-content";
 import { saveResult, setPending } from "@/lib/history";
 import { saveTestResult } from "@/server/results";
 import { inventorySummary } from "@/lib/inventory";
@@ -246,8 +246,9 @@ export default function StroopRunner({ test }: { test: PsychTest }) {
   const spec = isPractice ? practiceCards[practiceIndex] : null;
   const question = isPractice ? null : mainList[mainIndex];
   const word = spec ? spec.word : question!.stroop!.word;
-  const inkHex = spec ? spec.inkHex : question!.stroop!.inkHex;
   const inkLabel = spec ? spec.ink : question!.stroop!.ink;
+  const storedInkHex = spec ? spec.inkHex : question!.stroop!.inkHex;
+  const inkHex = stroopInkHex(inkLabel, storedInkHex);
   const current = isPractice ? practiceIndex + 1 : mainIndex + 1;
   const total = isPractice ? practiceCards.length : mainList.length;
 

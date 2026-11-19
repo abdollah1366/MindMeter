@@ -8,16 +8,24 @@
 
 export type StroopColor = { key: string; hex: string; value: number };
 
-/** چهار رنگ پاسخ. زرد با تیرگی بیشتر انتخاب شده تا روی زمینهی سفید خوانا بماند. */
+/** چهار رنگ پاسخ. زرد با تیرگی متوسط انتخاب شده تا هم زرد دیده شود و روی زمینهی روشن خوانا بماند. */
 export const STROOP_COLORS: StroopColor[] = [
   { key: "قرمز", hex: "#dc2626", value: 1 },
   { key: "آبی", hex: "#2563eb", value: 2 },
   { key: "سبز", hex: "#15803d", value: 3 },
-  { key: "زرد", hex: "#b45309", value: 4 },
+  { key: "زرد", hex: "#eab308", value: 4 },
 ];
 
 /** گزینههای چهارگانه که هم در اجرا و هم در اعتبارسنجی تست استفاده می شوند. */
 export const STROOP_OPTIONS = STROOP_COLORS.map((c) => ({ label: c.key, value: c.value }));
+
+/**
+ * رنگ جوهر را از نام رنگ میگیرد تا کارت های ذخیرهشده در دیتابیس هم با پالت جدید
+ * مطابقت داشته باشند و نیازی به بهروزرسانی دیتا نباشد.
+ */
+export function stroopInkHex(ink: string, fallback: string): string {
+  return STROOP_COLORS.find((c) => c.key === ink)?.hex ?? fallback;
+}
 
 /** واژه های هیجانی منفی در بخش دوم آزمون. */
 export const STROOP_EMOTIONAL_WORDS = [
