@@ -1,10 +1,11 @@
 /**
  * seed فهرست ارزیابی گفتار و زبان.
  *
- * این تابع idempotent است: دسته‌بندی‌ها و آزمون‌ها را بر اساس slug می‌سازد یا
- * به‌روزرسانی می‌کند. وضعیت (status) و انتشار (published) ردیف‌های موجود
- * عمداً بازنویسی نمی‌شوند تا فعال‌سازی آینده‌ی یک آزمون با اجرای دوباره‌ی seed
- * از بین نرود.
+ * این تابع idempotent است: دستهبندیها و آزمونها را بر اساس slug میسازد یا
+ * بهروزرسانی میکند. انتشار (published) ردیفهای موجود عمداً بازنویسی نمیشود.
+ * وضعیت (status) تنها برای آزمونهایی که implementationKey دارند از کاتالوگ
+ * خوانده میشود تاactive ماندن آزمون اجراشده (MPT) با اجرای دوبارهی seed
+ * تضمین شود؛ سایر آزمونها بدون تغییر میمانند.
  */
 import type { PrismaClient } from "@prisma/client";
 import { speechAssessments, speechCategories } from "../src/data/speech-catalog";
@@ -62,6 +63,9 @@ export async function seedSpeech(db: PrismaClient) {
       implementationKey: a.implementationKey ?? null,
       implementationPath: a.implementationPath ?? null,
       metadata: a.metadata ?? null,
+      // آزمونهایی که پیادهسازی واقعی دارند، وضعیتشان از منبع کاتالوگ پیروی میکند
+      // تا با اجرای دوبارهی seed روی سرور،active شدنشان از بین نرود.
+      ...(a.implementationKey ? { status: a.status } : {}),
     };
 
     if (existing) {
