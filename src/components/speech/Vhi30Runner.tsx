@@ -18,7 +18,6 @@ import {
   VHI_DOMAIN_LABELS,
   VHI_ITEM_COUNT,
   VHI_RESPONSE_SCALE,
-  VHI_VALIDATION_NOTICE,
   type VHIResult,
 } from "@/lib/speech/vhi-30-types";
 import { saveVhi30Result } from "@/server/speech-results";
@@ -67,8 +66,8 @@ export default function Vhi30Runner({ isLoggedIn }: { isLoggedIn: boolean }) {
       setError("");
       return;
     }
-    // پیش از ثبت نهایی، همه گویهها بررسی میشوند. چنانچه گویهای بیپاسخ مانده
-    // باشد، کاربر به نخستین گویه ناقص هدایت میشود و هیچ پاسخی پاک نمیشود.
+    // پیش از ثبت نهایی، همه گویه‌ها بررسی می‌شوند. چنانچه گویه‌ای بی‌پاسخ مانده
+    // باشد، کاربر به نخستین گویه ناقص هدایت می‌شود و هیچ پاسخی پاک نمی‌شود.
     if (!isVhi30Complete(answers)) {
       const firstMissing = vhi30MissingQuestionIds(answers)[0];
       const missingIndex = VHI_30_QUESTIONS.findIndex((item) => item.id === firstMissing);
@@ -115,7 +114,7 @@ export default function Vhi30Runner({ isLoggedIn }: { isLoggedIn: boolean }) {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 font-sans">
       <header className="rounded-3xl bg-gradient-to-bl from-brand-600 via-brand-700 to-calm-700 px-6 py-8 text-white sm:px-9">
         <div className="flex flex-wrap gap-2 text-xs">
           <span className="rounded-full bg-white/15 px-3 py-1">پرسشنامه خودگزارشی</span>
@@ -127,7 +126,7 @@ export default function Vhi30Runner({ isLoggedIn }: { isLoggedIn: boolean }) {
           Voice Handicap Index (VHI-30)
         </p>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-brand-100/90">
-          پرسشنامهای برای سنجش میزان تأثیری که مشکلات صوتی بر زندگی روزمره، ویژگیهای جسمانی صدا و وضعیت هیجانی فرد دارند.
+          پرسشنامه‌ای برای سنجش میزان تأثیری که مشکلات صوتی بر زندگی روزمره، ویژگی‌های جسمانی صدا و وضعیت هیجانی فرد دارند.
         </p>
       </header>
 
@@ -136,20 +135,12 @@ export default function Vhi30Runner({ isLoggedIn }: { isLoggedIn: boolean }) {
           <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
             <h2 className="text-lg font-extrabold">درباره پرسشنامه</h2>
             <p className="mt-3 text-sm leading-8 text-slate-600">
-              این پرسشنامه ۳۰ گویه دارد و در سه حوزه عملکردی، جسمانی و هیجانی قرار میگیرد. برای هر گویه تنها یک پاسخ انتخاب میشود
-              و تمام گویهها باید پاسخ داده شوند. زمان تخمینی تکمیل، حدود ۵ تا ۱۰ دقیقه است.
+              این پرسشنامه ۳۰ گویه دارد و در سه حوزه عملکردی، جسمانی و هیجانی قرار می‌گیرد. برای هر گویه تنها یک پاسخ انتخاب می‌شود
+              و تمام گویه‌ها باید پاسخ داده شوند. زمان تخمینی تکمیل، حدود ۵ تا ۱۰ دقیقه است.
             </p>
             <p className="mt-4 rounded-xl bg-calm-50 px-4 py-3 text-sm leading-7 text-calm-700">
-              این ابزار یک پرسشنامه است و اندازهگیری صوت یا آزمون آکوستیکی نیست. هیچ مجوز میکروفونی درخواست نمیشود و هیچ صوتی ضبط،
-              ذخیره یا ارسال نمیگردد.
-            </p>
-          </section>
-
-          <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
-            <h2 className="font-bold">وضعیت متون پرسشنامه</h2>
-            <p className="mt-2">{VHI_VALIDATION_NOTICE}</p>
-            <p className="mt-2">
-              بنابراین نتیجهی نمایشدادهشده صرفاً حاصل جمع پاسخها است و نباید بهعنوان نتیجه بالینی یا طبقهبندی شدت مورد استناد قرار گیرد.
+              این ابزار یک پرسشنامه است و اندازه‌گیری صوت یا آزمون آکوستیکی نیست. هیچ مجوز میکروفونی درخواست نمی‌شود و هیچ صوتی ضبط،
+              ذخیره یا ارسال نمی‌گردد.
             </p>
           </section>
 
@@ -162,7 +153,7 @@ export default function Vhi30Runner({ isLoggedIn }: { isLoggedIn: boolean }) {
               شروع آزمون
             </button>
             <Link href="/speech" className="text-sm text-slate-500 hover:text-brand-600">
-              بازگشت به فهرست آزمونها
+              بازگشت به فهرست آزمون‌ها
             </Link>
           </div>
         </div>
@@ -196,11 +187,6 @@ export default function Vhi30Runner({ isLoggedIn }: { isLoggedIn: boolean }) {
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
             <h2 className="text-lg font-bold leading-8 text-slate-800">{question.text}</h2>
-            {question.wordingStatus === "MISSING" ? (
-              <p className="mt-2 text-xs leading-6 text-amber-700">
-                متن تأییدشدهی این گویه وارد نشده است؛ لطفاً تا تکمیل منبع معتبر از نتیجه بهعنوان نتیجه بالینی استفاده نکنید.
-              </p>
-            ) : null}
 
             <fieldset className="mt-5 space-y-2">
               <legend className="sr-only">پاسخ خود را انتخاب کنید</legend>
@@ -243,7 +229,7 @@ export default function Vhi30Runner({ isLoggedIn }: { isLoggedIn: boolean }) {
               disabled={index === 0}
               className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
             >
-            قبلی
+              قبلی
             </button>
             <button
               type="button"
@@ -270,9 +256,9 @@ export default function Vhi30Runner({ isLoggedIn }: { isLoggedIn: boolean }) {
               {isLoggedIn ? (
                 saveState.state === "saved" ? (
                   <div className="flex flex-wrap items-center gap-3 text-sm text-emerald-700">
-                    <span>نتیجه در پروندهی شما ذخیره شد.</span>
+                    <span>نتیجه در پرونده‌ی شما ذخیره شد.</span>
                     <Link href={`/speech/vhi-30/result/${saveState.id}`} className="font-bold underline">
-                      مشاهده گزارش ذخیرهشده
+                      مشاهده گزارش ذخیره‌شده
                     </Link>
                   </div>
                 ) : (
@@ -299,13 +285,13 @@ export default function Vhi30Runner({ isLoggedIn }: { isLoggedIn: boolean }) {
                 onClick={() => setShowAnswers((value) => !value)}
                 className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
               >
-                {showAnswers ? "پنهان کردن پاسخها" : "مشاهده پاسخها"}
+                {showAnswers ? "پنهان کردن پاسخ‌ها" : "مشاهده پاسخ‌ها"}
               </button>
               <Link
                 href="/speech"
                 className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
               >
-                بازگشت به فهرست آزمونها
+                بازگشت به فهرست آزمون‌ها
               </Link>
               <button
                 type="button"
@@ -322,7 +308,7 @@ export default function Vhi30Runner({ isLoggedIn }: { isLoggedIn: boolean }) {
 
           {showAnswers ? (
             <section className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h2 className="text-sm font-bold text-slate-700">مروری بر پاسخها</h2>
+              <h2 className="text-sm font-bold text-slate-700">مروری بر پاسخ‌ها</h2>
               <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200">
                 <table className="w-full min-w-[34rem] text-right text-sm">
                   <thead className="bg-slate-50 text-xs text-slate-500">
@@ -338,7 +324,7 @@ export default function Vhi30Runner({ isLoggedIn }: { isLoggedIn: boolean }) {
                         <td className="px-3 py-2 text-xs text-slate-500">
                           {item.id} — {VHI_DOMAIN_LABELS[item.domain]}
                         </td>
-                        <td className="px-3 py-2 text-xs leading-6 text-slate-500">{item.text}</td>
+                        <td className="px-3 py-2 text-xs leading-6 text-slate-600">{item.text}</td>
                         <td className="px-3 py-2 font-medium text-slate-700">
                           {vhi30ScoreLabel(answers[item.id])}
                         </td>

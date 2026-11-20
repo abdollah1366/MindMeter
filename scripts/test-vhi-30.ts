@@ -1,7 +1,7 @@
 /**
- * تستهای واحد پرسشنامه VHI-30.
- * فقط توابع خالص و اعتبارسنج payload بررسی میشوند؛ هیچ میکروفون، ضبط صوت
- * یا سرویس خارجی برای اجرای این تستها لازم نیست.
+ * تست‌های واحد پرسشنامه VHI-30.
+ * فقط توابع خالص و اعتبارسنج payload بررسی می‌شوند؛ هیچ میکروفون، ضبط صوت
+ * یا سرویس خارجی برای اجرای این تست‌ها لازم نیست.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -47,18 +47,18 @@ describe("ساختار پرسشنامه VHI-30", () => {
     assert.deepEqual(VHI_30_QUESTIONS.map((question) => question.order), Array.from({ length: 30 }, (_, i) => i + 1));
   });
 
-  it("همه متون گویهها بهوضوح بهعنوان ناموجود علامتگذاری شدهاند", () => {
-    assert.equal(VHI_30_MISSING_COUNT, 30);
-    assert.ok(
-      VHI_30_QUESTIONS.every(
-        (question) => question.wordingStatus === "MISSING" && question.text.includes("در دسترس نیست"),
-      ),
-    );
+  it("هر ۳۰ گویه متن فارسی کامل دارند و هیچ متن ناموجودی باقی نمانده است", () => {
+    assert.equal(VHI_30_MISSING_COUNT, 0);
+    assert.ok(VHI_30_QUESTIONS.every((question) => question.wordingStatus === "AVAILABLE"));
+    assert.ok(VHI_30_QUESTIONS.every((question) => question.text.trim().length > 0));
+    assert.ok(VHI_30_QUESTIONS.every((question) => /[\u0600-\u06FF]/.test(question.text)));
+    assert.ok(VHI_30_QUESTIONS.every((question) => !/[A-Za-z]/.test(question.text)));
+    assert.equal(new Set(VHI_30_QUESTIONS.map((question) => question.text)).size, 30);
   });
 });
 
 describe("محاسبه نمره", () => {
-  it("۱. تمام پاسخها = ۰، نمره کل ۰ است", () => {
+  it("۱. تمام پاسخ‌ها = ۰، نمره کل ۰ است", () => {
     const scores = scoreVhi30(answersWithScore(0));
     assert.deepEqual(scores, {
       functionalScore: 0,
@@ -68,7 +68,7 @@ describe("محاسبه نمره", () => {
     });
   });
 
-  it("۲. تمام پاسخها = ۴، نمره کل ۱۲۰ است", () => {
+  it("۲. تمام پاسخ‌ها = ۴، نمره کل ۱۲۰ است", () => {
     const scores = scoreVhi30(answersWithScore(4));
     assert.deepEqual(scores, {
       functionalScore: 40,
@@ -103,7 +103,7 @@ describe("محاسبه نمره", () => {
     assert.equal(scores.totalScore, 40);
   });
 
-  it("۶. پاسخهای مخلوط بهدرستی جمع میشوند", () => {
+  it("۶. پاسخ‌های مخلوط به‌درستی جمع می‌شوند", () => {
     const answers = answersWithScore(0);
     answers.F1 = 4;
     answers.F2 = 3;
@@ -117,7 +117,7 @@ describe("محاسبه نمره", () => {
     assert.equal(scores.totalScore, 14);
   });
 
-  it("پاسخ نامعتبر یا خارج از محدوده ۰ تا ۴ نادیده گرفته میشود", () => {
+  it("پاسخ نامعتبر یا خارج از محدوده ۰ تا ۴ نادیده گرفته می‌شود", () => {
     const answers = answersWithScore(0);
     answers.F1 = 5;
     answers.F2 = -1;
@@ -129,7 +129,7 @@ describe("محاسبه نمره", () => {
 });
 
 describe("پرسشنامه ناقص و پیمایش", () => {
-  it("۷. پرسشنامه ناقص نمیتواند ثبت نهایی شود", () => {
+  it("۷. پرسشنامه ناقص نمی‌تواند ثبت نهایی شود", () => {
     assert.equal(isVhi30Complete({}), false);
     assert.equal(vhi30MissingQuestionIds({}).length, 30);
 
@@ -138,18 +138,18 @@ describe("پرسشنامه ناقص و پیمایش", () => {
     assert.equal(isVhi30Complete(answers), false);
     assert.deepEqual(vhi30MissingQuestionIds(answers), ["E7"]);
 
-    // حتی اگر فیلد نمرهها دستکاری شود، اعتبارسنج سرور payload ناقص را رد میکند.
+    // حتی اگر فیلد نمره‌ها دستکاری شود، اعتبارسنج سرور payload ناقص را رد می‌کند.
     const forged = toVhi30Payload(answersWithScore(2));
     forged.answers = forged.answers.filter((answer) => answer.questionId !== "E7");
     assert.equal(parseVhi30Payload(forged), null);
   });
 
-  it("۸. پاسخها هنگام پیمایش بین گویهها دستنخورده میمانند", () => {
+  it("۸. پاسخ‌ها هنگام پیمایش بین گویه‌ها دست‌نخورده می‌مانند", () => {
     let answers: Vhi30Answers = {};
     answers = setVhi30Answer(answers, "F1", 3);
     answers = setVhi30Answer(answers, "F2", 4);
 
-    // تغییر شاخص گویهی جاری (رفتن به گویهی بعد و بازگشت) نباید پاسخها را تغییر دهد.
+    // تغییر شاخص گویه‌ی جاری (رفتن به گویه‌ی بعد و بازگشت) نباید پاسخ‌ها را تغییر دهد.
     let index = 1;
     const before = JSON.stringify(answers);
     index = 2;
@@ -162,12 +162,12 @@ describe("پرسشنامه ناقص و پیمایش", () => {
     assert.equal(answers.F2, 4);
     assert.equal(answers.F3, 2);
 
-    // پاسخ نامعتبر یا شناسه ناشناخته تغییری ایجاد نمیکند.
+    // پاسخ نامعتبر یا شناسه ناشناخته تغییری ایجاد نمی‌کند.
     assert.equal(setVhi30Answer(answers, "F1", 9), answers);
     assert.equal(setVhi30Answer(answers, "UNKNOWN", 2), answers);
   });
 
-  it("پاسخها دقیقاً یک گزینه برای هر گویه دارند", () => {
+  it("پاسخ‌ها دقیقاً یک گزینه برای هر گویه دارند", () => {
     const answers = answersWithScore(3);
     const payload = toVhi30Payload(answers);
     assert.equal(payload.answers.length, 30);
@@ -176,7 +176,7 @@ describe("پرسشنامه ناقص و پیمایش", () => {
 });
 
 describe("بدون میکروفون و بدون ضبط صوت", () => {
-  it("۹. هیچکدام از فایلهای VHI-30 به API میکروفون یا ضبط صوت دسترسی ندارند", () => {
+  it("۹. هیچ‌کدام از فایل‌های VHI-30 به API میکروفون یا ضبط صوت دسترسی ندارند", () => {
     const files = [
       "../src/components/speech/Vhi30Runner.tsx",
       "../src/components/speech/Vhi30Report.tsx",
@@ -205,7 +205,7 @@ describe("بدون میکروفون و بدون ضبط صوت", () => {
 });
 
 describe("ذخیره و بازیابی نتیجه", () => {
-  it("۱۰. payload ساختهشده پس از ذخیره و بازیابی معتبر است", () => {
+  it("۱۰. payload ساخته‌شده پس از ذخیره و بازیابی معتبر است", () => {
     const answers = answersWithScore(2);
     const payload = toVhi30Payload(answers);
     const stored = JSON.parse(JSON.stringify(payload)) as unknown;
@@ -217,7 +217,7 @@ describe("ذخیره و بازیابی نتیجه", () => {
     assert.equal(decoded?.emotionalScore, 20);
   });
 
-  it("نمرههای دستکاریشده و فیلدهای غیرمجاز رد میشوند", () => {
+  it("نمره‌های دستکاری‌شده و فیلدهای غیرمجاز رد می‌شوند", () => {
     const payload = toVhi30Payload(answersWithScore(1));
     const forgedScore = structuredClone(payload);
     forgedScore.totalScore = 120;
@@ -241,7 +241,7 @@ describe("ذخیره و بازیابی نتیجه", () => {
     assert.equal(canAccessSpeechResult(null, "owner"), false);
   });
 
-  it("اعتبارسنج آزمونهای آکوستیکی، payload پرسشنامه را رد میکند", () => {
+  it("اعتبارسنج آزمون‌های آکوستیکی، payload پرسشنامه را رد می‌کند", () => {
     const payload = toVhi30Payload(answersWithScore(0));
     assert.equal(payload.key, "vhi-30");
     assert.equal("attempts" in payload, false);
