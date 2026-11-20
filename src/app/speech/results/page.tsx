@@ -35,6 +35,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
         ? "F0 نامشخص"
         : `F0: ${toPersianDigits(row.result.f0MeanHz.toFixed(1))} Hz`;
     validCount = row.result.validCount;
+  } else if (row.kind === "vhi-30") {
+    countLabel = "گویه پاسخشده";
+    href = `/speech/vhi-30/result/${row.id}`;
+    title = "پرسشنامه شاخص ناتوانی صوتی (VHI-30)";
+    detail = `نمره کل: ${toPersianDigits(row.result.totalScore)} از ۱۲۰`;
+    validCount = row.result.answers.length;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;
@@ -90,6 +96,12 @@ export default async function SpeechResultsPage() {
             className="rounded-xl border border-brand-300 bg-white px-4 py-2 text-sm text-brand-700 hover:bg-brand-50"
           >
             ارزیابی کیفیت صوت
+          </Link>
+          <Link
+            href="/speech/vhi-30"
+            className="rounded-xl border border-brand-300 bg-white px-4 py-2 text-sm text-brand-700 hover:bg-brand-50"
+          >
+            پرسشنامه VHI-30
           </Link>
         </div>
       </div>

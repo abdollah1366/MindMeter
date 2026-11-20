@@ -12,6 +12,7 @@
     "test:mpt": "node --import tsx --test scripts/test-mpt.ts",
     "test:sustained-vowel": "node --import tsx --test scripts/test-sustained-vowel.ts",
     "test:voice-quality": "node --import tsx --test scripts/test-voice-quality.ts",
+    "test:vhi-30": "node --import tsx --test scripts/test-vhi-30.ts",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",

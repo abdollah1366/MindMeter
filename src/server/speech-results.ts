@@ -5,6 +5,7 @@ import { getSessionUserId } from "@/lib/auth/session";
 import { parseMptPayload } from "@/lib/speech/mpt-payload";
 import { parseSustainedVowelPayload } from "@/lib/speech/sustained-vowel-payload";
 import { parseVoiceQualityPayload } from "@/lib/speech/voice-quality-payload";
+import { parseVhi30Payload } from "@/lib/speech/vhi-30-payload";
 
 export type SaveResultResponse =
   | { ok: true; id: string }
@@ -114,6 +115,42 @@ export async function saveVoiceQualityResult(input: unknown): Promise<SaveResult
 
   const row = await db.speechResult.create({
     data: { userId, assessmentSlug: "voice-quality-assessment", data },
+  });
+  return { ok: true, id: row.id };
+}
+
+/**
+ * ذخیره نتیجه پرسشنامه VHI-30. برخلاف سه آزمون بالا، کاملاً غیرآکوستیکی است:
+ * هیچ نمونه صوتی، مجوز میکروفون یا data مربوط به ضبط در آن وجود ندارد.
+ * نمرهها در اعتبارسنج سرور دوباره از روی ۳۰ پاسخ محاسبه میشوند.
+ */
+export async function saveVhi30Result(input: unknown): Promise<SaveResultResponse> {
+  const userId = await getSessionUserId();
+  if (!userId) return { ok: false, reason: "auth" };
+
+  const assessment = await db.speechAssessment.findFirst({
+    where: { slug: "vhi-30", published: true, status: "AVAILABLE" },
+    select: { id: true },
+  });
+  if (!assessment) return { ok: false, reason: "invalid" };
+
+  const payload = parseVhi30Payload(input);
+  if (!payload) return { ok: false, reason: "invalid" };
+  const data = JSON.stringify(payload);
+
+  const recent = await db.speechResult.findFirst({
+    where: {
+      userId,
+      assessmentSlug: "vhi-30",
+      createdAt: { gte: new Date(Date.now() - DEDUPE_WINDOW_MS) },
+    },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, data: true },
+  });
+  if (recent?.data === data) return { ok: true, id: recent.id };
+
+  const row = await db.speechResult.create({
+    data: { userId, assessmentSlug: "vhi-30", data },
   });
   return { ok: true, id: row.id };
 }

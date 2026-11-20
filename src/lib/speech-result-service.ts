@@ -7,6 +7,8 @@ import { parseSustainedVowelPayload } from "@/lib/speech/sustained-vowel-payload
 import type { SustainedVowelStoredResult } from "@/lib/speech/sustained-vowel-types";
 import { parseVoiceQualityPayload } from "@/lib/speech/voice-quality-payload";
 import type { VoiceQualityStoredResult } from "@/lib/speech/voice-quality-types";
+import { parseVhi30Payload } from "@/lib/speech/vhi-30-payload";
+import type { Vhi30StoredResult } from "@/lib/speech/vhi-30-payload";
 
 type BaseView = {
   id: string;
@@ -15,14 +17,16 @@ type BaseView = {
 };
 
 /**
- * نتیجه ذخیرهشده میتواند متعلق به MPT، تحلیل واکه پایدار یا ارزیابی کیفیت صوت
- * باشد. discriminate بر اساس assessmentSlug صورت میگیرد که فقط توسط سرور هنگام درج تنظیم شده است؛
- * سپس payload با اعتبارسنج مربوط به همان نوع بررسی میشود.
+ * نتیجه ذخیرهشده میتواند متعلق به MPT، تحلیل واکه پایدار، ارزیابی کیفیت صوت
+ * یا پرسشنامه VHI-30 باشد. discriminate بر اساس assessmentSlug صورت میگیرد که
+ * فقط توسط سرور هنگام درج تنظیم شده است؛ سپس payload با اعتبارسنج مربوط به همان
+ * نوع بررسی میشود. نتایج پرسشنامه جدا از نتایج اندازهگیری آکوستیکی نگه داشته میشوند.
  */
 export type SpeechResultView =
   | (BaseView & { kind: "mpt"; result: MptStoredResult })
   | (BaseView & { kind: "sustained-vowel"; result: SustainedVowelStoredResult })
-  | (BaseView & { kind: "voice-quality"; result: VoiceQualityStoredResult });
+  | (BaseView & { kind: "voice-quality"; result: VoiceQualityStoredResult })
+  | (BaseView & { kind: "vhi-30"; result: Vhi30StoredResult });
 
 type ResultRow = { id: string; assessmentSlug: string; createdAt: Date; userId: string; data: string };
 
@@ -39,6 +43,10 @@ function decodeRow(row: ResultRow, userId: string): SpeechResultView | null {
     if (row.assessmentSlug === "sustained-vowel-analysis") {
       const result = parseSustainedVowelPayload(parsed);
       return result ? { ...base, kind: "sustained-vowel", result } : null;
+    }
+    if (row.assessmentSlug === "vhi-30") {
+      const result = parseVhi30Payload(parsed);
+      return result ? { ...base, kind: "vhi-30", result } : null;
     }
     const result = parseMptPayload(parsed);
     return result ? { ...base, kind: "mpt", result } : null;
