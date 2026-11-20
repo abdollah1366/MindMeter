@@ -154,7 +154,9 @@ export const speechAssessments: SpeechAssessmentSeed[] = [
     description: "پرسش‌نامه‌ی خودگزارشی برای سنجش تأثیر اختلال صوت بر زندگی روزمره.",
     assessmentType: "STANDARDIZED_QUESTIONNAIRE",
     method: "پرسش‌نامه‌ی خودگزارشی ۳۰ گویه‌ای.",
-    status: "IN_DEVELOPMENT",
+    // ساختار و محاسبه نمره آماده است؛ متون تأییدشده فارسی هنوز وارد نشده‌اند.
+    // آزمون برای نمایش ساختار فعال شده، اما گزارش هیچ تفسیر بالینی ارائه نمی‌دهد.
+    status: "AVAILABLE",
     published: true,
     order: 4,
     categorySlug: "voice",
