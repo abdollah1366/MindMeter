@@ -9,6 +9,8 @@ import { parseVoiceQualityPayload } from "@/lib/speech/voice-quality-payload";
 import type { VoiceQualityStoredResult } from "@/lib/speech/voice-quality-types";
 import { parseVhi30Payload } from "@/lib/speech/vhi-30-payload";
 import type { Vhi30StoredResult } from "@/lib/speech/vhi-30-payload";
+import { parseAmrPayload } from "@/lib/speech/amr-payload";
+import type { AmrStoredResult } from "@/lib/speech/amr-types";
 import { parseGrbasStored } from "@/lib/speech/grbas-payload";
 import type { GrbasStoredResult } from "@/lib/speech/grbas-payload";
 
@@ -29,7 +31,8 @@ export type SpeechResultView =
   | (BaseView & { kind: "sustained-vowel"; result: SustainedVowelStoredResult })
   | (BaseView & { kind: "voice-quality"; result: VoiceQualityStoredResult })
   | (BaseView & { kind: "vhi-30"; result: Vhi30StoredResult })
-  | (BaseView & { kind: "grbas"; result: GrbasStoredResult });
+  | (BaseView & { kind: "grbas"; result: GrbasStoredResult })
+  | (BaseView & { kind: "amr"; result: AmrStoredResult });
 
 type ResultRow = { id: string; assessmentSlug: string; createdAt: Date; userId: string; data: string };
 
@@ -54,6 +57,10 @@ function decodeRow(row: ResultRow, userId: string): SpeechResultView | null {
     if (row.assessmentSlug === "grbas") {
       const result = parseGrbasStored(parsed);
       return result ? { ...base, kind: "grbas", result } : null;
+    }
+    if (row.assessmentSlug === "amr") {
+      const result = parseAmrPayload(parsed);
+      return result ? { ...base, kind: "amr", result } : null;
     }
     const result = parseMptPayload(parsed);
     return result ? { ...base, kind: "mpt", result } : null;

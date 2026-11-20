@@ -36,6 +36,11 @@ const IMPLEMENTED = [
     implementationKey: "grbas",
     implementationPath: "/speech/grbas",
   },
+  {
+    slug: "amr",
+    implementationKey: "amr",
+    implementationPath: "/speech/amr",
+  },
 ] as const;
 
 async function main() {

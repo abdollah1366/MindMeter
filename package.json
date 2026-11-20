@@ -14,6 +14,7 @@
     "test:voice-quality": "node --import tsx --test scripts/test-voice-quality.ts",
     "test:vhi-30": "node --import tsx --test scripts/test-vhi-30.ts",
     "test:grbas": "node --import tsx --test scripts/test-grbas.ts",
+    "test:amr": "node --import tsx --test scripts/test-amr.ts",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",

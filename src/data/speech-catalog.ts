@@ -185,16 +185,18 @@ export const speechAssessments: SpeechAssessmentSeed[] = [
   // ─────────────── ارزیابی تولید گفتار ───────────────
   {
     slug: "amr",
-    title: "آزمون سرعت تکرار هجا",
+    title: "آزمون نرخ حرکت تناوبی",
     titleEn: "Alternating Motion Rate (AMR)",
-    description: "سنجش سرعت و نظم تکرار متناوب هجاها برای بررسی کنترل حرکتی گفتار.",
+    description: "سنجش سرعت و نظم تکرار متناوب هجاهای /pa/، /ta/ و /ka/ برای بررسی کنترل حرکتی گفتار.",
     assessmentType: "PERFORMANCE_MEASURE",
-    method: "تکرار سریع هجاهای متناوب و اندازه‌گیری نرخ.",
-    status: "COMING_SOON",
+    method: "ضبط سه تکلیف مستقل و تحلیل نرخ تکرار، ریتم و کیفیت گفتار.",
+    status: "AVAILABLE",
     published: true,
     order: 1,
     categorySlug: "speech-production",
     requiresRightsReview: false,
+    implementationKey: "amr",
+    implementationPath: "/speech/amr",
   },
   {
     slug: "smr",

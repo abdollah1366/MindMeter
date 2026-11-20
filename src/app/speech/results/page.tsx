@@ -48,6 +48,13 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "ارزیابی ادراکی GRBAS";
     detail = formatGrbasSummary(row.result.scores);
     validCount = 5;
+  } else if (row.kind === "amr") {
+    countLabel = "تکلیف";
+    href = `/speech/amr/result/${row.id}`;
+    title = "آزمون نرخ حرکت تناوبی (AMR)";
+    const lowest = row.result.lowestRateTask ? row.result.lowestRateTask.toUpperCase() : "—";
+    detail = `کمترین نرخ: ${lowest}`;
+    validCount = row.result.tasks.length;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;
