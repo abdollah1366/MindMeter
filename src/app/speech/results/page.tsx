@@ -4,6 +4,7 @@ import { formatJalali } from "@/lib/jalali";
 import { toPersianDigits } from "@/lib/scoring";
 import { requireUser } from "@/lib/auth/guards";
 import { listSpeechResultsForUser, type SpeechResultView } from "@/lib/speech-result-service";
+import { formatGrbasSummary } from "@/lib/speech/grbas-scoring";
 
 export const metadata: Metadata = {
   title: "نتایج ارزیابی گفتار من",
@@ -41,6 +42,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "پرسشنامه شاخص ناتوانی صوتی (VHI-30)";
     detail = `نمره کل: ${toPersianDigits(row.result.totalScore)} از ۱۲۰`;
     validCount = row.result.answers.length;
+  } else if (row.kind === "grbas") {
+    countLabel = "مؤلفه";
+    href = `/speech/grbas/result/${row.id}`;
+    title = "ارزیابی ادراکی GRBAS";
+    detail = formatGrbasSummary(row.result.scores);
+    validCount = 5;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;
@@ -60,7 +67,7 @@ function ResultCard({ row }: { row: SpeechResultView }) {
           <span className="mt-1 block text-xs text-slate-400">{formatJalali(row.createdAt)}</span>
         </span>
         <span className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="rounded-full bg-brand-50 px-2.5 py-1 text-brand-700">{detail}</span>
+          <span dir="ltr" className="rounded-full bg-brand-50 px-2.5 py-1 text-brand-700">{detail}</span>
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
             {toPersianDigits(validCount)} {countLabel}
           </span>

@@ -172,12 +172,14 @@ export const speechAssessments: SpeechAssessmentSeed[] = [
     description: "مقیاس ادراکی برای درجه‌بندی کیفیت صوت در پنج بُعد.",
     assessmentType: "STANDARDIZED_SCALE",
     method: "درجه‌بندی شنیداری‑ادراکی توسط ارزیاب آموزش‌دیده.",
-    status: "COMING_SOON",
+    status: "AVAILABLE",
     published: true,
     order: 5,
     categorySlug: "voice",
     requiresRightsReview: true,
-    rightsNote: "مقیاس استاندارد بیرونی؛ استفاده و انطباق آن نیازمند بررسی حقوقی و پیاده‌سازی تخصصی است.",
+    rightsNote: "مقیاس استاندارد بیرونی؛ توضیحات فارسی این سامانه تعریف رسمی یا ترجمه‌ی اعتبارسنجی‌شده نیست.",
+    implementationKey: "grbas",
+    implementationPath: "/speech/grbas",
   },
 
   // ─────────────── ارزیابی تولید گفتار ───────────────

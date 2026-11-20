@@ -12,6 +12,9 @@ import { toPersianDigits, type Answers } from "@/lib/scoring";
 import type { ScaleScore, TestAlert } from "@/lib/types";
 import { getTest } from "@/data/tests";
 import { addClinicalNote } from "@/server/clinician";
+import { parseGrbasStored } from "@/lib/speech/grbas-payload";
+import { formatGrbasSummary } from "@/lib/speech/grbas-scoring";
+import { GRBAS_SAMPLE_SOURCE_LABELS } from "@/lib/speech/grbas-types";
 import { referToClinician } from "@/server/referral";
 import { CLINICIAN_KIND } from "@/lib/clinicians";
 import { audit } from "@/lib/audit";
@@ -31,6 +34,19 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
     include: { results: { orderBy: { createdAt: "desc" } } },
   });
   if (!patient) notFound();
+  const grbasRows = await db.speechResult.findMany({
+    where: { userId: id, assessmentSlug: "grbas" },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+  const grbasAssessments = grbasRows.flatMap((row) => {
+    try {
+      const result = parseGrbasStored(JSON.parse(row.data) as unknown);
+      return result ? [{ id: row.id, createdAt: row.createdAt, result }] : [];
+    } catch {
+      return [];
+    }
+  });
   const notes = await db.clinicalNote.findMany({
     where: { clinicianId: profile.id, patientId: id },
     orderBy: { createdAt: "desc" },
@@ -114,6 +130,47 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
                   </li>
                 );
               })}
+            </ul>
+          )}
+        </section>
+
+        <section>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-extrabold">ارزیابی‌های ادراکی GRBAS</h2>
+            <Link
+              href={`/speech/grbas?patient=${patient.id}`}
+              className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-700"
+            >
+              ثبت ارزیابی GRBAS
+            </Link>
+          </div>
+          {grbasAssessments.length === 0 ? (
+            <p className="mt-3 text-sm text-slate-500">هنوز ارزیابی GRBAS برای این مراجع ثبت نشده است.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {grbasAssessments.map(({ id: resultId, createdAt, result }) => (
+                <li key={resultId}>
+                  <Link
+                    href={`/speech/grbas/result/${resultId}`}
+                    className="block rounded-2xl border border-slate-200 bg-white p-4 hover:border-brand-400"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-bold">
+                        GRBAS <span className="text-sm font-normal text-slate-500">{GRBAS_SAMPLE_SOURCE_LABELS[result.sampleSource]}</span>
+                      </p>
+                      <span className="text-xs text-slate-400">{formatJalali(createdAt)}</span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                      <span dir="ltr" className="rounded-full bg-brand-50 px-2.5 py-1 text-brand-700">
+                        {formatGrbasSummary(result.scores)}
+                      </span>
+                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
+                        ۵ مؤلفه
+                      </span>
+                    </div>
+                  </Link>
+                </li>
+              ))}
             </ul>
           )}
         </section>
