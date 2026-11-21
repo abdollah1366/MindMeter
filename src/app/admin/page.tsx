@@ -73,6 +73,7 @@ export default async function AdminDashboard({ searchParams }: Props) {
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-extrabold">داشبورد</h1>
+        <Link href="/admin/credits" className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm hover:text-brand-600">مدیریت اعتبار کاربران</Link>
         <form action={runRemindersNow} className="flex items-center gap-2 text-sm">
           {reminders !== undefined && <span className="text-emerald-700">{toPersianDigits(Number(reminders) || 0)} یادآوری ارسال شد</span>}
           <button className="rounded-xl border border-slate-200 bg-white px-4 py-2 hover:text-brand-600">ارسال یادآوری‌های الان</button>

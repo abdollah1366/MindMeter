@@ -6,6 +6,7 @@ import { SUPPORT_TOPICS } from "@/data/support-topics";
 import { formatTehran } from "@/lib/tehran-time";
 import { displayUser, priorityOf, statusOf, TICKET_PRIORITY } from "@/lib/support";
 import { setTicketPriority, setTicketStatus } from "@/server/tickets";
+import ConfirmPaymentButton from "@/components/ConfirmPaymentButton";
 import TicketThread from "@/components/tickets/TicketThread";
 import TicketReplyForm from "@/components/tickets/TicketReplyForm";
 
@@ -15,7 +16,7 @@ export default async function AdminTicketDetail({ params }: { params: Promise<{ 
   const { id } = await params;
   const ticket = await db.ticket.findUnique({
     where: { id },
-    include: { user: true, messages: { include: { user: true }, orderBy: { createdAt: "asc" } } },
+    include: { user: true, payment: true, messages: { include: { user: true }, orderBy: { createdAt: "asc" } } },
   });
   if (!ticket) notFound();
 
@@ -45,6 +46,18 @@ export default async function AdminTicketDetail({ params }: { params: Promise<{ 
         <p className="mt-4 text-xs text-slate-400">
           ثبت شده در {formatTehran(ticket.createdAt, { dateStyle: "medium", timeStyle: "short" })}
         </p>
+
+        {ticket.payment && ticket.payment.status !== "PAID" ? (
+          <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+            <p className="text-sm font-bold text-emerald-800">پرداخت دستی مرتبط</p>
+            <p className="mt-1 text-xs text-emerald-700">
+              مبلغ {ticket.payment.amount.toLocaleString("fa-IR")} تومان — وضعیت: {ticket.payment.status}
+            </p>
+            <div className="mt-3">
+              <ConfirmPaymentButton ticketId={ticket.id} />
+            </div>
+          </div>
+        ) : null}
 
         <div className="mt-5 flex flex-wrap gap-3 border-t border-slate-100 pt-5">
           <form action={setTicketStatus} className="flex items-center gap-2">

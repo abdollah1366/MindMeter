@@ -270,6 +270,7 @@ model Payment {
   description   String
   createdAt     DateTime     @default(now())
   paidAt        DateTime?
+  tickets       Ticket[]
 }
 
 /// ارجاع به مشاور یا متخصص دیگر
@@ -698,6 +699,8 @@ model Ticket {
   priority  String          @default("NORMAL")
   userId    String
   user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentId String?
+  payment   Payment?        @relation(fields: [paymentId], references: [id], onDelete: SetNull)
   messages  TicketMessage[]
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
