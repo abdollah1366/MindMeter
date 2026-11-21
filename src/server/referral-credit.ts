@@ -7,7 +7,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { audit } from "@/lib/audit";
 import { notifyLater } from "@/lib/notify";
 
-const REFERRER_REWARD = 500_000;
+const REFERRER_REWARD = 50_000;
 const INVITEE_REWARD = 25_000;
 
 function makeCode() {

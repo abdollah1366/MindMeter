@@ -22,7 +22,7 @@ export default async function ReferralPage() {
     <div className="mx-auto max-w-3xl space-y-5">
       <h1 className="text-2xl font-extrabold">معرفی به دوستان</h1>
       <p className="text-sm leading-7 text-slate-600">
-        با معرفی دوستان خود به مایندمتر، هر کدام از شما اعتبار هدیه دریافت می‌کنید: معرف ۵۰۰,۰۰۰ تومان و دوست دعوت‌شده ۲۵,۰۰۰ تومان.
+        با معرفی دوستان خود به مایندمتر، هر کدام از شما اعتبار هدیه دریافت می‌کنید: معرف ۵۰,۰۰۰ تومان و دوست دعوت‌شده ۲۵,۰۰۰ تومان.
         اعتبار در خرید آزمون‌ها و دوره‌ها قابل استفاده است.
       </p>
 
@@ -40,7 +40,7 @@ export default async function ReferralPage() {
           </code>
         </div>
         <p className="mt-3 text-xs text-slate-500">
-          لینک ثبت‌نام: <span dir="ltr" className="text-brand-700">https://www.mindmeter.ir/signup?ref={code}</span>
+          لینک ثبت‌نام: <span dir="ltr" className="text-brand-700">https://www.mindmetr.ir/signup?ref={code}</span>
         </p>
       </section>
 
