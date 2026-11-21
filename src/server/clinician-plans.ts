@@ -43,7 +43,7 @@ export async function buyClinicianPlan(form: FormData) {
       userId: user.id,
       clinicianPlanId: plan.id,
       amount: def.amount,
-      provider: paymentProvider(),
+      provider: "MANUAL",
       description: `بسته‌ی تست متخصص - ${def.title}`.slice(0, 250),
     },
   });
