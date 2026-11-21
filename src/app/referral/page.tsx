@@ -3,16 +3,23 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { getMyReferralCode, listMyReferrals } from "@/server/referral-credit";
+import { getMyReferralCode, listMyReferrals, applyReferralCodeByValue } from "@/server/referral-credit";
 import ApplyReferralForm from "@/components/ApplyReferralForm";
+import CopyLink from "@/components/CopyLink";
 import { formatToman } from "@/lib/tehran-time";
 import { toPersianDigits } from "@/lib/scoring";
 
 export const metadata: Metadata = { title: "معرفی به دوستان", robots: { index: false } };
 
-export default async function ReferralPage() {
+export default async function ReferralPage({ searchParams }: { searchParams: Promise<{ ref?: string }> }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/referral");
+
+  const { ref } = await searchParams;
+  if (ref && !user.referredByUserId) {
+    await applyReferralCodeByValue(user.id, ref);
+    redirect("/referral");
+  }
 
   const code = await getMyReferralCode();
   const invited = await listMyReferrals();
@@ -42,6 +49,7 @@ export default async function ReferralPage() {
         <p className="mt-3 text-xs text-slate-500">
           لینک ثبت‌نام: <span dir="ltr" className="text-brand-700">https://www.mindmetr.ir/signup?ref={code}</span>
         </p>
+        <CopyLink url={`https://www.mindmetr.ir/signup?ref=${code}`} />
       </section>
 
       {!user.referredByUserId ? (

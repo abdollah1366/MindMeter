@@ -5,11 +5,12 @@ import { getSessionUserId } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "ورود / ثبتنام" };
 
-type Props = { searchParams: Promise<{ next?: string }> };
+type Props = { searchParams: Promise<{ next?: string; ref?: string }> };
 
 export default async function LoginPage({ searchParams }: Props) {
-  const { next = "/my-results" } = await searchParams;
-  const safe = next.startsWith("/") && !next.startsWith("//") ? next : "/my-results";
+  const { next = "", ref } = await searchParams;
+  const baseNext = next.startsWith("/") && !next.startsWith("//") ? next : "/my-results";
+  const safe = ref ? `/referral?ref=${encodeURIComponent(ref)}` : baseNext;
   if (await getSessionUserId()) redirect(safe);
 
   return (

@@ -40,34 +40,40 @@ export async function getMyReferralCode(): Promise<string | null> {
 
 export type ApplyReferralState = { error?: string; ok?: boolean };
 
-export async function applyReferralCode(_: ApplyReferralState, form: FormData): Promise<ApplyReferralState> {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login?next=/referral");
-
-  const code = String(form.get("code") ?? "").trim().toUpperCase();
+export async function applyReferralCodeByValue(userId: string, codeRaw: string): Promise<ApplyReferralState> {
+  const code = codeRaw.trim().toUpperCase();
   if (!code) return { error: "کد معرف را وارد کنید." };
 
+  const user = await db.user.findUnique({ where: { id: userId }, select: { referredByUserId: true } });
+  if (!user) return { error: "کاربر یافت نشد." };
   if (user.referredByUserId) return { error: "شما قبلاً از یک کد معرف استفاده کرده‌اید." };
 
   const referrer = await db.user.findUnique({ where: { referralCode: code }, select: { id: true } });
   if (!referrer) return { error: "کد معرف معتبر نیست." };
-  if (referrer.id === user.id) return { error: "نمی‌توانید کد خودتان را وارد کنید." };
+  if (referrer.id === userId) return { error: "نمی‌توانید کد خودتان را وارد کنید." };
 
-  // اعطای اعتبار در یک تراکنش
   await db.$transaction(async (tx) => {
-    await tx.user.update({ where: { id: user.id }, data: { referredByUserId: referrer.id } });
+    await tx.user.update({ where: { id: userId }, data: { referredByUserId: referrer.id } });
     await tx.user.update({ where: { id: referrer.id }, data: { creditBalance: { increment: REFERRER_REWARD } } });
-    await tx.user.update({ where: { id: user.id }, data: { creditBalance: { increment: INVITEE_REWARD } } });
-    await tx.creditTransaction.create({ data: { userId: referrer.id, amount: REFERRER_REWARD, kind: "REFERRAL_REWARD", sourceId: user.id, note: "هدیه معرفی دوست" } });
-    await tx.creditTransaction.create({ data: { userId: user.id, amount: INVITEE_REWARD, kind: "REFERRAL_BONUS", sourceId: referrer.id, note: "هدیه ثبت‌نام با کد معرف" } });
+    await tx.user.update({ where: { id: userId }, data: { creditBalance: { increment: INVITEE_REWARD } } });
+    await tx.creditTransaction.create({ data: { userId: referrer.id, amount: REFERRER_REWARD, kind: "REFERRAL_REWARD", sourceId: userId, note: "هدیه معرفی دوست" } });
+    await tx.creditTransaction.create({ data: { userId: userId, amount: INVITEE_REWARD, kind: "REFERRAL_BONUS", sourceId: referrer.id, note: "هدیه ثبت‌نام با کد معرف" } });
   });
 
-  await audit(user.id, "referral.apply", { targetType: "User", targetId: referrer.id, meta: { code } });
+  await audit(userId, "referral.apply", { targetType: "User", targetId: referrer.id, meta: { code } });
   notifyLater(referrer.id, { title: "هدیه معرفی دوست", body: `${REFERRER_REWARD.toLocaleString("fa-IR")} تومان اعتبار به حساب شما اضافه شد.`, url: "/profile" });
 
   revalidatePath("/profile");
   revalidatePath("/referral");
   return { ok: true };
+}
+
+export async function applyReferralCode(_: ApplyReferralState, form: FormData): Promise<ApplyReferralState> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login?next=/referral");
+
+  const code = String(form.get("code") ?? "").trim().toUpperCase();
+  return applyReferralCodeByValue(user.id, code);
 }
 
 export async function listMyReferrals() {
