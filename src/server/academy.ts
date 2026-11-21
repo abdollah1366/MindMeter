@@ -33,6 +33,18 @@ export async function enrollCourse(_: EnrollState, form: FormData): Promise<Enro
     ? await db.enrollment.update({ where: { id: existing.id }, data })
     : await db.enrollment.create({ data: { ...data, userId: user.id, courseId } });
 
+  // پرداخت با اعتبار در صورت کافی بودن
+  const currentUser = await db.user.findUnique({ where: { id: user.id }, select: { creditBalance: true } });
+  if (price > 0 && currentUser && currentUser.creditBalance >= price) {
+    await db.$transaction([
+      db.user.update({ where: { id: user.id }, data: { creditBalance: { decrement: price } } }),
+      db.creditTransaction.create({ data: { userId: user.id, amount: -price, kind: "SPEND_COURSE", sourceId: enrollment.id, note: `ثبت‌نام دوره ${course.title}` } }),
+    ]);
+    await activateEnrollment(enrollment.id);
+    revalidatePath("/my-courses");
+    redirect(`${back}/learn`);
+  }
+
   if (price === 0) {
     await activateEnrollment(enrollment.id);
     revalidatePath("/my-courses");

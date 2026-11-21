@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import ProfileForm from "@/components/ProfileForm";
 import { getCurrentUser, isProfileComplete } from "@/lib/auth/session";
 import { ageFrom, currentJalaliYear, dateToJalali } from "@/lib/jalali";
 import { toPersianDigits } from "@/lib/scoring";
+import { formatToman } from "@/lib/tehran-time";
 
 export const metadata: Metadata = { title: "اطلاعات من" };
 
@@ -46,6 +48,21 @@ export default async function ProfilePage({ searchParams }: Props) {
           </p>
         )
       )}
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-bold">اعتبار حساب</h2>
+            <p className="mt-1 text-2xl font-extrabold text-brand-700">{formatToman(user.creditBalance)}</p>
+          </div>
+          <Link href="/referral" className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-700">
+            معرفی به دوستان
+          </Link>
+        </div>
+        <p className="mt-2 text-xs text-slate-500">
+          اعتبار در خرید آزمون‌های پولی و دوره‌ها قابل استفاده است. با معرفی دوستان اعتبار بیشتری کسب کنید.
+        </p>
+      </section>
+
       <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6">
         <ProfileForm
           next={next}

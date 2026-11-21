@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ManualPaymentCard from "@/components/ManualPaymentCard";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
@@ -80,16 +81,19 @@ export default async function PayPage({ params, searchParams }: Props) {
             )}
           </div>
         ) : (
-          <form action={startPayment} className="mt-6">
-            <input type="hidden" name="paymentId" value={payment.id} />
-            <button className="w-full rounded-xl bg-brand-600 py-3 font-bold text-white hover:bg-brand-700">
-              {payment.provider === "DEV" ? "پرداخت آزمایشی (حالت توسعه)" : "پرداخت با زرین‌پال"}
-            </button>
-            <p className="mt-3 text-center text-xs leading-6 text-slate-400">
-              این نوبت تا {toPersianDigits(PAYMENT_HOLD_MIN)} دقیقه برای شما نگه داشته می‌شود.
-              {payment.provider === "DEV" && " در حالت توسعه پولی جابه‌جا نمی‌شود."}
-            </p>
-          </form>
+          <>
+            <ManualPaymentCard paymentId={payment.id} amount={payment.amount} />
+            <form action={startPayment} className="mt-6">
+              <input type="hidden" name="paymentId" value={payment.id} />
+              <button className="w-full rounded-xl bg-slate-100 py-3 font-bold text-slate-700 hover:bg-slate-200">
+                {payment.provider === "DEV" ? "پرداخت آزمایشی (حالت توسعه)" : "یا پرداخت آنلاین با زرین‌پال"}
+              </button>
+              <p className="mt-3 text-center text-xs leading-6 text-slate-400">
+                این نوبت تا {toPersianDigits(PAYMENT_HOLD_MIN)} دقیقه برای شما نگه داشته می‌شود.
+                {payment.provider === "DEV" && " در حالت توسعه پولی جابه‌جا نمی‌شود."}
+              </p>
+            </form>
+          </>
         )}
       </div>
     </div>
@@ -138,13 +142,16 @@ function CoursePay({
           <p className="mt-5 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">پرداخت انجام نشد یا لغو شد. می‌توانید دوباره تلاش کنید.</p>
         )}
         {payable ? (
-          <form action={startPayment} className="mt-6">
-            <input type="hidden" name="paymentId" value={payment.id} />
-            <button className="w-full rounded-xl bg-brand-600 py-3 font-bold text-white hover:bg-brand-700">
-              {payment.provider === "DEV" ? "پرداخت آزمایشی (حالت توسعه)" : "پرداخت با زرین‌پال"}
-            </button>
-            {payment.provider === "DEV" && <p className="mt-3 text-center text-xs text-slate-400">در حالت توسعه پولی جابه‌جا نمی‌شود.</p>}
-          </form>
+          <>
+            <ManualPaymentCard paymentId={payment.id} amount={payment.amount} />
+            <form action={startPayment} className="mt-6">
+              <input type="hidden" name="paymentId" value={payment.id} />
+              <button className="w-full rounded-xl bg-slate-100 py-3 font-bold text-slate-700 hover:bg-slate-200">
+                {payment.provider === "DEV" ? "پرداخت آزمایشی (حالت توسعه)" : "یا پرداخت آنلاین با زرین‌پال"}
+              </button>
+              {payment.provider === "DEV" && <p className="mt-3 text-center text-xs text-slate-400">در حالت توسعه پولی جابه‌جا نمی‌شود.</p>}
+            </form>
+          </>
         ) : (
           <p className="mt-6 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">این پرداخت دیگر معتبر نیست. لطفاً از صفحه‌ی دوره دوباره ثبت‌نام کنید.</p>
         )}
@@ -191,13 +198,16 @@ function TestPay({
           <p className="mt-5 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">پرداخت انجام نشد یا لغو شد. می‌توانید دوباره تلاش کنید.</p>
         )}
         {payable ? (
-          <form action={startPayment} className="mt-6">
-            <input type="hidden" name="paymentId" value={payment.id} />
-            <button className="w-full rounded-xl bg-brand-600 py-3 font-bold text-white hover:bg-brand-700">
-              {payment.provider === "DEV" ? "پرداخت آزمایشی (حالت توسعه)" : "پرداخت با زرین‌پال"}
-            </button>
-            {payment.provider === "DEV" && <p className="mt-3 text-center text-xs text-slate-400">در حالت توسعه پولی جابه‌جا نمی‌شود.</p>}
-          </form>
+          <>
+            <ManualPaymentCard paymentId={payment.id} amount={payment.amount} />
+            <form action={startPayment} className="mt-6">
+              <input type="hidden" name="paymentId" value={payment.id} />
+              <button className="w-full rounded-xl bg-slate-100 py-3 font-bold text-slate-700 hover:bg-slate-200">
+                {payment.provider === "DEV" ? "پرداخت آزمایشی (حالت توسعه)" : "یا پرداخت آنلاین با زرین‌پال"}
+              </button>
+              {payment.provider === "DEV" && <p className="mt-3 text-center text-xs text-slate-400">در حالت توسعه پولی جابه‌جا نمی‌شود.</p>}
+            </form>
+          </>
         ) : (
           <p className="mt-6 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">این پرداخت دیگر معتبر نیست.</p>
         )}
@@ -248,13 +258,16 @@ function PlanPay({
           <p className="mt-5 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">پرداخت انجام نشد یا لغو شد. می‌توانید دوباره تلاش کنید.</p>
         )}
         {payable ? (
-          <form action={startPayment} className="mt-6">
-            <input type="hidden" name="paymentId" value={payment.id} />
-            <button className="w-full rounded-xl bg-brand-600 py-3 font-bold text-white hover:bg-brand-700">
-              {payment.provider === "DEV" ? "پرداخت آزمایشی (حالت توسعه)" : "پرداخت با زرین‌پال"}
-            </button>
-            {payment.provider === "DEV" && <p className="mt-3 text-center text-xs text-slate-400">در حالت توسعه پولی جابهجا نمیشود.</p>}
-          </form>
+          <>
+            <ManualPaymentCard paymentId={payment.id} amount={payment.amount} />
+            <form action={startPayment} className="mt-6">
+              <input type="hidden" name="paymentId" value={payment.id} />
+              <button className="w-full rounded-xl bg-slate-100 py-3 font-bold text-slate-700 hover:bg-slate-200">
+                {payment.provider === "DEV" ? "پرداخت آزمایشی (حالت توسعه)" : "یا پرداخت آنلاین با زرین‌پال"}
+              </button>
+              {payment.provider === "DEV" && <p className="mt-3 text-center text-xs text-slate-400">در حالت توسعه پولی جابه‌جا نمی‌شود.</p>}
+            </form>
+          </>
         ) : (
           <p className="mt-6 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">این پرداخت دیگر معتبر نیست. لطفاً از پنل متخصص بسته‌ی دیگری انتخاب کنید.</p>
         )}

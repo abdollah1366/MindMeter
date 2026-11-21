@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getVisibleTest } from "@/lib/tests-service";
@@ -17,6 +18,18 @@ export async function buyTest(form: FormData) {
   if (!test) redirect("/tests");
   const price = await testPrice(slug);
   if (price <= 0 || (await availablePurchase(user.id, slug))) redirect(back);
+
+  // اگر کاربر اعتبار کافی دارد، با اعتبار پرداخت میشود
+  const currentUser = await db.user.findUnique({ where: { id: user.id }, select: { creditBalance: true } });
+  if (currentUser && currentUser.creditBalance >= price) {
+    const purchase = await db.testPurchase.create({ data: { userId: user.id, testSlug: slug, amount: price, status: "PAID", paidAt: new Date() } });
+    await db.$transaction([
+      db.user.update({ where: { id: user.id }, data: { creditBalance: { decrement: price } } }),
+      db.creditTransaction.create({ data: { userId: user.id, amount: -price, kind: "SPEND_TEST", sourceId: purchase.id, note: `خرید آزمون ${test.code}` } }),
+    ]);
+    revalidatePath("/my-results");
+    redirect(back);
+  }
 
   // پرداخت نیمه‌کاره‌ی قبلی با همین مبلغ دوباره استفاده شود
   const pending = await db.payment.findFirst({

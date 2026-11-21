@@ -56,6 +56,15 @@ model User {
   clinicianRuns ClinicianTestRun[]
   /// نتایج ارزیابیهای گفتار و زبان (فقط داده عددی، بدون فایل صوتی)
   speechResults SpeechResult[]
+  /// اعتبار حساب کاربر (تومان) برای استفاده در خرید تستها و دورهها
+  creditBalance Int @default(0)
+  /// کد معرف اختصاصی کاربر
+  referralCode String? @unique
+  /// کاربری که این حساب را معرفی کرده است
+  referredByUserId String?
+  referredBy User? @relation("UserReferrals", fields: [referredByUserId], references: [id], onDelete: SetNull)
+  invitedUsers User[] @relation("UserReferrals")
+  creditTransactions CreditTransaction[]
 }
 
 /// کدهای یک‌بارمصرف ورود
@@ -854,4 +863,18 @@ model SpeechResult {
   createdAt      DateTime @default(now())
 
   @@index([userId, assessmentSlug, createdAt])
+}
+
+/// تراکنشهای اعتبار کاربر (هدیه معرفی، خرید، تنظیم دستی و ...)
+model CreditTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  kind      String
+  sourceId  String?
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
