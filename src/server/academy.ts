@@ -58,7 +58,7 @@ export async function enrollCourse(_: EnrollState, form: FormData): Promise<Enro
       userId: user.id,
       enrollmentId: enrollment.id,
       amount: price,
-      provider: paymentProvider(),
+      provider: "MANUAL",
       description: `ثبت‌نام دوره - ${course.title}`.slice(0, 250),
     },
   });

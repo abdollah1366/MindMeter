@@ -43,7 +43,7 @@ export async function buyTest(form: FormData) {
       userId: user.id,
       testPurchaseId: purchase.id,
       amount: price,
-      provider: paymentProvider(),
+      provider: "MANUAL",
       description: `آزمون ${test.code} - ${test.title}`.slice(0, 250),
     },
   });
