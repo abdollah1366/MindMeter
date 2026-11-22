@@ -103,6 +103,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "ارزیابی دیزآرتری";
     detail = `شدت: ${toPersianDigits(row.result.overallSeverity)}`;
     validCount = row.result.ratings.length;
+  } else if (row.kind === "apraxia-of-speech") {
+    countLabel = "دامنه";
+    href = `/speech/apraxia-of-speech/result/${row.id}`;
+    title = "ارزیابی آپراکسی گفتار";
+    detail = `شدت: ${toPersianDigits(row.result.overallSeverity)}`;
+    validCount = row.result.ratings.length;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;

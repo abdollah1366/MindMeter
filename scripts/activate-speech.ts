@@ -81,6 +81,11 @@ const IMPLEMENTED = [
     implementationKey: "dysarthria",
     implementationPath: "/speech/dysarthria",
   },
+  {
+    slug: "apraxia-of-speech",
+    implementationKey: "apraxia-of-speech",
+    implementationPath: "/speech/apraxia-of-speech",
+  },
 ] as const;
 
 async function main() {
