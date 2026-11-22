@@ -71,6 +71,11 @@ const IMPLEMENTED = [
     implementationKey: "speech-intelligibility",
     implementationPath: "/speech/speech-intelligibility",
   },
+  {
+    slug: "ssi-4",
+    implementationKey: "ssi-4",
+    implementationPath: "/speech/ssi-4",
+  },
 ] as const;
 
 async function main() {

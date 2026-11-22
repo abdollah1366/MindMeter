@@ -91,6 +91,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "ارزیابی وضوح گفتار";
     detail = row.result.overallPercent !== null ? `وضوح: ${toPersianDigits(row.result.overallPercent)}%` : "وضوح";
     validCount = row.result.ratings.length;
+  } else if (row.kind === "ssi-4") {
+    countLabel = "سطح";
+    href = `/speech/ssi-4/result/${row.id}`;
+    title = "ارزیابی لکنت (SSI-4)";
+    detail = `شدت: ${toPersianDigits(row.result.totalScore)}`;
+    validCount = 1;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;
