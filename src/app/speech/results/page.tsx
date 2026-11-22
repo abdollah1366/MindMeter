@@ -73,6 +73,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "پرسشنامه ارزیابی بلع (EAT-10)";
     detail = `نمره کل: ${toPersianDigits(row.result.totalScore)} از ۴۰`;
     validCount = row.result.answers.length;
+  } else if (row.kind === "fois") {
+    countLabel = "سطح";
+    href = `/speech/fois/result/${row.id}`;
+    title = "مقیاس عملکرد دریافت خوراکی (FOIS)";
+    detail = `سطح: ${toPersianDigits(row.result.level)}`;
+    validCount = 1;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;

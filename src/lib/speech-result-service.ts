@@ -17,6 +17,8 @@ import { parseEat10Payload } from "@/lib/speech/eat-10-payload";
 import type { Eat10StoredResult } from "@/lib/speech/eat-10-types";
 import { parseArticulationStored } from "@/lib/speech/articulation-payload";
 import type { ArticulationStoredResult } from "@/lib/speech/articulation-types";
+import { parseFoisStored } from "@/lib/speech/fois-payload";
+import type { FoisStoredResult } from "@/lib/speech/fois-types";
 import { parseGrbasStored } from "@/lib/speech/grbas-payload";
 import type { GrbasStoredResult } from "@/lib/speech/grbas-payload";
 
@@ -41,7 +43,8 @@ export type SpeechResultView =
   | (BaseView & { kind: "amr"; result: AmrStoredResult })
   | (BaseView & { kind: "smr"; result: SmrStoredResult })
   | (BaseView & { kind: "articulation"; result: ArticulationStoredResult })
-  | (BaseView & { kind: "eat-10"; result: Eat10StoredResult });
+  | (BaseView & { kind: "eat-10"; result: Eat10StoredResult })
+  | (BaseView & { kind: "fois"; result: FoisStoredResult });
 
 type ResultRow = { id: string; assessmentSlug: string; createdAt: Date; userId: string; data: string };
 
@@ -82,6 +85,10 @@ function decodeRow(row: ResultRow, userId: string): SpeechResultView | null {
     if (row.assessmentSlug === "eat-10") {
       const result = parseEat10Payload(parsed);
       return result ? { ...base, kind: "eat-10", result } : null;
+    }
+    if (row.assessmentSlug === "fois") {
+      const result = parseFoisStored(parsed);
+      return result ? { ...base, kind: "fois", result } : null;
     }
     const result = parseMptPayload(parsed);
     return result ? { ...base, kind: "mpt", result } : null;
