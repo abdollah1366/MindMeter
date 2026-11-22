@@ -127,6 +127,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "ارزیابی بالینی بلع";
     detail = `شدت: ${toPersianDigits(row.result.overallSeverity)}`;
     validCount = row.result.ratings.length;
+  } else if (row.kind === "expressive-language") {
+    countLabel = "دامنه";
+    href = `/speech/expressive-language/result/${row.id}`;
+    title = "ارزیابی زبان بیانی";
+    detail = `شدت: ${toPersianDigits(row.result.overallSeverity)}`;
+    validCount = row.result.ratings.length;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;

@@ -101,6 +101,11 @@ const IMPLEMENTED = [
     implementationKey: "clinical-swallowing",
     implementationPath: "/speech/clinical-swallowing",
   },
+  {
+    slug: "expressive-language",
+    implementationKey: "expressive-language",
+    implementationPath: "/speech/expressive-language",
+  },
 ] as const;
 
 async function main() {
