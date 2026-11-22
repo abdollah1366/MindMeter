@@ -7,6 +7,7 @@ import { parseSustainedVowelPayload } from "@/lib/speech/sustained-vowel-payload
 import { parseVoiceQualityPayload } from "@/lib/speech/voice-quality-payload";
 import { parseVhi30Payload } from "@/lib/speech/vhi-30-payload";
 import { parseAmrPayload } from "@/lib/speech/amr-payload";
+import { parseSmrPayload } from "@/lib/speech/smr-payload";
 
 export type SaveResultResponse =
   | { ok: true; id: string }
@@ -188,5 +189,19 @@ export async function saveAmrResult(input: unknown): Promise<SaveResultResponse>
   const row = await db.speechResult.create({
     data: { userId, assessmentSlug: "amr", data },
   });
+  return { ok: true, id: row.id };
+}
+
+export async function saveSmrResult(input: unknown): Promise<SaveResultResponse> {
+  const userId = await getSessionUserId();
+  if (!userId) return { ok: false, reason: "auth" };
+  const assessment = await db.speechAssessment.findFirst({ where: { slug: "smr", published: true, status: "AVAILABLE" }, select: { id: true } });
+  if (!assessment) return { ok: false, reason: "invalid" };
+  const payload = parseSmrPayload(input);
+  if (!payload) return { ok: false, reason: "invalid" };
+  const data = JSON.stringify(payload);
+  const recent = await db.speechResult.findFirst({ where: { userId, assessmentSlug: "smr", createdAt: { gte: new Date(Date.now() - DEDUPE_WINDOW_MS) } }, orderBy: { createdAt: "desc" }, select: { id: true, data: true } });
+  if (recent?.data === data) return { ok: true, id: recent.id };
+  const row = await db.speechResult.create({ data: { userId, assessmentSlug: "smr", data } });
   return { ok: true, id: row.id };
 }

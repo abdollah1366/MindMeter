@@ -28,6 +28,26 @@ export async function buyClinicianPlan(form: FormData) {
   if (pending?.payments[0]) redirect(`/pay/${pending.payments[0].id}`);
 
   const expiresAt = def.durationDays ? new Date(Date.now() + def.durationDays * 24 * 60 * 60 * 1000) : null;
+  const currentUser = await db.user.findUnique({ where: { id: user.id }, select: { creditBalance: true } });
+  if (currentUser && currentUser.creditBalance >= def.amount) {
+    const plan = await db.clinicianTestPlan.create({
+      data: {
+        clinicianId: profile.id,
+        kind: def.kind,
+        totalTests: def.totalTests,
+        amount: def.amount,
+        expiresAt,
+        status: "ACTIVE",
+      },
+    });
+    await db.$transaction([
+      db.user.update({ where: { id: user.id }, data: { creditBalance: { decrement: def.amount } } }),
+      db.creditTransaction.create({ data: { userId: user.id, amount: -def.amount, kind: "SPEND_PLAN", sourceId: plan.id, note: `خرید بسته ${def.title}` } }),
+    ]);
+    revalidatePath("/panel/tests");
+    redirect("/panel/tests");
+  }
+
   const plan = await db.clinicianTestPlan.create({
     data: {
       clinicianId: profile.id,
@@ -44,10 +64,9 @@ export async function buyClinicianPlan(form: FormData) {
       clinicianPlanId: plan.id,
       amount: def.amount,
       provider: "MANUAL",
-      description: `بسته‌ی تست متخصص - ${def.title}`.slice(0, 250),
+      description: `بسته تست متخصص - ${def.title}`.slice(0, 250),
     },
   });
 
-  revalidatePath("/panel/tests");
   redirect(`/pay/${payment.id}`);
 }

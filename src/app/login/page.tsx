@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import LoginForm from "@/components/LoginForm";
 import { getSessionUserId } from "@/lib/auth/session";
@@ -22,6 +23,9 @@ export default async function LoginPage({ searchParams }: Props) {
         </p>
         <LoginForm next={safe} />
       </div>
+      <p className="mt-2 text-center text-xs">
+        <Link href="/forgot-password" className="text-slate-500 hover:text-brand-600">فراموشی رمز عبور</Link>
+      </p>
       <p className="mt-4 text-center text-xs leading-6 text-slate-400">
         با ورود، <a href="/about" className="underline">قوانین و حریم خصوصی</a> مایندمتر را میپذیرید.
       </p>

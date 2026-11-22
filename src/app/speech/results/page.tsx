@@ -55,6 +55,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     const lowest = row.result.lowestRateTask ? row.result.lowestRateTask.toUpperCase() : "—";
     detail = `کمترین نرخ: ${lowest}`;
     validCount = row.result.tasks.length;
+  } else if (row.kind === "smr") {
+    countLabel = "چرخه";
+    href = `/speech/smr/result/${row.id}`;
+    title = "آزمون توالی حرکات گفتاری (SMR)";
+    detail = `چرخه: ${toPersianDigits(row.result.task.cycleCount)}`;
+    validCount = row.result.task.cycleCount;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;
