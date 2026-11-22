@@ -17,6 +17,7 @@
     "test:amr": "node --import tsx --test scripts/test-amr.ts",
     "test:expressive-language": "node --import tsx --test scripts/test-expressive-language.ts",
     "test:receptive-language": "node --import tsx --test scripts/test-receptive-language.ts",
+    "test:reading-aloud": "node --import tsx --test scripts/test-reading-aloud.ts",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",

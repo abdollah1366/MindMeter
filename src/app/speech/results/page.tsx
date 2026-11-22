@@ -139,6 +139,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "ارزیابی زبان دریافتی";
     detail = `شدت: ${toPersianDigits(row.result.overallSeverity)}`;
     validCount = row.result.ratings.length;
+  } else if (row.kind === "reading-aloud") {
+    countLabel = "واژه صحیح";
+    href = `/speech/reading-aloud/result/${row.id}`;
+    title = "آزمون خواندن متن با صدای بلند";
+    detail = `دقت: ${toPersianDigits(row.result.summary.accuracyPercent)}٪`;
+    validCount = row.result.summary.wordsCorrect;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;

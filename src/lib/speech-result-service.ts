@@ -39,6 +39,8 @@ import { parseExpressiveLanguageStored } from "@/lib/speech/expressive-language-
 import type { ExpressiveLanguageStoredResult } from "@/lib/speech/expressive-language-types";
 import { parseReceptiveLanguageStored } from "@/lib/speech/receptive-language-payload";
 import type { ReceptiveLanguageStoredResult } from "@/lib/speech/receptive-language-types";
+import { parseReadingAloudStored } from "@/lib/speech/reading-aloud-payload";
+import type { ReadingAloudStoredResult } from "@/lib/speech/reading-aloud-types";
 import { parseGrbasStored } from "@/lib/speech/grbas-payload";
 import type { GrbasStoredResult } from "@/lib/speech/grbas-payload";
 
@@ -74,7 +76,8 @@ export type SpeechResultView =
   | (BaseView & { kind: "parkinsons-speech"; result: ParkinsonStoredResult })
   | (BaseView & { kind: "clinical-swallowing"; result: ClinicalSwallowingStoredResult })
   | (BaseView & { kind: "expressive-language"; result: ExpressiveLanguageStoredResult })
-  | (BaseView & { kind: "receptive-language"; result: ReceptiveLanguageStoredResult });
+  | (BaseView & { kind: "receptive-language"; result: ReceptiveLanguageStoredResult })
+  | (BaseView & { kind: "reading-aloud"; result: ReadingAloudStoredResult });
 
 type ResultRow = { id: string; assessmentSlug: string; createdAt: Date; userId: string; data: string };
 
@@ -159,6 +162,10 @@ function decodeRow(row: ResultRow, userId: string): SpeechResultView | null {
     if (row.assessmentSlug === "receptive-language") {
       const result = parseReceptiveLanguageStored(parsed);
       return result ? { ...base, kind: "receptive-language", result } : null;
+    }
+    if (row.assessmentSlug === "reading-aloud") {
+      const result = parseReadingAloudStored(parsed);
+      return result ? { ...base, kind: "reading-aloud", result } : null;
     }
     const result = parseMptPayload(parsed);
     return result ? { ...base, kind: "mpt", result } : null;

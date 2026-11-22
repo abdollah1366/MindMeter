@@ -247,14 +247,16 @@ export const speechAssessments: SpeechAssessmentSeed[] = [
     slug: "reading-aloud",
     title: "آزمون خواندن متن با صدای بلند",
     titleEn: "Reading Aloud Assessment",
-    description: "بررسی دقت، روانی و وضوح خواندن متن با صدای بلند.",
+    description: "بررسی دقت، روانی و آهنگ خواندن متن با صدای بلند.",
     assessmentType: "CLINICAL_TASK",
     method: "خواندن متن و ارزیابی دقت و روانی.",
-    status: "COMING_SOON",
+    status: "AVAILABLE",
     published: true,
     order: 5,
     categorySlug: "speech-production",
     requiresRightsReview: false,
+    implementationKey: "reading-aloud",
+    implementationPath: "/speech/reading-aloud",
   },
 
   // ─────────────── ارزیابی لکنت و روانی گفتار ───────────────
