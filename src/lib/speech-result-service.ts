@@ -21,6 +21,8 @@ import { parseFoisStored } from "@/lib/speech/fois-payload";
 import type { FoisStoredResult } from "@/lib/speech/fois-types";
 import { parseVerbalFluencyPayload } from "@/lib/speech/verbal-fluency-payload";
 import type { VerbalFluencyStoredResult } from "@/lib/speech/verbal-fluency-types";
+import { parseSpeechIntelligibilityStored } from "@/lib/speech/speech-intelligibility-payload";
+import type { SpeechIntelligibilityStoredResult } from "@/lib/speech/speech-intelligibility-types";
 import { parseGrbasStored } from "@/lib/speech/grbas-payload";
 import type { GrbasStoredResult } from "@/lib/speech/grbas-payload";
 
@@ -47,7 +49,8 @@ export type SpeechResultView =
   | (BaseView & { kind: "articulation"; result: ArticulationStoredResult })
   | (BaseView & { kind: "eat-10"; result: Eat10StoredResult })
   | (BaseView & { kind: "fois"; result: FoisStoredResult })
-  | (BaseView & { kind: "verbal-fluency"; result: VerbalFluencyStoredResult });
+  | (BaseView & { kind: "verbal-fluency"; result: VerbalFluencyStoredResult })
+  | (BaseView & { kind: "speech-intelligibility"; result: SpeechIntelligibilityStoredResult });
 
 type ResultRow = { id: string; assessmentSlug: string; createdAt: Date; userId: string; data: string };
 
@@ -96,6 +99,10 @@ function decodeRow(row: ResultRow, userId: string): SpeechResultView | null {
     if (row.assessmentSlug === "verbal-fluency") {
       const result = parseVerbalFluencyPayload(parsed);
       return result ? { ...base, kind: "verbal-fluency", result } : null;
+    }
+    if (row.assessmentSlug === "speech-intelligibility") {
+      const result = parseSpeechIntelligibilityStored(parsed);
+      return result ? { ...base, kind: "speech-intelligibility", result } : null;
     }
     const result = parseMptPayload(parsed);
     return result ? { ...base, kind: "mpt", result } : null;

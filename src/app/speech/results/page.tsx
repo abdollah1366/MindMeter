@@ -85,6 +85,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "آزمون روانی کلامی";
     detail = `یکتا: ${toPersianDigits(row.result.uniqueWords)}`;
     validCount = row.result.uniqueWords;
+  } else if (row.kind === "speech-intelligibility") {
+    countLabel = "بافت";
+    href = `/speech/speech-intelligibility/result/${row.id}`;
+    title = "ارزیابی وضوح گفتار";
+    detail = row.result.overallPercent !== null ? `وضوح: ${toPersianDigits(row.result.overallPercent)}%` : "وضوح";
+    validCount = row.result.ratings.length;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;
