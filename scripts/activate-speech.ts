@@ -51,6 +51,11 @@ const IMPLEMENTED = [
     implementationKey: "articulation",
     implementationPath: "/speech/articulation",
   },
+  {
+    slug: "eat-10",
+    implementationKey: "eat-10",
+    implementationPath: "/speech/eat-10",
+  },
 ] as const;
 
 async function main() {

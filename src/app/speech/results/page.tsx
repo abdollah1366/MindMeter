@@ -67,6 +67,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "ارزیابی تلفظ و تولید واج‌ها";
     detail = `صحیح: ${toPersianDigits(row.result.summary.correctCount)} از ${toPersianDigits(row.result.summary.totalItems)}`;
     validCount = row.result.summary.totalItems;
+  } else if (row.kind === "eat-10") {
+    countLabel = "گویه";
+    href = `/speech/eat-10/result/${row.id}`;
+    title = "پرسشنامه ارزیابی بلع (EAT-10)";
+    detail = `نمره کل: ${toPersianDigits(row.result.totalScore)} از ۴۰`;
+    validCount = row.result.answers.length;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;
