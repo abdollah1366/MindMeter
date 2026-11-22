@@ -109,6 +109,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "ارزیابی آپراکسی گفتار";
     detail = `شدت: ${toPersianDigits(row.result.overallSeverity)}`;
     validCount = row.result.ratings.length;
+  } else if (row.kind === "picture-naming") {
+    countLabel = "تصویر";
+    href = `/speech/picture-naming/result/${row.id}`;
+    title = "ارزیابی نامیدن تصاویر";
+    detail = `صحیح: ${toPersianDigits(row.result.summary.correctCount)} از ${toPersianDigits(row.result.summary.totalItems)}`;
+    validCount = row.result.summary.totalItems;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;

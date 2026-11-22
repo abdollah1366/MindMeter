@@ -86,6 +86,11 @@ const IMPLEMENTED = [
     implementationKey: "apraxia-of-speech",
     implementationPath: "/speech/apraxia-of-speech",
   },
+  {
+    slug: "picture-naming",
+    implementationKey: "picture-naming",
+    implementationPath: "/speech/picture-naming",
+  },
 ] as const;
 
 async function main() {
