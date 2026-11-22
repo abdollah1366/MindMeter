@@ -9,7 +9,16 @@ import CopyLink from "@/components/CopyLink";
 import { formatToman } from "@/lib/tehran-time";
 import { toPersianDigits } from "@/lib/scoring";
 
-export const metadata: Metadata = { title: "معرفی به دوستان", robots: { index: false } };
+export const metadata: Metadata = {
+  title: "معرفی به دوستان | مایندمتر",
+  description: "با معرفی دوستان خود به مایندمتر، معرف ۵۰,۰۰۰ تومان و دوست دعوت‌شده ۲۵,۰۰۰ تومان اعتبار هدیه دریافت می‌کنند. اعتبار در خرید آزمون‌ها و دوره‌ها قابل استفاده است.",
+  robots: { index: true, follow: true },
+  openGraph: {
+    title: "معرفی به دوستان | مایندمتر",
+    description: "با معرفی دوستان خود به مایندمتر، هر دو اعتبار هدیه دریافت می‌کنید.",
+    type: "website",
+  },
+};
 
 export default async function ReferralPage({ searchParams }: { searchParams: Promise<{ ref?: string }> }) {
   const user = await getCurrentUser();
