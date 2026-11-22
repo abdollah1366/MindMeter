@@ -25,6 +25,8 @@ import { parseSpeechIntelligibilityStored } from "@/lib/speech/speech-intelligib
 import type { SpeechIntelligibilityStoredResult } from "@/lib/speech/speech-intelligibility-types";
 import { parseSsi4Stored } from "@/lib/speech/ssi-4-payload";
 import type { Ssi4StoredResult } from "@/lib/speech/ssi-4-types";
+import { parseDysarthriaStored } from "@/lib/speech/dysarthria-payload";
+import type { DysarthriaStoredResult } from "@/lib/speech/dysarthria-types";
 import { parseGrbasStored } from "@/lib/speech/grbas-payload";
 import type { GrbasStoredResult } from "@/lib/speech/grbas-payload";
 
@@ -53,7 +55,8 @@ export type SpeechResultView =
   | (BaseView & { kind: "fois"; result: FoisStoredResult })
   | (BaseView & { kind: "verbal-fluency"; result: VerbalFluencyStoredResult })
   | (BaseView & { kind: "speech-intelligibility"; result: SpeechIntelligibilityStoredResult })
-  | (BaseView & { kind: "ssi-4"; result: Ssi4StoredResult });
+  | (BaseView & { kind: "ssi-4"; result: Ssi4StoredResult })
+  | (BaseView & { kind: "dysarthria"; result: DysarthriaStoredResult });
 
 type ResultRow = { id: string; assessmentSlug: string; createdAt: Date; userId: string; data: string };
 
@@ -110,6 +113,10 @@ function decodeRow(row: ResultRow, userId: string): SpeechResultView | null {
     if (row.assessmentSlug === "ssi-4") {
       const result = parseSsi4Stored(parsed);
       return result ? { ...base, kind: "ssi-4", result } : null;
+    }
+    if (row.assessmentSlug === "dysarthria") {
+      const result = parseDysarthriaStored(parsed);
+      return result ? { ...base, kind: "dysarthria", result } : null;
     }
     const result = parseMptPayload(parsed);
     return result ? { ...base, kind: "mpt", result } : null;

@@ -97,6 +97,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "ارزیابی لکنت (SSI-4)";
     detail = `شدت: ${toPersianDigits(row.result.totalScore)}`;
     validCount = 1;
+  } else if (row.kind === "dysarthria") {
+    countLabel = "دامنه";
+    href = `/speech/dysarthria/result/${row.id}`;
+    title = "ارزیابی دیزآرتری";
+    detail = `شدت: ${toPersianDigits(row.result.overallSeverity)}`;
+    validCount = row.result.ratings.length;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;

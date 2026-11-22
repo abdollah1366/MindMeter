@@ -76,6 +76,11 @@ const IMPLEMENTED = [
     implementationKey: "ssi-4",
     implementationPath: "/speech/ssi-4",
   },
+  {
+    slug: "dysarthria",
+    implementationKey: "dysarthria",
+    implementationPath: "/speech/dysarthria",
+  },
 ] as const;
 
 async function main() {
