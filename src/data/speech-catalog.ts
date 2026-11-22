@@ -393,16 +393,18 @@ export const speechAssessments: SpeechAssessmentSeed[] = [
   },
   {
     slug: "parkinsons-speech",
-    title: "ارزیابی گفتار در بیماری پارکینسون",
+    title: "ارزیابی گفتار پارکینسون",
     titleEn: "Parkinson's Speech Assessment",
-    description: "بررسی ویژگی‌های گفتار مرتبط با بیماری پارکینسون مانند شدت صدا و روانی.",
+    description: "ارزیابی بالینی گفتار در پارکینسون.",
     assessmentType: "CLINICAL_ASSESSMENT",
-    method: "ارزیابی نمونه‌ی گفتار و پارامترهای صوتی‑حرکتی.",
-    status: "COMING_SOON",
+    method: "ارزیابی بالینی گفتار پارکینسون توسط متخصص.",
+    status: "AVAILABLE",
     published: true,
     order: 3,
     categorySlug: "neuro-speech",
     requiresRightsReview: false,
+    implementationKey: "parkinsons-speech",
+    implementationPath: "/speech/parkinsons-speech",
   },
 
   // ─────────────── ارزیابی بلع ───────────────

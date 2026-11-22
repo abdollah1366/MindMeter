@@ -115,6 +115,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "ارزیابی نامیدن تصاویر";
     detail = `صحیح: ${toPersianDigits(row.result.summary.correctCount)} از ${toPersianDigits(row.result.summary.totalItems)}`;
     validCount = row.result.summary.totalItems;
+  } else if (row.kind === "parkinsons-speech") {
+    countLabel = "دامنه";
+    href = `/speech/parkinsons-speech/result/${row.id}`;
+    title = "ارزیابی گفتار پارکینسون";
+    detail = `شدت: ${toPersianDigits(row.result.overallSeverity)}`;
+    validCount = row.result.ratings.length;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;

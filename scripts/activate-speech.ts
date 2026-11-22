@@ -91,6 +91,11 @@ const IMPLEMENTED = [
     implementationKey: "picture-naming",
     implementationPath: "/speech/picture-naming",
   },
+  {
+    slug: "parkinsons-speech",
+    implementationKey: "parkinsons-speech",
+    implementationPath: "/speech/parkinsons-speech",
+  },
 ] as const;
 
 async function main() {
