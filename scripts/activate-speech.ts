@@ -106,6 +106,11 @@ const IMPLEMENTED = [
     implementationKey: "expressive-language",
     implementationPath: "/speech/expressive-language",
   },
+  {
+    slug: "receptive-language",
+    implementationKey: "receptive-language",
+    implementationPath: "/speech/receptive-language",
+  },
 ] as const;
 
 async function main() {

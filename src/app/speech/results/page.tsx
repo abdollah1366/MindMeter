@@ -133,6 +133,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "ارزیابی زبان بیانی";
     detail = `شدت: ${toPersianDigits(row.result.overallSeverity)}`;
     validCount = row.result.ratings.length;
+  } else if (row.kind === "receptive-language") {
+    countLabel = "دامنه";
+    href = `/speech/receptive-language/result/${row.id}`;
+    title = "ارزیابی زبان دریافتی";
+    detail = `شدت: ${toPersianDigits(row.result.overallSeverity)}`;
+    validCount = row.result.ratings.length;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;
