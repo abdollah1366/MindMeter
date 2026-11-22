@@ -61,6 +61,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "آزمون توالی حرکات گفتاری (SMR)";
     detail = `چرخه: ${toPersianDigits(row.result.task.cycleCount)}`;
     validCount = row.result.task.cycleCount;
+  } else if (row.kind === "articulation") {
+    countLabel = "واج";
+    href = `/speech/articulation/result/${row.id}`;
+    title = "ارزیابی تلفظ و تولید واج‌ها";
+    detail = `صحیح: ${toPersianDigits(row.result.summary.correctCount)} از ${toPersianDigits(row.result.summary.totalItems)}`;
+    validCount = row.result.summary.totalItems;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;

@@ -8,6 +8,7 @@ import { parseVoiceQualityPayload } from "@/lib/speech/voice-quality-payload";
 import { parseVhi30Payload } from "@/lib/speech/vhi-30-payload";
 import { parseAmrPayload } from "@/lib/speech/amr-payload";
 import { parseSmrPayload } from "@/lib/speech/smr-payload";
+import { parseArticulationInput, buildArticulationStored } from "@/lib/speech/articulation-payload";
 
 export type SaveResultResponse =
   | { ok: true; id: string }

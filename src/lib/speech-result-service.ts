@@ -13,6 +13,8 @@ import { parseAmrPayload } from "@/lib/speech/amr-payload";
 import type { AmrStoredResult } from "@/lib/speech/amr-types";
 import { parseSmrPayload } from "@/lib/speech/smr-payload";
 import type { SmrStoredResult } from "@/lib/speech/smr-types";
+import { parseArticulationStored } from "@/lib/speech/articulation-payload";
+import type { ArticulationStoredResult } from "@/lib/speech/articulation-types";
 import { parseGrbasStored } from "@/lib/speech/grbas-payload";
 import type { GrbasStoredResult } from "@/lib/speech/grbas-payload";
 
@@ -35,7 +37,8 @@ export type SpeechResultView =
   | (BaseView & { kind: "vhi-30"; result: Vhi30StoredResult })
   | (BaseView & { kind: "grbas"; result: GrbasStoredResult })
   | (BaseView & { kind: "amr"; result: AmrStoredResult })
-  | (BaseView & { kind: "smr"; result: SmrStoredResult });
+  | (BaseView & { kind: "smr"; result: SmrStoredResult })
+  | (BaseView & { kind: "articulation"; result: ArticulationStoredResult });
 
 type ResultRow = { id: string; assessmentSlug: string; createdAt: Date; userId: string; data: string };
 
@@ -68,6 +71,10 @@ function decodeRow(row: ResultRow, userId: string): SpeechResultView | null {
     if (row.assessmentSlug === "smr") {
       const result = parseSmrPayload(parsed);
       return result ? { ...base, kind: "smr", result } : null;
+    }
+    if (row.assessmentSlug === "articulation") {
+      const result = parseArticulationStored(parsed);
+      return result ? { ...base, kind: "articulation", result } : null;
     }
     const result = parseMptPayload(parsed);
     return result ? { ...base, kind: "mpt", result } : null;

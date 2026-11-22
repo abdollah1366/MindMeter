@@ -24,6 +24,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   "interpretation.save": "ثبت تفسیر متخصص بر نتیجه",
   "grbas.create": "ثبت ارزیابی GRBAS برای مراجع",
   "grbas.view": "مشاهده‌ی ارزیابی GRBAS",
+  "articulation.create": "ثبت ارزیابی تلفظ",
+  "articulation.view": "مشاهده‌ی ارزیابی تلفظ",
 };
 
 type Entry = { targetType?: string; targetId?: string; patientId?: string | null; meta?: Record<string, unknown> };
