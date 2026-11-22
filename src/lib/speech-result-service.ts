@@ -33,6 +33,8 @@ import { parsePictureNamingStored } from "@/lib/speech/picture-naming-payload";
 import type { PictureNamingStoredResult } from "@/lib/speech/picture-naming-types";
 import { parseParkinsonStored } from "@/lib/speech/parkinsons-speech-payload";
 import type { ParkinsonStoredResult } from "@/lib/speech/parkinsons-speech-types";
+import { parseClinicalSwallowingStored } from "@/lib/speech/clinical-swallowing-payload";
+import type { ClinicalSwallowingStoredResult } from "@/lib/speech/clinical-swallowing-types";
 import { parseGrbasStored } from "@/lib/speech/grbas-payload";
 import type { GrbasStoredResult } from "@/lib/speech/grbas-payload";
 
@@ -65,7 +67,8 @@ export type SpeechResultView =
   | (BaseView & { kind: "dysarthria"; result: DysarthriaStoredResult })
   | (BaseView & { kind: "apraxia-of-speech"; result: AosStoredResult })
   | (BaseView & { kind: "picture-naming"; result: PictureNamingStoredResult })
-  | (BaseView & { kind: "parkinsons-speech"; result: ParkinsonStoredResult });
+  | (BaseView & { kind: "parkinsons-speech"; result: ParkinsonStoredResult })
+  | (BaseView & { kind: "clinical-swallowing"; result: ClinicalSwallowingStoredResult });
 
 type ResultRow = { id: string; assessmentSlug: string; createdAt: Date; userId: string; data: string };
 
@@ -138,6 +141,10 @@ function decodeRow(row: ResultRow, userId: string): SpeechResultView | null {
     if (row.assessmentSlug === "parkinsons-speech") {
       const result = parseParkinsonStored(parsed);
       return result ? { ...base, kind: "parkinsons-speech", result } : null;
+    }
+    if (row.assessmentSlug === "clinical-swallowing") {
+      const result = parseClinicalSwallowingStored(parsed);
+      return result ? { ...base, kind: "clinical-swallowing", result } : null;
     }
     const result = parseMptPayload(parsed);
     return result ? { ...base, kind: "mpt", result } : null;

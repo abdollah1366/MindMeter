@@ -121,6 +121,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "ارزیابی گفتار پارکینسون";
     detail = `شدت: ${toPersianDigits(row.result.overallSeverity)}`;
     validCount = row.result.ratings.length;
+  } else if (row.kind === "clinical-swallowing") {
+    countLabel = "دامنه";
+    href = `/speech/clinical-swallowing/result/${row.id}`;
+    title = "ارزیابی بالینی بلع";
+    detail = `شدت: ${toPersianDigits(row.result.overallSeverity)}`;
+    validCount = row.result.ratings.length;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;

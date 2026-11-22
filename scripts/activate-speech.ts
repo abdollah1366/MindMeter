@@ -96,6 +96,11 @@ const IMPLEMENTED = [
     implementationKey: "parkinsons-speech",
     implementationPath: "/speech/parkinsons-speech",
   },
+  {
+    slug: "clinical-swallowing",
+    implementationKey: "clinical-swallowing",
+    implementationPath: "/speech/clinical-swallowing",
+  },
 ] as const;
 
 async function main() {
