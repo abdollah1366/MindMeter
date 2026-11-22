@@ -79,6 +79,12 @@ function ResultCard({ row }: { row: SpeechResultView }) {
     title = "مقیاس عملکرد دریافت خوراکی (FOIS)";
     detail = `سطح: ${toPersianDigits(row.result.level)}`;
     validCount = 1;
+  } else if (row.kind === "verbal-fluency") {
+    countLabel = "کلمه";
+    href = `/speech/verbal-fluency/result/${row.id}`;
+    title = "آزمون روانی کلامی";
+    detail = `یکتا: ${toPersianDigits(row.result.uniqueWords)}`;
+    validCount = row.result.uniqueWords;
   } else {
     countLabel = "تلاش معتبر";
     href = `/speech/mpt/result/${row.id}`;

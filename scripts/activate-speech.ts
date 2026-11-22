@@ -61,6 +61,11 @@ const IMPLEMENTED = [
     implementationKey: "fois",
     implementationPath: "/speech/fois",
   },
+  {
+    slug: "verbal-fluency",
+    implementationKey: "verbal-fluency",
+    implementationPath: "/speech/verbal-fluency",
+  },
 ] as const;
 
 async function main() {

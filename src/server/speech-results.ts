@@ -8,6 +8,7 @@ import { parseVoiceQualityPayload } from "@/lib/speech/voice-quality-payload";
 import { parseVhi30Payload } from "@/lib/speech/vhi-30-payload";
 import { parseAmrPayload } from "@/lib/speech/amr-payload";
 import { parseEat10Payload } from "@/lib/speech/eat-10-payload";
+import { parseVerbalFluencyPayload } from "@/lib/speech/verbal-fluency-payload";
 import { parseSmrPayload } from "@/lib/speech/smr-payload";
 import { parseArticulationInput, buildArticulationStored } from "@/lib/speech/articulation-payload";
 
@@ -221,3 +222,18 @@ export async function saveEat10Result(input: unknown): Promise<SaveResultRespons
   const row = await db.speechResult.create({ data: { userId, assessmentSlug: "eat-10", data } });
   return { ok: true, id: row.id };
 }
+
+export async function saveVerbalFluencyResult(input: unknown): Promise<SaveResultResponse> {
+  const userId = await getSessionUserId();
+  if (!userId) return { ok: false, reason: "auth" };
+  const assessment = await db.speechAssessment.findFirst({ where: { slug: "verbal-fluency", published: true, status: "AVAILABLE" }, select: { id: true } });
+  if (!assessment) return { ok: false, reason: "invalid" };
+  const payload = parseVerbalFluencyPayload(input);
+  if (!payload) return { ok: false, reason: "invalid" };
+  const data = JSON.stringify(payload);
+  const recent = await db.speechResult.findFirst({ where: { userId, assessmentSlug: "verbal-fluency", createdAt: { gte: new Date(Date.now() - DEDUPE_WINDOW_MS) } }, orderBy: { createdAt: "desc" }, select: { id: true, data: true } });
+  if (recent?.data === data) return { ok: true, id: recent.id };
+  const row = await db.speechResult.create({ data: { userId, assessmentSlug: "verbal-fluency", data } });
+  return { ok: true, id: row.id };
+}
+
